@@ -5,7 +5,7 @@
 #include "ucode8.h"
 #include <sstream>
 
-const std::string Re8map::PHP_NAME = "Pun\\Re8map";
+const char* Re8map::PHP_NAME = "Pun\\Re8map";
 
 Re8map::Re8map()
 {
@@ -56,7 +56,7 @@ Re8map::getIdRex(Php::Parameters& params)
 
     auto p8 = new Pcre8();
     p8->setImp(sp);
-    auto result = Php::Object(Pcre8::PHP_NAME.data(), p8);
+    auto result = Php::Object(Pcre8::PHP_NAME, p8);
     return result;
 }
 

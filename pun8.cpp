@@ -2,10 +2,20 @@
 #include "pun8.h"
 #include "pcre8.h"
 #include "re8map.h"
+#include "recap8.h"
 #include "ucode8.h"
 #include <sstream>
 
-const std::string Pun8::PHP_NAME = "Pun\\Pun8";
+const char* Pun8::PHP_NAME = "Pun\\Pun8";
+
+std::string 
+Pun8::missingParameter(const char* shouldBe, unsigned int offset)
+{
+    std::stringstream ss;
+
+    ss << "Parameter " << offset << " should be " << shouldBe;
+    return ss.str();
+}
 
 Pun8::Pun8() : _index(0), _size(0), _myChar(0)
 {
@@ -34,86 +44,107 @@ void Pun8::setString(Php::Parameters& params)
     } 
 }
 
-Re8map* Pun8::check_Re8map(Php::Parameters& params, unsigned int offset)
+Recap8* 
+Pun8::option_Recap8(Php::Parameters& params, unsigned int offset)
 {
     auto ct = params.size();
     if (offset >= ct) {
-        throw Php::Exception("Parameter 1 missing: Re8map object");
+        return nullptr;
     }
-    Php::Value object = params[offset];   
-    if (!object.instanceOf(Re8map::PHP_NAME)) {
-        throw Php::Exception("Parameter 1 should be Re8map object");
+    const Php::Value& object = params[offset];   
+    if (!object.instanceOf(Recap8::PHP_NAME)) {
+        throw Php::Exception("Parameter 1 should be Recap8 object");
     } 
 
-    Re8map *obj = (Re8map *)object.implementation();
+    Recap8 *obj = (Recap8 *)object.implementation();
     return obj;    
 }
-Pcre8* Pun8::check_Pcre8(Php::Parameters& params, unsigned int offset)
+
+Re8map* 
+Pun8::check_Re8map(Php::Parameters& params, unsigned int offset)
+{
+    auto ct = params.size();
+
+    if (offset < ct) {
+        const Php::Value& object = params[offset];   
+        if (object.instanceOf(Re8map::PHP_NAME)) {
+            Re8map *obj = (Re8map *)object.implementation();
+            return obj;  
+        }
+    }
+    throw Php::Exception(missingParameter("Re8map object",offset));
+  
+}
+
+
+Pcre8* 
+Pun8::check_Pcre8(Php::Parameters& params, unsigned int offset)
+{
+    auto ct = params.size();
+
+    if (offset < ct) {
+        const Php::Value& object = params[offset];   
+        if (object.instanceOf(Pcre8::PHP_NAME)) {
+            Pcre8 *obj = (Pcre8 *)object.implementation();
+            return obj;
+        }
+    }
+    throw Php::Exception(missingParameter("Pcre8 object", offset));
+}
+
+ 
+bool Pun8::check_String(Php::Parameters& params,unsigned int offset)
 {
     auto ct = params.size();
     if (offset >= ct) {
-        throw Php::Exception("Parameter 1 missing: Pcre8 object");
-    }
-    Php::Value object = params[offset];   
-    if (!object.instanceOf(Pcre8::PHP_NAME)) {
-        throw Php::Exception("Parameter 1 should be Pcre8 object");
-    } 
-
-    Pcre8 *obj = (Pcre8 *)object.implementation();
-    return obj;
+        throw Php::Exception(missingParameter("String", offset));
+    }    
+    return params[offset].isString();
 }
 
- void Pun8::check_String(Php::Parameters& params,unsigned int offset)
- {
-    auto ct = params.size();
-    if (offset >= ct) {
-        std::stringstream ss;
-        ss << "Missing Parameter " << offset << ": String";
-        throw Php::Exception(ss.str().data());
-    }    
-
- }
-
- bool Pun8::option_Array(Php::Parameters& params, unsigned int offset)
- {
+bool Pun8::option_Array(Php::Parameters& params, unsigned int offset)
+{
     auto ct = params.size();
     if (offset >= ct) {
         return false;
     }
-    return true;
- }
+    return params[offset].isArray();
+}
 
- bool Pun8::option_Int(Php::Parameters& params,unsigned int offset)
- {
+bool Pun8::option_Int(Php::Parameters& params,unsigned int offset)
+{
     auto ct = params.size();
     return (offset < ct);
- }
+}
 
-
-void Pun8::check_Int(Php::Parameters& params,unsigned int offset)
+int 
+Pun8::check_Int(Php::Parameters& params,unsigned int offset)
 {
     auto ct = params.size();
     if (ct < 1) {
-        std::stringstream ss;
-        ss << "Missing Parameter " << offset << ": Integer";
-        throw Php::Exception(ss.str().data());
-    }    
+        throw Php::Exception(missingParameter("Integer", offset));
+    }
+    return params[0];
 }
-void Pun8::check_IntString(Php::Parameters& params)
+
+int 
+Pun8::check_IntString(Php::Parameters& params)
 {
-    Pun8::check_Int(params);
+    
     auto ct = params.size();
     if (ct < 2) {
-        throw Php::Exception("Parameter 2 missing: String - PCRE2 expression");
+        throw Php::Exception(missingParameter("String",2));
     }
+    return params[0];
 }
 
-
-Php::Value Pun8::getCode() const {
+Php::Value 
+Pun8::getCode() const {
     return Php::Value(int(_myChar));
 }
 
-Php::Value Pun8::getOffset() const {
+Php::Value 
+Pun8::getOffset() const {
     return Php::Value(int(_index));
 }
 
@@ -143,17 +174,26 @@ Php::Value Pun8::nextChar() {
 Php::Value 
 Pun8::matchPcre8(Php::Parameters& params)
 {
-    Pcre8* p8 = Pun8::check_Pcre8(params);
+    Pcre8* p8 = Pun8::check_Pcre8(params,0);
+    Recap8* cap = Pun8::option_Recap8(params,1);
+
     auto  sp = p8->getImp();
-    Php::Value result;
+    
+    Pcre8_match result;
+
     this->Pun8::matchSP(sp, result);
-    return result;
+
+    if (cap == nullptr) {
+        cap = new Recap8(); 
+    }
+    cap->_match = std::move(result);
+    Php::Value obj = Php::Object(Recap8::PHP_NAME, cap);
+    return obj;
 }
 
 bool 
-Pun8::matchSP(Pcre8_share& sp, Php::Value& result)
+Pun8::matchSP(Pcre8_share& sp, Pcre8_match& matches)
 {
-    Pcre8_match matches;
     char const* buf;
     int rct;
     auto pimp = sp.get();
@@ -165,19 +205,9 @@ Pun8::matchSP(Pcre8_share& sp, Php::Value& result)
                  reinterpret_cast<const unsigned char*>(buf),
                  _size - _index, 
                   matches);
-
-        if (rct > 0) {
-        // return array of strings
-            for(int i = 0; i < rct; i++)
-            {
-                result[i] = matches._slist[i];
-            }
-            return true;
-        }
+        return (rct > 0);
     }
-    result = false;
     return false;
-
 }
 
 
@@ -190,18 +220,53 @@ void Pun8::setRe8map(Php::Parameters& params)
 Php::Value 
 Pun8::matchIdRex(Php::Parameters& params)
 {
-    Pun8::check_Int(params);
-    int id = params[0];
-   
+    int id = Pun8::check_Int(params,0);
+    Recap8* cap = Pun8::option_Recap8(params,1);
+
     auto map = _remap.get();
      Pcre8_share sp;
     if (!map->getRex(id, sp)) {
         throw Php::Exception("No PCRE2 expression found at index");
     }
-    Php::Value result;
+    Pcre8_match matches;
 
-    this->Pun8::matchSP(sp, result); 
+    this->Pun8::matchSP(sp, matches); 
+
+    if (cap == nullptr) {
+        cap = new Recap8();
+    }
+    cap->_match = std::move(matches);
+
+    Php::Value result = Php::Object(Recap8::PHP_NAME, cap);
     return result;
+}
+
+Php::Value 
+Pun8::firstMatch(Php::Parameters& params)
+{
+    auto isArray = Pun8::option_Array(params, 0);
+    Recap8* cap = option_Recap8(params,1);
+    if (!isArray || (cap == nullptr)) {
+        throw Php::Exception("Need Arguments of (Array, Recap8)");
+    }
+    const Php::Value& v = params[0];
+    Pcre8_match matches;
+    auto pimp = _remap.get();
+    auto mapend = pimp->_map.end();
+    for(int i = 0; i < v.size(); i++)
+    {
+        int index = v[i];
+        auto pit = pimp->_map.find(index);
+        if (pit != mapend)
+        {
+            if (this->matchSP(pit->second, matches))
+            {
+                cap->_match = std::move(matches);
+                return Php::Value(index);
+            }
+        }
+    }
+    return Php::Value(0);
 }
 
 Php::Value 
@@ -232,8 +297,8 @@ Pun8::getIds() const
 Php::Value 
 Pun8::getIdRex(Php::Parameters& params) 
 {
-    Pun8::check_Int(params);
-    int index = params[0];
+    int index = Pun8::check_Int(params,0);
+
     Pcre8_share sp;
     auto map = _remap.get();
     if (!map->getRex(index,sp))
@@ -243,6 +308,6 @@ Pun8::getIdRex(Php::Parameters& params)
 
     auto p8 = new Pcre8();
     p8->setImp(sp);
-    auto result = Php::Object(Pcre8::PHP_NAME.data(), p8);
+    auto result = Php::Object(Pcre8::PHP_NAME, p8);
     return result;
 }

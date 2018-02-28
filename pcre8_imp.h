@@ -13,6 +13,15 @@ class Pcre8_match {
 public:
     StringList  _slist;
     int         _rcode;
+    Pcre8_match();
+    
+    Pcre8_match(const Pcre8_match &m);
+    Pcre8_match &operator=(const Pcre8_match &m);
+
+    Pcre8_match(const Pcre8_match&& m);
+    Pcre8_match &operator=(const Pcre8_match &&m);
+
+
 };
 
 class Pcre8_imp {

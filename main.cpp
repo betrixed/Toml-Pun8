@@ -3,6 +3,7 @@
 #include "pun8.h"
 #include "pcre8.h"
 #include "re8map.h"
+#include "recap8.h"
 
 /**
 * Iterate through a UTF-8 string,
@@ -34,14 +35,15 @@ PHPCPP_EXPORT void *get_module()
     static Php::Extension extension("punicode", "1.0");
     
     // @todo    add your own functions, classes, namespaces to the extension
-    Php::Class<Pun8> punic(Pun8::PHP_NAME.data());
+    Php::Class<Pun8> punic(Pun8::PHP_NAME);
 
     punic.method<&Pun8::__construct>("__construct");
     
     // using regular expression id map.
     punic.method<&Pun8::matchIdRex> ("matchIdRex");
     punic.method<&Pun8::matchPcre8> ("matchPcre8");
-
+    punic.method<&Pun8::firstMatch> ("firstMatch");
+    
     punic.method<&Pun8::setIdRex> ("setIdRex");
     punic.method<&Pun8::getIdRex> ("getIdRex");
     punic.method<&Pun8::getIds> ("getIds");
@@ -57,7 +59,7 @@ PHPCPP_EXPORT void *get_module()
 
     extension.add(std::move(punic));
  
-    Php::Class<Pcre8> preg(Pcre8::PHP_NAME.data());
+    Php::Class<Pcre8> preg(Pcre8::PHP_NAME);
     preg.method<&Pcre8::__construct>("__construct");
     preg.method<&Pcre8::setIdString> ("setIdString");
     preg.method<&Pcre8::getString> ("getString");
@@ -67,7 +69,7 @@ PHPCPP_EXPORT void *get_module()
     
     extension.add(std::move(preg));
 
-    Php::Class<Re8map> re8(Re8map::PHP_NAME.data());
+    Php::Class<Re8map> re8(Re8map::PHP_NAME);
     re8.method<&Re8map::setIdRex> ("setIdRex");
     re8.method<&Re8map::hasIdRex> ("hasIdRex");
     re8.method<&Re8map::unsetIdRex> ("unsetIdRex");
@@ -76,6 +78,13 @@ PHPCPP_EXPORT void *get_module()
     re8.method<&Re8map::getIds> ("getIds");
     re8.method<&Re8map::count> ("count");
     extension.add(std::move(re8));
+
+    Php::Class<Recap8> cap8(Recap8::PHP_NAME);
+
+    cap8.method<&Recap8::count> ("count");
+    cap8.method<&Recap8::getCap> ("getCap");
+    extension.add(std::move(cap8));
+
     return extension;
 }
 

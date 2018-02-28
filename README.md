@@ -12,6 +12,7 @@ The interface methods are so far, near the minimum needed for the envisioned usa
 This was created first. It holds a reference to a PHP string, and maintains an absolute offset property. 
 It also has an internal shared IdRex8 map
 ```php
+  class Pun8 {
   // method declarations (implmented in  C++)
   // Start with a utf-8 string to traverse
   public function __construct(string $input);
@@ -26,17 +27,18 @@ It also has an internal shared IdRex8 map
   public function setOffset(int $offset);
   public function addOffset(int $offset); 
 
-  /** Just thought of now, not implemented yet, 
-   * to maybe return a tuple array [$id, $matches]
-   * or [false,false].
-   * Because PCRE2 has various more detailed pattern match
-   * information results that can be fetched, 
-   * a return match results class may be in future scope,
-   * such that the caller provides a reuseable class instance to assign
-   * the results to.
+  
+  /** 
+   * Match without changing the string offset.
+   * Pass ordered array of Id keys to internal expression map entries.
+   * Pass Recap8 class object to get the captures.
+   * Return id of the first regular expression that matched, or 0
+   * if nothing matched.
+   * Ordering is necessary to pick out subsets of the map, and 
+   * no IdKeys can be 0, in order to distinguish a no-match result.
    */
 
-  public function firstMatch(array $idsToTry) : mixed;
+  public function firstMatch(array $idsToTry,Recap8 $captures) : int;
 
   /** Has a map of Regular expressions. 
    * The internal IdRex8  object has a Id, the expression, and its PCRE2 compiled version.
@@ -49,11 +51,18 @@ It also has an internal shared IdRex8 map
   // Get a normal PHP array of those integer keys (unordered) as a list
   public function getIds() : array;
 
-  // Using the internal map, try a match using reference integer key.
-  // Will return array (list) of string matches if found, or PHP false.
-  public function matchIdRex(int $key) : mixed;
-  // Same as matchIdRex, Using an object that shares a single IdRex
-  public function matchIdRex8(IdRex8 $idrex) : mixed;
+  /* Using the internal map, try a match using a single Id key.
+   * Return captures string list in $cap
+   * Return value is number of captures
+   */
+  public function matchIdRex(int $key, Recap8 $cap) : int;
+  
+  /**
+   * Try a single PCRE2 match from IdRex8 object.
+   * Captures copied into $cap. 
+   * Return value is number of captures.
+   */
+  public function matchIdRex8(IdRex8 $idrex, Recap8 $cap) : int;
 
   // Set the current internal map, from a sharing Map object
   public function setRe8map(Re8map $map);
@@ -89,5 +98,16 @@ It is convenient to set the shared Pun8 internal map from one of these, assign a
    // Get key Ids as PHP array list of integer
    public getIds() : array;
    // Number of keys in map
+   public count() : int;
+```
+
+
+### Pun\\Recap8
+Internally a vector of std::string stores the PCRE2 matches. 
+This class is wrapper to pass results in method calls above.
+```php
+   // Return the indexed capture string
+   public getCap(int $keyId) : string;
+   // Return how many captures.
    public count() : int;
 ```

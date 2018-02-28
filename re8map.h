@@ -6,7 +6,7 @@
 
 class Re8map : public Php::Base {
 public:
-    static const std::string PHP_NAME;
+    static const char* PHP_NAME;
 	Re8map();
 	~Re8map();
 

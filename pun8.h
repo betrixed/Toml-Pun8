@@ -7,10 +7,11 @@
 // look ahead
 class Pcre8;
 class Re8map;
+class Recap8;
 
 class Pun8 : public Php::Base {
 public:
-    static const std::string PHP_NAME;
+    static const char* PHP_NAME;
 
 	Pun8();
 	~Pun8();
@@ -39,6 +40,7 @@ public:
     // Note their is no getRe8map
     void setRe8map(Php::Parameters& params);
 
+    Php::Value firstMatch(Php::Parameters& params);
     // Return matches array from a PCRE2 match
     // starting from current offsetm using map key
     Php::Value matchIdRex(Php::Parameters& params);
@@ -60,11 +62,13 @@ public:
 
     static bool option_Array(Php::Parameters& params, unsigned int offset=0);
     static Re8map* check_Re8map(Php::Parameters& params, unsigned int offset=0);
+    static Recap8* option_Recap8(Php::Parameters& params, unsigned int offset=0);
     static Pcre8* check_Pcre8(Php::Parameters& params,unsigned int offset=0);
-    static void check_IntString(Php::Parameters& params);
-    static void check_String(Php::Parameters& params,unsigned int offset = 0);
-    static void check_Int(Php::Parameters& params,unsigned int offset = 0);
+    static int check_IntString(Php::Parameters& params);
+    static bool check_String(Php::Parameters& params,unsigned int offset = 0);
+    static int check_Int(Php::Parameters& params,unsigned int offset = 0);
     static bool option_Int(Php::Parameters& params,unsigned int offset);
+    static std::string missingParameter(const char* shouldBe, unsigned int offset);
 
     
 private:
@@ -73,7 +77,7 @@ private:
     unsigned int    _size;
     char32_t        _myChar;
     Re8map_share    _remap;
-    bool matchSP(Pcre8_share& sp, Php::Value& result);
+    bool matchSP(Pcre8_share& sp, Pcre8_match& result);
 };
 
 #endif

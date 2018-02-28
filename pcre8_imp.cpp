@@ -104,7 +104,7 @@ Pcre8_imp::doMatch(const unsigned char* start, unsigned int slen, Pcre8_match& m
   matches._rcode = rcount;
 
   if (rcount <= 0) {
-      std::string test(reinterpret_cast<const char*>(start), slen);
+      //std::string test(reinterpret_cast<const char*>(start), slen);
       pcre2_match_data_free(match_data);
       return rcount;
   }
@@ -126,4 +126,37 @@ Pcre8_imp::doMatch(const unsigned char* start, unsigned int slen, Pcre8_match& m
   }
   pcre2_match_data_free(match_data);
   return rcount;
+}
+
+Pcre8_match::Pcre8_match() : _rcode(0)
+{
+}
+
+Pcre8_match::Pcre8_match(const Pcre8_match &m)
+  : _slist(m._slist), _rcode(m._rcode)
+{
+}
+
+Pcre8_match &
+Pcre8_match::operator=(const Pcre8_match &m)
+{
+  if (this != &m) {
+    _rcode = m._rcode;
+    _slist = m._slist;
+  }
+  return *this;
+}
+
+Pcre8_match::Pcre8_match(const Pcre8_match &&m)
+  : _slist(std::move(m._slist)), _rcode(std::move(m._rcode))
+{
+
+}
+
+Pcre8_match &
+Pcre8_match::operator=(const Pcre8_match &&m)
+{
+   _slist = std::move(m._slist);
+   _rcode = std::move(m._rcode);
+   return *this;
 }

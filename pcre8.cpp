@@ -1,8 +1,9 @@
 #include "pcre8.h"
+#include "recap8.h"
 #include "pun8.h"
 #include <ostream>
 
-const std::string Pcre8::PHP_NAME = "Pun\\IdRex8";
+const char* Pcre8::PHP_NAME = "Pun\\IdRex8";
 
 Pcre8::Pcre8() 
 {
@@ -21,9 +22,8 @@ void Pcre8::__construct(Php::Parameters& params)
 Pcre8_share 
 Pcre8::fromParameters(Php::Parameters& params)
 {
-	Pun8::check_IntString(params);
+	int index = Pun8::check_IntString(params);
 
-    int index = params[0];
     const char* str = params[1];
     int stringSize = params[1].size();
 
@@ -50,7 +50,6 @@ void Pcre8::setImp(const Pcre8_share& sptr) {
 	_imp = sptr;
 }
 
-
 Php::Value Pcre8::getString() const
 {
 	auto pimp = _imp.get();
@@ -71,9 +70,8 @@ Php::Value Pcre8::getId() const
  Php::Value Pcre8::match(Php::Parameters& params)
  {
     Pun8::check_String(params,0);
-    int offset =  (Pun8::option_Int(params,1)) ? (int) params[1] : 0;
-
-    Php::Value result;
+    int offset =  Pun8::option_Int(params,1);
+    Recap8* cap = Pun8::option_Recap8(params,2);
     Pcre8_match matches;
     auto pimp = _imp.get();
     char const* buf = params[0];
@@ -82,17 +80,13 @@ Php::Value Pcre8::getId() const
     if (offset < size) {
         buf += offset;
         size -= offset;
-        int rct = pimp->doMatch(reinterpret_cast<const unsigned char*>(buf), size, matches);
-
-        if (rct > 0) {
-            // return array of strings
-            for(int i = 0; i < rct; i++)
-            {
-                result[i] = matches._slist[i];
-            }
-            return result;
-        }
+        pimp->doMatch(reinterpret_cast<const unsigned char*>(buf), size, matches);
     }
-    result = false;
+    if (cap == nullptr) {
+        cap = new Recap8();
+    }
+    cap->_match = std::move(matches);
+
+    Php::Value result = Php::Object(Recap8::PHP_NAME, cap);
     return result;
  }

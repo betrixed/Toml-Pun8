@@ -3,16 +3,16 @@
 use Pun\IdRex8;
 use Pun\Pun8;
 use Pun\Re8map;
+use Pun\Recap8;
 
 function show($result) {
-
-	if (!empty($result)) {
-		foreach($result as $idx => $item) {
-			echo $idx . ": " . $item . " length " . strlen($item) . PHP_EOL;
-		}
+	echo "Show class is " . get_class($result) . PHP_EOL;
+	if ($result->count() > 1) {
+		echo $result->getCap(0) . PHP_EOL;
+		echo $result->getCap(1) . PHP_EOL;
 	}
 	else {
-		echo "Empty result" . PHP_EOL;
+		echo $result->count() . " captures returned" . PHP_EOL;
 	}
 }
 function routine() {
@@ -41,9 +41,11 @@ function routine() {
 	$pun->setRe8map($map);
 
 	$matches = $pun->matchIdRex(2);
-	if (!empty($matches)) {
-		echo "Matched " . $matches[0] . PHP_EOL;
-		$pun->addOffset(strlen($matches[0]));
+	echo "Match class is " . get_class($matches) . PHP_EOL;
+
+	if ($matches->count() > 1) {
+		echo "Captured " . $matches->getCap(1) . PHP_EOL;
+		$pun->addOffset(strlen($matches->getCap(0)));
 	}
 	show($pun->matchIdRex(1));
 

@@ -8,7 +8,7 @@
 
 class Pcre8 : public Php::Base {
 public:
-    static const std::string PHP_NAME;
+    static const char* PHP_NAME;
 
 	Pcre8();
     ~Pcre8();
