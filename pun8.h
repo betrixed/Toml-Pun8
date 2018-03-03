@@ -8,6 +8,7 @@
 class Pcre8;
 class Re8map;
 class Recap8;
+class Token8;
 
 class Pun8 : public Php::Base {
 public:
@@ -43,10 +44,10 @@ public:
     Php::Value firstMatch(Php::Parameters& params);
     // Return matches array from a PCRE2 match
     // starting from current offsetm using map key
-    Php::Value matchIdRex(Php::Parameters& params);
+    Php::Value matchMapId(Php::Parameters& params);
 
     // Match to a Pcre8 object
-    Php::Value matchPcre8(Php::Parameters& params);
+    Php::Value matchIdRex8(Php::Parameters& params);
 
     // Get current byte offset into string
     Php::Value getOffset() const;
@@ -57,27 +58,36 @@ public:
     // add increment to the current byte offset
     void addOffset(Php::Parameters& params);
 
-    // move the byte offset to next character
+    // Fetch next character, update "Code" value and move the byte offset
     Php::Value nextChar();
 
-    static bool option_Array(Php::Parameters& params, unsigned int offset=0);
-    static Re8map* check_Re8map(Php::Parameters& params, unsigned int offset=0);
-    static Recap8* option_Recap8(Php::Parameters& params, unsigned int offset=0);
-    static Pcre8* check_Pcre8(Php::Parameters& params,unsigned int offset=0);
-    static int check_IntString(Php::Parameters& params);
-    static bool check_String(Php::Parameters& params,unsigned int offset = 0);
-    static int check_Int(Php::Parameters& params,unsigned int offset = 0);
-    static bool option_Int(Php::Parameters& params,unsigned int offset);
-    static std::string missingParameter(const char* shouldBe, unsigned int offset);
+    // Fetch next character, update "Code" value but do not change the byte offset
+    Php::Value peekChar();
 
+    // list of map ids to iterate
+    void setIdList(Php::Parameters& params);
+
+    // return array of ordered map id's
+    Php::Value getIdList(); 
     
 private:
-    Php::Value      _mystr;
+
+    friend class Token8Stream;
+
+    /* get byte size and code value of next character */
+    int fn_peekChar();
+    int fn_firstMatch(Pcre8_match& matches);
+    void fn_copyIdList(Php::Value& v);
+    
+    std::string      _mystr;
     unsigned int    _index;
     unsigned int    _size;
     char32_t        _myChar;
     Re8map_share    _remap;
-    bool matchSP(Pcre8_share& sp, Pcre8_match& result);
+    IdList          _idlist;  // current id list for first match
+
+    // This returns the id in Pcre8_share and result, or 0
+    int matchSP(Pcre8_share& sp, Pcre8_match& result);
 };
 
 #endif

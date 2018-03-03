@@ -4,55 +4,191 @@ use Pun\IdRex8;
 use Pun\Pun8;
 use Pun\Re8map;
 use Pun\Recap8;
+use Pun\Token8;
+use Pun\Token8Stream;
+
+class Lexer
+{
+
+
+    // register all the regular expressions that 
+    // might be used.  Not all of them all the time!
+    const T_BAD = 0;
+    const T_EQUAL = 1;
+    const T_BOOLEAN = 2;
+    const T_DATE_TIME = 3;
+    const T_EOS = 4;
+    const T_INTEGER = 5;
+    const T_3_QUOTATION_MARK = 6;
+    const T_QUOTATION_MARK = 7;
+    const T_3_APOSTROPHE = 8;
+    const T_APOSTROPHE = 9;
+    const T_NEWLINE = 10;
+    const T_SPACE = 11;
+    const T_LEFT_SQUARE_BRACE = 12;
+    const T_RIGHT_SQUARE_BRACE = 13;
+    const T_LEFT_CURLY_BRACE = 14;
+    const T_RIGHT_CURLY_BRACE = 15;
+    const T_COMMA = 16;
+    const T_DOT = 17;
+    const T_UNQUOTED_KEY = 18;
+    const T_ESCAPED_CHARACTER = 19;
+    const T_ESCAPE = 20;
+    const T_BASIC_UNESCAPED = 21;
+    const T_FLOAT = 22;
+    const T_FLOAT_EXP = 23;
+    const T_HASH = 24;
+    const T_LITERAL_STRING = 25;
+    const T_IGNORE_COMMENT = 26;
+    const T_ANY_VALUE = 27;
+    const T_CHAR = 28;
+    const T_LAST_TOKEN = 28; // for range values of  named token lookup
+
+	static private $_AllRegExp;
+    static private $_AllExpIds;
+
+	static public function getAllRegex(): Re8map
+    {
+        if (empty(Lexer::$_AllRegExp)) {
+            $kt = new Re8map();
+            $kt->setIdRex(Lexer::T_EQUAL, "^(=)");
+            $kt->setIdRex(Lexer::T_BOOLEAN, "^(true|false)");
+            $kt->setIdRex(Lexer::T_DATE_TIME, "(^\\d{4}-\\d{2}-\\d{2}(T\\d{2}:\\d{2}:\\d{2}(\\.\\d{6})?(Z|-\\d{2}:\\d{2})?)?)");
+            $kt->setIdRex(Lexer::T_FLOAT_EXP,"^([+-]?((\d_?)+([\.](\d_?)*)?)([eE][+-]?(\d_?)+))");
+            $kt->setIdRex(Lexer::T_FLOAT, "^([+-]?((\d_?)+([\.](\d_?)*)))");
+            $kt->setIdRex(Lexer::T_INTEGER, "^([+-]?(\\d_?)+)");
+            $kt->setIdRex(Lexer::T_3_QUOTATION_MARK, "^(\"\"\")");
+            $kt->setIdRex(Lexer::T_QUOTATION_MARK, "^(\")");
+            $kt->setIdRex(Lexer::T_3_APOSTROPHE, "^(\'\'\')");
+            $kt->setIdRex(Lexer::T_APOSTROPHE, "^(\')");
+            $kt->setIdRex(Lexer::T_HASH, "^(#)");
+            $kt->setIdRex(Lexer::T_SPACE, "^(\\h+)");
+            $kt->setIdRex(Lexer::T_LEFT_SQUARE_BRACE, "^(\\[)");
+            $kt->setIdRex(Lexer::T_RIGHT_SQUARE_BRACE, "^(\\])");
+            $kt->setIdRex(Lexer::T_LEFT_CURLY_BRACE, "^(\\{)");
+            $kt->setIdRex(Lexer::T_RIGHT_CURLY_BRACE, "^(\\})");
+            $kt->setIdRex(Lexer::T_COMMA, "^(,)");
+            $kt->setIdRex(Lexer::T_DOT, "^(\\.)");
+            $kt->setIdRex(Lexer::T_UNQUOTED_KEY, "^([-A-Z_a-z0-9]+)");
+            $kt->setIdRex(
+                    Lexer::T_ESCAPED_CHARACTER, "^(\\\\(n|t|r|f|b|\\\"|\\\\|u[0-9A-Fa-f]{4,4}|U[0-9A-Fa-f]{8,8}))");
+            // ESCAPE \ would also be caught by LITERAL_STRING
+            $kt->setIdRex(Lexer::T_ESCAPE, "^(\\\\)");
+            // T_BASIC_UNESCAPED Leaves out " \    (0x22, 0x5C)
+            $kt->setIdRex(Lexer::T_BASIC_UNESCAPED, "^([^\\x{0}-\\x{19}\\x{22}\\x{5C}]+)");
+            // Literal strings are 'WYSIWYG'
+            // Single 'quote' (0x27) is separate fetch.
+            $kt->setIdRex(Lexer::T_LITERAL_STRING, "^([^\\x{0}-\\x{19}\\x{27}]+)");
+            $kt->setIdRex(Lexer::T_IGNORE_COMMENT, "^(\\V*)");
+            $kt->setIdRex(Lexer::T_ANY_VALUE, "^([^\\s\\]\\},]+)");
+
+            Lexer::$_AllRegExp = $kt;
+        }
+        return Lexer::$_AllRegExp;
+    }
+
+    static public function getAllIds()
+    {
+        if (empty(Lexer::$_AllExpIds)) {
+            Lexer::$_AllExpIds = [
+                Lexer::T_EQUAL, Lexer::T_BOOLEAN, Lexer::T_DATE_TIME,
+                Lexer::T_FLOAT_EXP,
+                Lexer::T_FLOAT, Lexer::T_INTEGER,
+                Lexer::T_3_QUOTATION_MARK, Lexer::T_QUOTATION_MARK,
+                Lexer::T_3_APOSTROPHE, Lexer::T_APOSTROPHE,
+                Lexer::T_HASH, Lexer::T_SPACE,
+                Lexer::T_LEFT_SQUARE_BRACE, Lexer::T_RIGHT_SQUARE_BRACE,
+                Lexer::T_LEFT_CURLY_BRACE, Lexer::T_RIGHT_CURLY_BRACE,
+                Lexer::T_COMMA, Lexer::T_DOT, Lexer::T_UNQUOTED_KEY,
+                Lexer::T_ESCAPED_CHARACTER, Lexer::T_ESCAPE,
+                Lexer::T_BASIC_UNESCAPED, Lexer::T_LITERAL_STRING,
+                Lexer::T_IGNORE_COMMENT, Lexer::T_ANY_VALUE
+            ];
+        }
+        return Lexer::$_AllExpIds;
+    }
+}
+
+
 
 function show($result) {
-	echo "Show class is " . get_class($result) . PHP_EOL;
-	if ($result->count() > 1) {
-		echo $result->getCap(0) . PHP_EOL;
-		echo $result->getCap(1) . PHP_EOL;
+	$ct = $result->count();
+	if ($ct > 0) {
+		for($i = 0; $i < $ct; $i++) {
+			echo $i . ": " . $result->getCap($i) . PHP_EOL;
+		}
 	}
 	else {
 		echo $result->count() . " captures returned" . PHP_EOL;
 	}
 }
-function routine() {
-	$input = "=Test = value";
 
-	$pun = new Pun8($input);
-
-	echo "NextChar is: " . $pun->nextChar() . PHP_EOL;
-
-	$expEquals = "^(\\h*=\\h*)";
-	$expKey = "(^[-A-Z_a-z0-9]+)";
-
-	$reg = new IdRex8(1,$expEquals);
-
-	if (!$reg->isCompiled()) {
-		echo $reg->getMessage() . PHP_EOL;
-	}
-	else {
-		echo "Compiled OK!" . PHP_EOL;
-	}
-	show($reg->match($input));
-	$map = new Re8map();
-
-	$map->setIdRex(2,$expKey);
-	$map->setIdRex(1,$expEquals);
+function testToken($test,$id) {
+	$map = Lexer::getAllRegex();
+	$pun = new Pun8($test);
 	$pun->setRe8map($map);
-
-	$matches = $pun->matchIdRex(2);
-	echo "Match class is " . get_class($matches) . PHP_EOL;
-
-	if ($matches->count() > 1) {
-		echo "Captured " . $matches->getCap(1) . PHP_EOL;
-		$pun->addOffset(strlen($matches->getCap(0)));
+	$cap = new Recap8();
+	$ids = Lexer::getAllIds();
+    $pun->setIdList($ids);
+	$match = $pun->firstMatch($cap);
+	if ($id !== $match) {
+		echo "**** id: " . $match . PHP_EOL;
+		show($cap);
+		return false;
 	}
-	show($pun->matchIdRex(1));
+	/* else if ($match === Lexer::T_DATE_TIME) {
+		echo "______ id: " . $match . PHP_EOL;
+		show($cap);
+	}
+    */
+	return true;
+}
 
-	$p8 = $pun->getIdRex(1);
-	echo "object is " . get_class($p8) . PHP_EOL;
+function testMatch() {
+    $tests = [
+        ["title", Lexer::T_UNQUOTED_KEY],
+        ["2.5", Lexer::T_FLOAT],
+        ["9_224_617.445_991_228_313", Lexer::T_FLOAT],
+        ["-2.5", Lexer::T_FLOAT],
+        ["5e+22", Lexer::T_FLOAT_EXP],
+        ["1e1_000", Lexer::T_FLOAT_EXP],
+        ["6.626e-34", Lexer::T_FLOAT_EXP],
+        ["1.", Lexer::T_FLOAT],
+        ["25",  Lexer::T_INTEGER],
+        ["-25",  Lexer::T_INTEGER],
+        ["2_5",  Lexer::T_INTEGER],
+        ["25",  Lexer::T_INTEGER],
+        ["25",  Lexer::T_INTEGER],
+        ["25",  Lexer::T_INTEGER],
+        ["1987-07-05T17:45Z",Lexer::T_DATE_TIME]
+    ];
 
-	show($p8->match($input));
+    foreach($tests as $idx => $test)
+    {
+        if (!testToken($test[0], $test[1]))
+        {
+            echo "Match Error " . $test[0] . PHP_EOL;
+        }
+    }
+}
+function routine() {
+	
+
+    $ts = new Token8Stream();
+
+    $map = Lexer::getAllRegex();
+    $ts->setRe8map($map);
+    $ts->setExpSet( [Lexer::T_SPACE,
+            Lexer::T_UNQUOTED_KEY,
+            Lexer::T_INTEGER]  );
+    $ts->setInput("t = true");
+
+    $id = $ts->moveNextId();
+    gc_collect_cycles();
+    echo "ID is " . $id . PHP_EOL;
+    echo "Value is " . $ts->getValue() . PHP_EOL;
+    echo "Tail is " . $ts->beforeEOL() . PHP_EOL;
+
 }
 
 $memInc = 0.0;
@@ -65,7 +201,6 @@ for ($i = 0 ; $i < 2; $i++)
     if ($i == 1) {
         $startMem = memory_get_usage();
     }
-
 	routine();
 }
 gc_collect_cycles();

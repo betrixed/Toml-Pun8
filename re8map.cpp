@@ -3,6 +3,8 @@
 #include "pun8.h"
 #include "pcre8.h"
 #include "ucode8.h"
+#include "parameter.h"
+
 #include <sstream>
 
 const char* Re8map::PHP_NAME = "Pun\\Re8map";
@@ -44,7 +46,7 @@ Re8map::getIds() const
 Php::Value 
 Re8map::getIdRex(Php::Parameters& params) 
 {
-    Pun8::check_Int(params);
+    pun::check_Int(params);
     int index = params[0];
     Pcre8_share sp;
     auto map = _remap.get();
@@ -60,16 +62,16 @@ Re8map::getIdRex(Php::Parameters& params)
     return result;
 }
 
-Php::Value Re8map::shareMap(Php::Parameters& params)
+Php::Value Re8map::addMapIds(Php::Parameters& params)
 {
 	int mapIndex;
 	int shared = 0;
-	Re8map* obj = Pun8::check_Re8map(params,0);
+	Re8map* obj = pun::check_Re8map(params,0);
 	auto mFrom = obj->getImp().get();
 	auto mTo = _remap.get();
 	
 
-	if (Pun8::option_Array(params,1)) {
+	if (pun::option_Array(params,1)) {
 		auto& Ar = params[1];
 		for(auto& iter : Ar)
 		{
@@ -108,7 +110,7 @@ Php::Value Re8map::count() const
 // Has key value in map
 Php::Value Re8map::hasIdRex(Php::Parameters& params) const
 {
-	Pun8::check_Int(params);
+	pun::check_Int(params);
 	int index = params[0];
 	auto map = _remap.get();
 	return Php::Value(map->hasKey(index));
@@ -117,7 +119,7 @@ Php::Value Re8map::hasIdRex(Php::Parameters& params) const
 // Remove key value and expression data from map
 Php::Value Re8map::unsetIdRex(Php::Parameters& params)
 {
-	Pun8::check_Int(params);
+	pun::check_Int(params);
 	int index = params[0];
 	auto map = _remap.get();
 	return Php::Value(map->eraseRex(index));

@@ -1,6 +1,7 @@
 #include "pcre8.h"
 #include "recap8.h"
 #include "pun8.h"
+#include "parameter.h"
 #include <ostream>
 
 const char* Pcre8::PHP_NAME = "Pun\\IdRex8";
@@ -22,7 +23,7 @@ void Pcre8::__construct(Php::Parameters& params)
 Pcre8_share 
 Pcre8::fromParameters(Php::Parameters& params)
 {
-	int index = Pun8::check_IntString(params);
+	int index = pun::check_IntString(params);
 
     const char* str = params[1];
     int stringSize = params[1].size();
@@ -69,9 +70,10 @@ Php::Value Pcre8::getId() const
 
  Php::Value Pcre8::match(Php::Parameters& params)
  {
-    Pun8::check_String(params,0);
-    int offset =  Pun8::option_Int(params,1);
-    Recap8* cap = Pun8::option_Recap8(params,2);
+    pun::check_String(params,0);
+    int offset =  pun::option_Int(params,1);
+    Recap8* cap = pun::option_Recap8(params,2);
+
     Pcre8_match matches;
     auto pimp = _imp.get();
     char const* buf = params[0];

@@ -25,7 +25,7 @@ public:
     // another Re8map object.
     // The compiled Re are shared with this map.
     // Key PCRE2 already in this map won't be re-copied over.
-    Php::Value shareMap(Php::Parameters& params);
+    Php::Value addMapIds(Php::Parameters& params);
 
     // Get unordered array of integer id's in map
 	Php::Value getIds() const;

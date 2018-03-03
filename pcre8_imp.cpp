@@ -101,6 +101,7 @@ Pcre8_imp::doMatch(const unsigned char* start, unsigned int slen, Pcre8_match& m
 
   auto rcount = pcre2_match(_re, start, slen, 0, 0, match_data, nullptr);
 
+  matches._slist.clear();
   matches._rcode = rcount;
 
   if (rcount <= 0) {

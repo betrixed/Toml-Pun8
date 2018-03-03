@@ -8,6 +8,8 @@
 #include <memory>
 
 typedef std::vector<std::string> StringList;
+typedef std::unordered_map<std::string, int> SingleMap;
+typedef std::vector<int>  IdList;
 
 class Pcre8_match {
 public:
@@ -20,8 +22,6 @@ public:
 
     Pcre8_match(const Pcre8_match&& m);
     Pcre8_match &operator=(const Pcre8_match &&m);
-
-
 };
 
 class Pcre8_imp {

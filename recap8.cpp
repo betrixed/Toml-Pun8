@@ -1,20 +1,22 @@
 #include "recap8.h"
 #include "pun8.h"
+#include "parameter.h"
 
 const char* Recap8::PHP_NAME = "Pun\\Recap8";
 
 Php::Value 
 Recap8::count() const
 {
-	int result =  (_match._rcode >= 0) ? _match._rcode : 0;
+	int result =  _match._slist.size();
 	return Php::Value(result);
 }
 
 Php::Value 
 Recap8::getCap(Php::Parameters& params) const
 {
-	int offset = Pun8::check_Int(params,0);
-	if (offset >= 0 && offset < _match._rcode)
+	int offset = pun::check_Int(params,0);
+
+	if (offset >= 0 && offset < (int) _match._slist.size())
 	{
 		return Php::Value(_match._slist[offset]);
 	}
