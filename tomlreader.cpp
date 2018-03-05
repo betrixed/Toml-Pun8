@@ -10,6 +10,9 @@
 #include <limits>
 #include <algorithm>
 
+
+const char* TomlReader::PHP_NAME = "Pun\\TomlReader";
+
 const char* const cRexBool = "^(true|false)";
 const char* const cDateTime = "^(\\d{4}-\\d{2}-\\d{2}(T\\d{2}:\\d{2}:\\d{2}(\\.\\d{6})?(Z|-\\d{2}:\\d{2})?)?)";
 const char* const cFloatExp = "^([+-]?((\\d_?)+([\\.](\\d_?)*)?)([eE][+-]?(_?\\d_?)+))";
@@ -118,28 +121,36 @@ Rex::Rex()
 
 Rex::~Rex()
 {
-	delete _re8;
+
 }
 TomlReader::~TomlReader()
 {
-	delete _ts;
-	delete _root;
+
 }
 
 TomlReader::TomlReader() : 
-	_myrex(nullptr), _ts(nullptr), 
-	_root(nullptr), _table(nullptr), 
-	_stackTop(0), _expSetId(0)
+	_myrex(nullptr),
+	_table(nullptr),
+	_root(nullptr), 
+	_stackTop(0), 
+	_expSetId(0)
 {
 	_myrex = Rex::getGlobalRex();
+
+	// Reference counted objects ??
 	_root = new KeyTable();
+	_v_root = Php::Object(KeyTable::PHP_NAME, _root);
 	_table  = _root;
 	_ts = new Token8Stream();
+	_v_ts = Php::Object(Token8Stream::PHP_NAME, _ts);
+
+	// 
 	_ts->fn_setEOS(Rex::EOS);
 	_ts->fn_setEOL(Rex::Newline);
 	_ts->fn_setUnknown(Rex::AnyChar);
 	_ts->fn_setRe8map(_myrex->_re8);
 	_valueText.fn_setRe8map(_myrex->_re8->_remap);
+
 	this->setExpSet(eKey);
 }
 
@@ -215,7 +226,7 @@ Php::Value TomlReader::parse(Php::Parameters& param)
 			break;
 		}
 	}
-	return Php::Object(KeyTable::PHP_NAME,_root);
+	return _v_root;
 }
 
 void TomlReader::syntaxError(const std::string& s) {
@@ -436,6 +447,7 @@ void  TomlReader::parseKeyValue()
 	else {
 		parseValue(rhsValue);
 	}
+	Php::out << "Set " << keyName << " value " << rhsValue.debugZval() << std::endl;
 	_table->fn_setKV(keyName, rhsValue);
 }
 
@@ -604,7 +616,8 @@ void TomlReader::parseValue(Php::Value& val)
 
 	int ct = _valueText.fn_matchRegId(Rex::Bool, matches);
 	if (ct > 1) {
-		val =  (matches._slist[1] == "true") ? true : false;
+		bool bresult =  (matches._slist[1] == "true") ? true : false;
+	    val = bresult;
 		return;
 	}
 	ct = _valueText.fn_matchRegId(Rex::DateTime, matches);

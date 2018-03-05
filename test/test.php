@@ -8,6 +8,7 @@ use Pun\Token8;
 use Pun\Token8Stream;
 use Pun\KeyTable;
 use Pun\ValueList;
+use Pun\TomlReader;
 
 class Lexer
 {
@@ -214,6 +215,24 @@ function routine() {
 
 }
 
+function reader_0() {
+    $rdr = new TomlReader();
+}
+function reader()
+{
+    $a = [ 't' => true, 'f' => false];
+    echo "Target result " . print_r($a) . PHP_EOL;
+    $rdr = new TomlReader();
+
+    $input = <<<toml
+    t = true
+    f = false
+toml;
+
+    $result = $rdr->parse($input);
+
+    echo "TOML Reader " . print_r($result->toArray()) . PHP_EOL;
+}
 $memInc = 0.0;
 $i = 0;
 $startMem = $endMem = 0;
@@ -224,7 +243,7 @@ for ($i = 0 ; $i < 2; $i++)
     if ($i == 1) {
         $startMem = memory_get_usage();
     }
-	routine();
+	reader();
 }
 gc_collect_cycles();
 $endMem = memory_get_usage();
@@ -233,3 +252,4 @@ echo "*** Memory Inc  = " . $memInc . PHP_EOL;
 
 keytable();
 valuelist();
+reader_0();

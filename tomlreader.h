@@ -72,10 +72,14 @@ public:
 
 class TomlReader : public Php::Base {
 public:
+	static const char* PHP_NAME;
+
+
 	TomlReader();
 	~TomlReader();
 
 	Php::Value parse(Php::Parameters& param);
+	
 
 protected:
 	void popExpSet();
@@ -125,11 +129,17 @@ private:
 	};
 
 	Rex*	_myrex;
-	Token8Stream* _ts;
-	KeyTable* _root;
+	
+	
 	KeyTable* _table;
 	Token8	  _token;
 
+	KeyTable* 	 _root;
+	Php::Value   _v_root;
+
+	Token8Stream* _ts;
+	Php::Value    _v_ts;
+	
 	int     _stackTop;
 	int     _expSetId;
 	IdList	_expStack;

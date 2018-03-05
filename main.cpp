@@ -7,6 +7,7 @@
 #include "token8stream.h"
 #include "keytable.h"
 #include "valuelist.h"
+#include "tomlreader.h"
 /**
 * Iterate through a UTF-8 string,
 * Keep an internal array index to beginning of
@@ -140,6 +141,10 @@ PHPCPP_EXPORT void *get_module()
     valList.method<&ValueList::toArray> ("toArray");
     valList.method<&ValueList::getType> ("getType");
     extension.add(std::move(valList));
+
+    Php::Class<TomlReader> rdr(TomlReader::PHP_NAME);
+    rdr.method<&TomlReader::parse> ("parse");
+    extension.add(std::move(rdr));
 
     return extension;
 }
