@@ -90,3 +90,53 @@ bool ucode8Fore(
     else
         return false;
 }
+
+
+
+unsigned int
+EncodeUTF8::encode(char32_t d)
+{
+    if (d < 0x80)
+    {
+        result[0] = (char) d;
+        result[1] = 0;
+        return 1;
+    }
+    if (d < 0x800)
+    {
+        // encode in 11 bits, 2 bytes
+        result[1] = (d & 0x3F) | 0x80;
+        d >>= 6;
+        result[0] = (char) (d | 0xC0);
+        result[2] = 0;
+        return 2;
+    }
+    else if (d < 0x10000)
+    {
+        // encode in 16 bits, 3 bytes
+        result[2] = (d & 0x3F) | 0x80;
+        d >>= 6;
+        result[1] = (d & 0x3F) | 0x80;
+        d >>= 6;
+        result[0] = (char) (d | 0xE0);
+        result[3] = 0;
+        return 3;
+    }
+    else if (d > 0x10FFFF)
+    {
+        // not in current unicode range?
+        return 0;
+    }
+    else {
+        // encode in 21 bits, 4 bytes
+        result[3] = (d & 0x3F) | 0x80;
+        d >>= 6;
+        result[2] = (d & 0x3F) | 0x80;
+        d >>= 6;
+        result[1] = (d & 0x3F) | 0x80;
+        d >>= 6;
+        result[0] = (char) (d | 0xF0);
+        result[4] = 0;
+        return 4;
+    }
+}

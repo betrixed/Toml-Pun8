@@ -1,14 +1,28 @@
 #ifndef _H_PARAMETER
 #define _H_PARAMETER
 
+#ifndef PHPCPP_H
+#include <phpcpp.h>
+#endif
+
+#ifndef _H_PCRE8_IMP
+#include "pcre8_imp.h"
+#endif
+
+
+#include <ostream>
+
 class Re8map;
 class Recap8;
 class Pcre8;
 class Token8;
+class KeyTable;
+class ValueList;
+class Token8Stream;
 
-#include <phpcpp.h>
 
 namespace pun {
+     void hexUniStr8(const std::string& hexval, std::ostream& os);
 	 Token8* check_Token8(Php::Parameters& params, unsigned int offset=0);
 	 bool option_Array(Php::Parameters& params, unsigned int offset=0);
      Re8map* check_Re8map(Php::Parameters& params, unsigned int offset=0);

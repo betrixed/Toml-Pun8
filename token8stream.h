@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "pun8.h"
+#include "re8map.h"
 
 // integrated functions of Pun8 class
 // external interface based on PHP version
@@ -81,14 +82,35 @@ public:
 
     // move the distance or not of mapped PCRE8 id
     Php::Value moveRegId(Php::Parameters& params);
+public:
+    void setExpSet(const IdList& list);
+    void setString(const char* ptr, unsigned int len);
+    int  fn_moveNextId();
+    void fn_setEOS(int id) { _eosId = id; }
+    void fn_setEOL(int id) { _eolId = id; }
+    void fn_setUnknown(int id) { _unknownId = id; }
+    bool fn_moveRegId(int id);
+    int  fn_getId() const { return _token._id;}
+    void fn_setRe8map(Re8map* map) { _input._remap = map->_remap; }
 
+    std::string& fn_moveValue(std::string& val) { val = std::move(_token._value); return val;}
+    
+    void     fn_peekToken(Token8* token);
+    void     fn_acceptToken(Token8* token);
+    
+    Token8*  fn_getToken(Token8 &token);
+    std::string& fn_getValue();
+
+
+    
 private:
+
 	void			checkLineFeed(Token8* token);
     unsigned int    offsetToChar(char32_t stopChar);
 
 	Pun8			_input;
+    
     Token8          _token;
-
     Pcre8_match		_caps;
 
     SingleMap		_singles;

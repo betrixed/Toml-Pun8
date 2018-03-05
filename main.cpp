@@ -5,6 +5,8 @@
 #include "re8map.h"
 #include "recap8.h"
 #include "token8stream.h"
+#include "keytable.h"
+#include "valuelist.h"
 /**
 * Iterate through a UTF-8 string,
 * Keep an internal array index to beginning of
@@ -121,6 +123,24 @@ PHPCPP_EXPORT void *get_module()
     token.method<&Token8::getLine> ("getLine");
     token.method<&Token8::isSingle> ("isSingle");
     extension.add(std::move(token));
+
+    Php::Class<KeyTable> keytab(KeyTable::PHP_NAME);
+    keytab.method<&KeyTable::setKV> ("setKV");
+    keytab.method<&KeyTable::getV> ("getV");
+    keytab.method<&KeyTable::unsetV> ("unsetV");
+    keytab.method<&KeyTable::count> ("count");
+    keytab.method<&KeyTable::toArray> ("toArray");
+    extension.add(std::move(keytab));
+
+    Php::Class<ValueList> valList(ValueList::PHP_NAME);
+    valList.method<&ValueList::pushBack> ("pushBack");
+    valList.method<&ValueList::getV> ("getV");
+    valList.method<&ValueList::getLast> ("getLast");
+    valList.method<&ValueList::count> ("count");
+    valList.method<&ValueList::toArray> ("toArray");
+    valList.method<&ValueList::getType> ("getType");
+    extension.add(std::move(valList));
+
     return extension;
 }
 

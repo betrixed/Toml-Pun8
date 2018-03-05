@@ -1,9 +1,17 @@
 
-# Punicode - PHP extension for foreward iteration of unicode string with new PCRE2 interfaces.
+# Punicode - PHP extension for foreward iteration of unicode string with new PCRE2 interface.
 This PHP extension, tentatively named "Punicode8", is created using the PHP-CPP toolkit.
 The motivation arises from frustrations experienced in engineering the TOML parser projects, toml and toml-zephir, which centred around the interface limitations of preg_match. 
 Punicode is compiled with a shared link directly to the latest version of the libpcre2-8 library.
-It is currently being developed on a linux system.
+
+Of course utf-16 versions of this could be done, but I'm not into that right now.
+
+Punicode currently being developed on a linux system, using the PHP-CPP source code.
+This project is not likely to be modified, or even tried, on PHP versions earlier than 7.0
+
+The cause of going to so much development trouble is to create a TOML parser PHP-extension, using an existing design coded in PHP, which happens to make a lot of use of PCRE2. The current PHP interface for PCRE2 got in the way of trying various innovations.
+
+A toml-PHP and toml-zephir versions have already been created and have set execution performance to be beaten.
 
 ## Classes
   The classes, so far, in this first version design, are labelled "Pun\\Pun8", "Pun\\IdRex8", "Pun\\Re8map".

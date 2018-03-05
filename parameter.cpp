@@ -9,6 +9,17 @@
 #include <ostream>
 #include <cstdint>
 
+#include "ucode8.h"
+void pun::hexUniStr8(const std::string& hexval, std::ostream& os)
+{
+    char32_t val = (char32_t) strtol(hexval.data(), 0, 16);
+    EncodeUTF8 ec8;
+
+    ec8.encode(val);
+    os << ec8.result;
+}
+
+
 std::string 
 pun::missingParameter(const char* shouldBe, unsigned int offset)
 {

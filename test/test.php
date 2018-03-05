@@ -6,6 +6,8 @@ use Pun\Re8map;
 use Pun\Recap8;
 use Pun\Token8;
 use Pun\Token8Stream;
+use Pun\KeyTable;
+use Pun\ValueList;
 
 class Lexer
 {
@@ -171,6 +173,27 @@ function testMatch() {
         }
     }
 }
+function keytable() {
+    $kt = new KeyTable();
+
+    $kt->setKV("key1", "value1");
+    $kt->setKV("2", "value2");
+
+    $a = $kt->toArray();
+
+    echo "KeyTable " . print_r($a,true) . PHP_EOL;
+}
+
+function valuelist() {
+    $kt = new KeyTable();
+    $list = new ValueList();
+
+    $list->pushBack($kt);
+
+    echo "Type is " . $list->getType() . PHP_EOL;
+    $a = $list->toArray();
+    echo "ValueList " . print_r($a,true) . PHP_EOL;
+}
 function routine() {
 	
 
@@ -207,3 +230,6 @@ gc_collect_cycles();
 $endMem = memory_get_usage();
 $memInc +=  ($endMem - $startMem);
 echo "*** Memory Inc  = " . $memInc . PHP_EOL;
+
+keytable();
+valuelist();

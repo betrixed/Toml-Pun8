@@ -24,20 +24,10 @@ Pcre8_share
 Pcre8::fromParameters(Php::Parameters& params)
 {
 	int index = pun::check_IntString(params);
-
     const char* str = params[1];
-    int stringSize = params[1].size();
+    auto stringSize = params[1].size();
 
-    Pcre8_share sp = std::make_shared<Pcre8_imp>();
-    auto pimp = sp.get();
-    pimp->_eStr.assign(str,stringSize);
-    pimp->_id = index;
-
-    std::string errorMsg;
-
-    if (!pimp->compile(errorMsg)) {
-        throw Php::Exception(errorMsg);
-    }
+    Pcre8_share sp = pun::makeSharedRe(index, str, stringSize);
     return sp;
 }
 /** param 0 - id, param 1 - string pcre2 */

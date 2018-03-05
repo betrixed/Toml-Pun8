@@ -40,11 +40,8 @@ void Token8Stream::checkLineFeed(Token8* token)
 	}
 	throw Php::Exception(pun::invalidCharacter(_input._myChar));
 }
-// Argument is Token8 to put next value into, return same token object
-Php::Value Token8Stream::peekToken(Php::Parameters& params)
-{
-	Token8* token = pun::check_Token8(params,0);
 
+void Token8Stream::fn_peekToken(Token8* token) {
 	auto nextCt = _input.fn_peekChar();
 	if (nextCt==0) {
 		token->_id = _eosId;
@@ -74,12 +71,17 @@ Php::Value Token8Stream::peekToken(Php::Parameters& params)
 			token->_id = _unknownId;
 		}
 	}
+}
+// Argument is Token8 to put next value into, return same token object
+Php::Value Token8Stream::peekToken(Php::Parameters& params)
+{
+	Token8* token = pun::check_Token8(params,0);
+	fn_peekToken(token);
 	return Php::Value(Php::Object(Token8::PHP_NAME, token));
 }
 
-void Token8Stream::acceptToken(Php::Parameters& params)
+void Token8Stream::fn_acceptToken(Token8* token)
 {
-	Token8* token = pun::check_Token8(params,0);
 	if (_flagLF) {
 		_flagLF = false;
 		_tokenLine += 1;
@@ -94,12 +96,15 @@ void Token8Stream::acceptToken(Php::Parameters& params)
 		return;
 	}
 	_input._index += _token._value.size();
-	return;
 }
 
-Php::Value 
-Token8Stream::moveNextId()
+void Token8Stream::acceptToken(Php::Parameters& params)
 {
+	Token8* token = pun::check_Token8(params,0);
+	fn_acceptToken(token);
+}
+
+int  Token8Stream::fn_moveNextId() {
 	if (_flagLF) {
 		_flagLF = false;
 		_tokenLine += 1;
@@ -156,7 +161,13 @@ Token8Stream::moveNextId()
 		}
 	}
 	_token._line = _tokenLine;
-	return Php::Value(_token._id);
+	return _token._id;	
+}
+
+Php::Value 
+Token8Stream::moveNextId()
+{
+	return Php::Value(fn_moveNextId());
 }
 
 
@@ -180,10 +191,8 @@ Php::Value Token8Stream::moveRegex(Php::Parameters& params)
     return Php::Value(result);
 }
 
-Php::Value Token8Stream::moveRegId(Php::Parameters& params)
+bool Token8Stream::fn_moveRegId(int id)
 {
-	int id = pun::check_Int(params,0);
-
 	auto map = _input._remap.get();
     Pcre8_share sp;
     if (!map->getRex(id, sp)) {
@@ -198,8 +207,14 @@ Php::Value Token8Stream::moveRegId(Php::Parameters& params)
     	_token._id = _unknownId;
     	_token._isSingle = false;
     	result = true;
-    }
-    return Php::Value(result);
+    }	
+    return result;
+}
+
+Php::Value Token8Stream::moveRegId(Php::Parameters& params)
+{
+	int id = pun::check_Int(params,0);
+    return Php::Value(this->fn_moveRegId(id));
 }
 
 void Token8Stream::setEOSId(Php::Parameters& params)
@@ -265,6 +280,11 @@ void Token8Stream::setRe8map(Php::Parameters& params)
 	_input.setRe8map(params);
 }
 
+void Token8Stream::setString(const char* ptr, unsigned int len)
+{
+	_input.fn_setString(ptr,len);
+}
+
 void Token8Stream::setInput(Php::Parameters& params)
 {
 	_input.setString(params);
@@ -275,6 +295,19 @@ Php::Value Token8Stream::hasPendingTokens() const
 {
 	bool result = (_token._id != _eosId);
 	return Php::Value(result);
+}
+
+std::string& 
+Token8Stream::fn_getValue()
+{
+	return _token._value;
+}
+
+Token8*  
+Token8Stream::fn_getToken(Token8 &token)
+{
+	token = _token;
+	return &token;
 }
 
 Php::Value Token8Stream::getToken(Php::Parameters& params) const
@@ -298,6 +331,11 @@ Php::Value Token8Stream::getId() const
 {
 	return Php::Value(_token._id);
 }
+
+void Token8Stream::setExpSet(const IdList& list) {
+	_input._idlist = list;
+}
+
 
 unsigned int  Token8Stream::offsetToChar(char32_t stopChar)  {
 	auto position = _input._index;

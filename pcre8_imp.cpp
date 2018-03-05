@@ -1,11 +1,14 @@
 #include "pcre8_imp.h"
 
+#ifndef PHPCPP_H
 #include <phpcpp.h>
+#endif
+
 #include <sstream>
 #include <utility>
 //#include <ostream>
 
-void Pcre8_map::setRex(Pcre8_share& reg)
+void Pcre8_map::setRex(const Pcre8_share& reg)
 {
     auto index = reg.get()->_id;
     auto pit = _map.find(index);
@@ -160,4 +163,21 @@ Pcre8_match::operator=(const Pcre8_match &&m)
    _slist = std::move(m._slist);
    _rcode = std::move(m._rcode);
    return *this;
+}
+
+
+Pcre8_share 
+pun::makeSharedRe(int mapId, const char* estr, unsigned int slen)
+{
+    Pcre8_share sp = std::make_shared<Pcre8_imp>();
+    auto pimp = sp.get();
+    pimp->_eStr.assign(estr,slen);
+    pimp->_id = mapId;
+
+    std::string errorMsg;
+
+    if (!pimp->compile(errorMsg)) {
+        throw Php::Exception(errorMsg);
+    }
+    return sp;
 }

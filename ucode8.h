@@ -8,4 +8,10 @@ bool ucode8Fore(
 	char32_t& d       // 32-bit unicode value
 	);
 
+// Encode char32_t into null terminated string of char_t, return length
+struct EncodeUTF8 {
+	char result[8];
+	unsigned int encode(const char32_t d);
+};
+
 #endif

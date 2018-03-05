@@ -10,6 +10,7 @@ class Re8map;
 class Recap8;
 class Token8;
 
+// this requires at least C++11 , to mandate std::string contiguous storage and data(), c_str() equivalance.
 class Pun8 : public Php::Base {
 public:
     static const char* PHP_NAME;
@@ -69,16 +70,23 @@ public:
 
     // return array of ordered map id's
     Php::Value getIdList(); 
-    
+
+public:
+    int fn_peekChar();
+    int fn_firstMatch(Pcre8_match& matches);
+    int fn_matchRegId(int id, Pcre8_match& matches);
+    void fn_copyIdList(Php::Value& v);
+    void fn_setString(const char* ptr, unsigned int len);
+    void fn_setString(const std::string& s);
+    void fn_setRe8map(Re8map_share& smap);
+    const std::string& str();
+
 private:
 
     friend class Token8Stream;
 
     /* get byte size and code value of next character */
-    int fn_peekChar();
-    int fn_firstMatch(Pcre8_match& matches);
-    void fn_copyIdList(Php::Value& v);
-    
+
     std::string      _mystr;
     unsigned int    _index;
     unsigned int    _size;

@@ -1,11 +1,11 @@
-
+ 
 #include "pun8.h"
 #include "pcre8.h"
 #include "re8map.h"
 #include "recap8.h"
-#include "ucode8.h"
+#include <cstdint>
 #include "parameter.h"
-
+#include "ucode8.h"
 #include <sstream>
 #include <ostream>
 const char* Pun8::PHP_NAME = "Pun\\Pun8";
@@ -30,15 +30,9 @@ void Pun8::__construct(Php::Parameters& params)
 // Reset existing string, or provide another
 void Pun8::setString(Php::Parameters& params)
 {
-     _index = 0;
-     _myChar = 0;
-
     if (!params.empty()) {
         const char* cptr = params[0];
-
-        _size = params[0].size();
-
-        _mystr.assign(cptr, _size);
+        this->fn_setString(cptr, params[0].size());
     } 
 }
 
@@ -107,6 +101,17 @@ Pun8::matchIdRex8(Php::Parameters& params)
 }
 
 int 
+Pun8::fn_matchRegId(int id, Pcre8_match& matches)
+{
+    auto map = _remap.get();
+    Pcre8_share sp;
+    if (!map->getRex(id, sp)) {
+        throw Php::Exception("No PCRE2 expression found at index");
+    }
+    return this->matchSP(sp, matches); 
+}
+
+int 
 Pun8::matchSP(Pcre8_share& sp, Pcre8_match& matches)
 {
     char const* buf;
@@ -133,6 +138,10 @@ Pun8::matchSP(Pcre8_share& sp, Pcre8_match& matches)
     return 0;
 }
 
+void Pun8::fn_setRe8map(Re8map_share& smap)
+{
+    _remap = smap;
+}
 
 void Pun8::setRe8map(Php::Parameters& params)
 {
@@ -273,6 +282,29 @@ int Pun8::fn_firstMatch(Pcre8_match& matches)
     matches._slist.clear();
     matches._rcode = 0;
     return 0;
+}
+
+
+
+const std::string& Pun8::str()
+{
+    return _mystr;
+}
+
+void Pun8::fn_setString(const char* ptr, unsigned int len)
+{
+     _index = 0;
+     _myChar = 0;
+     _size = len;
+     _mystr.assign(ptr, len);
+}
+
+void Pun8::fn_setString(const std::string& s)
+{
+     _index = 0;
+     _myChar = 0;
+     _mystr = s;
+     _size = _mystr.size();
 }
 
  void Pun8::fn_copyIdList(Php::Value& v)

@@ -46,16 +46,22 @@ typedef std::shared_ptr<Pcre8_imp> Pcre8_share;
 
 typedef std::unordered_map<int, Pcre8_share> RexMap;
 
+typedef std::unordered_map<std::string, int> RexSingles;
+
 class Pcre8_map {
 public:
 	RexMap	_map;
 
     bool hasKey(int index) const;
-	void setRex(Pcre8_share& re);
+	void setRex(const Pcre8_share& re);
 	bool getRex(int index, Pcre8_share& re) const;
 	int  eraseRex(int index);
 };
 
 typedef std::shared_ptr<Pcre8_map> Re8map_share;
+
+namespace pun { 
+    Pcre8_share makeSharedRe(int mapId, const char* estr, unsigned int slen);
+};
 
 #endif

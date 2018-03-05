@@ -34,7 +34,7 @@ public:
 
   	const Re8map_share& getImp() { return _remap;}
 
-private:
+public: // PHP cannot see this
     Re8map_share   _remap;
 };
 
