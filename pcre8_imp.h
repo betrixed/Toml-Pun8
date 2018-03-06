@@ -8,7 +8,6 @@
 #include <memory>
 
 typedef std::vector<std::string> StringList;
-typedef std::unordered_map<std::string, int> SingleMap;
 typedef std::vector<int>  IdList;
 
 class Pcre8_match {
@@ -46,7 +45,7 @@ typedef std::shared_ptr<Pcre8_imp> Pcre8_share;
 
 typedef std::unordered_map<int, Pcre8_share> RexMap;
 
-typedef std::unordered_map<std::string, int> RexSingles;
+typedef std::unordered_map<char32_t, int> RexSingles;
 
 class Pcre8_map {
 public:
@@ -58,7 +57,17 @@ public:
 	int  eraseRex(int index);
 };
 
+class CharMap {
+public:
+    RexSingles _map;
+    bool hasKey(char32_t index) const;
+    void setKV(char32_t ix,  int tokenId);
+    int  getV(char32_t ix) const;
+    int  eraseV(char32_t ix);
+};
+
 typedef std::shared_ptr<Pcre8_map> Re8map_share;
+typedef std::shared_ptr<CharMap> CharMap_sp;
 
 namespace pun { 
     Pcre8_share makeSharedRe(int mapId, const char* estr, unsigned int slen);

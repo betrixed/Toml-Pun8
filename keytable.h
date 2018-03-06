@@ -38,7 +38,11 @@
 
 #include "tomlbase.h"
 
-class KeyTable : public TomlBase
+// Php::Value also has a mapValue() method to return ValueMap
+// string keys are forced by Value.stringValue()
+
+class KeyTable : public TomlBase, public Php::Countable, 
+				public Php::ArrayAccess//, public Php::Traversable
 {
 public:
 	static const char* PHP_NAME;
@@ -47,22 +51,60 @@ public:
 	void setKV(Php::Parameters& params);
 	// Get value accessed by key
 	Php::Value getV(Php::Parameters& params);
+
+	Php::Value hasK(Php::Parameters& params);
 	// Remove value accessed by key
-	void unsetV(Php::Parameters& params);
+	void unsetK(Php::Parameters& params);
 	// Return keys as Array 
 	Php::Value getKeys();
+	// Countable and ArrayAccess
+	virtual long count() override;
+	virtual bool offsetExists(const Php::Value &key) override;
+	virtual void offsetSet(const Php::Value &key, const Php::Value &value) override;
+	virtual Php::Value offsetGet(const Php::Value &key) override;
+	virtual void offsetUnset(const Php::Value &key) override;
+	//virtual Php::Iterator *getIterator() override;
 
-	Php::Value count() const;
 	// Return the Array as stored
 	Php::Value toArray();
 public:
 	void fn_setKV(std::string& key, Php::Value &val);
 	Php::Value fn_getV(std::string& key);
 
-	bool hasKey(std::string& key) const;
+	bool fn_hasK(std::string& key) const;
 private:
-	Php::Array _store;
+	ValueMap _store;
 
 };
+/*
+class KT_Iterator : public Php::Iterator {
+	Php::Array         _array;
+	// Has to be a pointer, unique_ptr usage.
+	Php::ValueIterator* _iter; 
 
+	
+
+	KT_Iterator(KeyTable* base) : Php::Iterator(base), 
+		_array(base->_store),
+		_iter(nullptr) 
+	{
+
+	}
+	virtual bool valid(){
+	 	return (*_iter) != _array.end();
+	}
+	virtual Php::Value current() {
+		return (*_iter)->second;
+	}
+	virtual Php::Value key() {
+		return (*_iter)->first;
+	}
+	virtual void next() {
+		(*_iter)++;
+	}
+	virtual void rewind() {
+		_iter = & (_array.begin());
+	}
+};
+*/
 #endif

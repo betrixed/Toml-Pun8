@@ -128,13 +128,15 @@ PHPCPP_EXPORT void *get_module()
     Php::Class<KeyTable> keytab(KeyTable::PHP_NAME);
     keytab.method<&KeyTable::setKV> ("setKV");
     keytab.method<&KeyTable::getV> ("getV");
-    keytab.method<&KeyTable::unsetV> ("unsetV");
-    keytab.method<&KeyTable::count> ("count");
+    keytab.method<&KeyTable::unsetK> ("unsetK");
+    keytab.method<&KeyTable::hasK> ("hasK");
+    //keytab.method<&KeyTable::count> ("count");
     keytab.method<&KeyTable::toArray> ("toArray");
     extension.add(std::move(keytab));
 
     Php::Class<ValueList> valList(ValueList::PHP_NAME);
     valList.method<&ValueList::pushBack> ("pushBack");
+    valList.method<&ValueList::popBack> ("popBack");
     valList.method<&ValueList::getV> ("getV");
     valList.method<&ValueList::getLast> ("getLast");
     valList.method<&ValueList::count> ("count");

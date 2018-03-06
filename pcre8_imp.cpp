@@ -181,3 +181,42 @@ pun::makeSharedRe(int mapId, const char* estr, unsigned int slen)
     }
     return sp;
 }
+
+
+bool CharMap::hasKey(char32_t ix) const
+{
+  auto pit = _map.find(ix);
+  return (pit != _map.end());  
+}
+
+void CharMap::setKV(char32_t ix,  int tokenId)
+{
+    auto pit = _map.find(ix);
+    if (pit != _map.end())
+    {   // replace, delete old
+        pit->second = tokenId;
+    }
+    else {
+        _map.insert(std::pair<char32_t, int>(ix,tokenId));
+    }     
+}
+
+int  CharMap::getV(char32_t ix) const
+{
+    auto pit = _map.find(ix);
+    if (pit != _map.end())
+    {
+         //Php::out << "Single " << (unsigned int) ix << " found " << pit->second << std::endl;
+         return pit->second;
+    }
+    //Php::out << "Single " << (unsigned int) ix << " Not found " << std::endl;
+    return 0;
+}
+
+int  CharMap::eraseV(char32_t ix)
+{
+  return _map.erase(ix);
+}
+
+
+

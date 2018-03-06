@@ -139,11 +139,11 @@ function testToken($test,$id) {
 		show($cap);
 		return false;
 	}
-	/* else if ($match === Lexer::T_DATE_TIME) {
+	else if ($match === Lexer::T_ESCAPED_CHARACTER) {
 		echo "______ id: " . $match . PHP_EOL;
 		show($cap);
 	}
-    */
+    
 	return true;
 }
 
@@ -163,7 +163,8 @@ function testMatch() {
         ["25",  Lexer::T_INTEGER],
         ["25",  Lexer::T_INTEGER],
         ["25",  Lexer::T_INTEGER],
-        ["1987-07-05T17:45Z",Lexer::T_DATE_TIME]
+        ["1987-07-05T17:45Z",Lexer::T_DATE_TIME],
+        ["\\u03B4",Lexer::T_ESCAPED_CHARACTER],
     ];
 
     foreach($tests as $idx => $test)
@@ -178,8 +179,10 @@ function keytable() {
     $kt = new KeyTable();
 
     $kt->setKV("key1", "value1");
-    $kt->setKV("2", "value2");
-
+    $kt->setKV("2.1", "value2");
+    $kt["100.1"] = 1000;
+    $kt[100] = 1111;
+    
     $a = $kt->toArray();
 
     echo "KeyTable " . print_r($a,true) . PHP_EOL;
@@ -227,12 +230,18 @@ function reader()
     $input = <<<toml
     t = true
     f = false
+    [table]
+    string = "Escape Me \\u03B4"
 toml;
 
     $result = $rdr->parse($input);
 
     echo "TOML Reader " . print_r($result->toArray()) . PHP_EOL;
 }
+
+keytable();
+testMatch();
+
 $memInc = 0.0;
 $i = 0;
 $startMem = $endMem = 0;

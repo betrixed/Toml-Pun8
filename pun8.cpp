@@ -299,6 +299,22 @@ void Pun8::fn_setString(const char* ptr, unsigned int len)
      _mystr.assign(ptr, len);
 }
 
+// return string from current , to just before char c
+std::string 
+Pun8::fn_beforeChar(char32_t c) const
+{
+    auto offset = _index;
+    auto prev = offset;
+    auto bptr = _mystr.data();
+    auto test = _myChar;
+    while(test != c && offset < _size) {
+        prev = offset;
+        ucode8Fore(bptr, _size, offset, test );
+    }
+
+    return std::string(bptr+_index, prev-_index);
+}
+
 void Pun8::fn_setString(const std::string& s)
 {
      _index = 0;

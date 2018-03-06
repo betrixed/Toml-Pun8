@@ -78,6 +78,8 @@ public:
     void fn_copyIdList(Php::Value& v);
     void fn_setString(const char* ptr, unsigned int len);
     void fn_setString(const std::string& s);
+    std::string fn_beforeChar(char32_t c) const;
+
     void fn_setRe8map(Re8map_share& smap);
     const std::string& str();
 

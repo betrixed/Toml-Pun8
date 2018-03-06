@@ -16,6 +16,7 @@ void pun::hexUniStr8(const std::string& hexval, std::ostream& os)
     EncodeUTF8 ec8;
 
     ec8.encode(val);
+    //Php::out << val << " is " << ec8.result << std::endl;
     os << ec8.result;
 }
 
@@ -61,7 +62,7 @@ pun::check_Re8map(Php::Parameters& params, unsigned int offset)
 
     if (offset < ct) {
         const Php::Value& object = params[offset];   
-        if (object.instanceOf(Re8map::PHP_NAME)) {
+        if (object.isObject() && object.instanceOf(Re8map::PHP_NAME)) {
             Re8map *obj = (Re8map *)object.implementation();
             return obj;  
         }
@@ -78,7 +79,7 @@ pun::check_Pcre8(Php::Parameters& params, unsigned int offset)
 
     if (offset < ct) {
         const Php::Value& object = params[offset];   
-        if (object.instanceOf(Pcre8::PHP_NAME)) {
+        if (object.isObject() && object.instanceOf(Pcre8::PHP_NAME)) {
             Pcre8 *obj = (Pcre8 *)object.implementation();
             return obj;
         }
@@ -139,7 +140,7 @@ pun::check_Token8(Php::Parameters& params, unsigned int offset)
 
     if (offset < ct) {
         const Php::Value& object = params[offset];   
-        if (object.instanceOf(Token8::PHP_NAME)) {
+        if (object.isObject() && object.instanceOf(Token8::PHP_NAME)) {
             Token8 *obj = (Token8 *)object.implementation();
             return obj;
         }

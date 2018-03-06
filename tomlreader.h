@@ -56,7 +56,7 @@ public:
 	IdList  _estrRe;
 	IdList  _lstrRe;
 	IdList  _mlstrRe;
-	RexSingles	_singles;
+	CharMap_sp	_singles;
 
 	Rex();
 	~Rex();

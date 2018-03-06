@@ -8,6 +8,7 @@ public:
 	static const char* PHP_NAME;
 
 	void pushBack(Php::Parameters& param);
+	void popBack();
 	Php::Value getV(Php::Parameters& params) const;
 	Php::Value getLast() const;
 	Php::Value count() const;
@@ -21,8 +22,11 @@ public:
 	Php::Value fn_getLast() const;
 	
 private:
-	Php::Array 		_store;
-	Php::Value      _className;
+	ValueArray 		_store;
+	// if storing objects, require same class name
+	// store it to avoid more calls to "get_class"
+	Php::Value      _className; 
+	// require same value type
 	Php::Type 	 	_type;
 };
 #endif

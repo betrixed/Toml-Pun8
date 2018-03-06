@@ -58,9 +58,10 @@ void Token8Stream::fn_peekToken(Token8* token) {
 		token->_value.assign(ccptr + _input._index, nextCt);
 		token->_isSingle = false;
 		if (nextCt == 1) {
-			auto fit = _singles.find(token->_value);
-			if (fit != _singles.end()) {
-				token->_id = fit->second;
+			auto cmap = _singles.get();
+			auto fit = cmap->getV(_input._myChar);
+			if (fit) {
+				token->_id = fit;
 				token->_isSingle = true;
 			}
 			else {
@@ -146,9 +147,11 @@ int  Token8Stream::fn_moveNextId() {
 
 			_token._isSingle = false;
 			if (nextCt == 1) {
-				auto fit = _singles.find(_token._value);
-				if (fit != _singles.end()) {
-					_token._id = fit->second;
+				auto cmap = _singles.get();
+
+				auto fit = cmap->getV(_input._myChar);
+				if (fit) {
+					_token._id = fit;
 					_token._isSingle = true;
 				}
 				else {
@@ -252,13 +255,24 @@ void Token8Stream::setSingles(Php::Parameters& params)
 	bool isArray = pun::option_Array(params,0);
 
 	if (!isArray) {
-		throw Php::Exception(pun::missingParameter("Array(string => int", 0));
+		throw Php::Exception(pun::missingParameter("Array(string => int)", 0));
 	}
 	const Php::Value& v = params[0];
-	_singles.clear();
-	for( auto &iter : v) {
 
-		_singles[ iter.first] = iter.second;
+	if (!_singles) {
+		_singles = std::make_shared<CharMap>();
+	}
+	auto cmap = _singles.get();
+
+	for( auto &iter : v) {
+		const Php::Value& sval = iter.first;
+		const char* cp = sval;
+		auto cpsize = sval.size();
+		if (cpsize > 0) {
+			char32_t code = cp[0];
+			int id = iter.second;
+			cmap->setKV(code,id);
+		}
 	}
 }
 
@@ -270,9 +284,7 @@ Token8Stream::getOffset() const {
 
 
 Php::Value  Token8Stream::beforeEOL()  {
-	auto total = this->offsetToChar(10);
-	const char* buf = _input._mystr.data();
-	return Php::Value(buf  + _input._index, total);
+	return Php::Value(fn_beforeChar(10));
 }
 
 void Token8Stream::setRe8map(Php::Parameters& params)
@@ -297,10 +309,21 @@ Php::Value Token8Stream::hasPendingTokens() const
 	return Php::Value(result);
 }
 
+
 std::string& 
 Token8Stream::fn_getValue()
 {
 	return _token._value;
+}
+
+void Token8Stream::fn_setSingles(CharMap_sp& sp)
+{
+	_singles = sp;
+}
+
+unsigned int Token8Stream::fn_getOffset() const
+{
+	return _input._index;
 }
 
 Token8*  
@@ -336,21 +359,7 @@ void Token8Stream::setExpSet(const IdList& list) {
 	_input._idlist = list;
 }
 
-
-unsigned int  Token8Stream::offsetToChar(char32_t stopChar)  {
-	auto position = _input._index;
-	
-	auto oldChar = _input._myChar;
-	unsigned int total = 0;
-	do {
-		auto nextCt = _input.fn_peekChar();
-		if (nextCt == 0) 
-			break;
-		total += nextCt;
-		_input._index += nextCt;
-	}
-	while (_input._myChar != stopChar); 
-	_input._index = position;
-	_input._myChar = oldChar;
-	return total;
+std::string  Token8Stream::fn_beforeChar(char32_t c) const
+{
+	return _input.fn_beforeChar(c);
 }

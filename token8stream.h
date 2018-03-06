@@ -92,12 +92,15 @@ public:
     bool fn_moveRegId(int id);
     int  fn_getId() const { return _token._id;}
     void fn_setRe8map(Re8map* map) { _input._remap = map->_remap; }
+    unsigned int fn_getOffset() const;
+
+    std::string fn_beforeChar(char32_t c) const;
 
     std::string& fn_moveValue(std::string& val) { val = std::move(_token._value); return val;}
     
     void     fn_peekToken(Token8* token);
     void     fn_acceptToken(Token8* token);
-    
+    void     fn_setSingles(CharMap_sp& sp);
     Token8*  fn_getToken(Token8 &token);
     std::string& fn_getValue();
 
@@ -106,14 +109,13 @@ public:
 private:
 
 	void			checkLineFeed(Token8* token);
-    unsigned int    offsetToChar(char32_t stopChar);
 
 	Pun8			_input;
     
     Token8          _token;
     Pcre8_match		_caps;
 
-    SingleMap		_singles;
+    CharMap_sp		_singles;
 
     int    _unknownId;
     int    _eolId;

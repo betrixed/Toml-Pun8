@@ -92,23 +92,27 @@ Rex::Rex()
 	mptr->setRex(pun::makeSharedRe(Rex::No_0Digit, cNo_0Digit, strlen(cNo_0Digit) ));
 	mptr->setRex(pun::makeSharedRe(Rex::Float_E, cFloat_E, strlen(cFloat_E) ));
 
-	_singles.reserve(31);
+	_singles = std::make_shared<CharMap>();
+	
+	auto cmap = _singles.get();
+	cmap->_map.reserve(31);
 
-	_singles.insert( { 
-		{"=", Rex::Equal}, 
-		{"[", Rex::LSquare},
-		{"]", Rex::RSquare},
-		{".", Rex::Dot},
-		{".", Rex::Comma},
-		{"{", Rex::LCurly},
-		{"}", Rex::RCurly},
-		{"'", Rex::Apost1},
-		{"#", Rex::Hash},
-		{"\\", Rex::Escape},
-		{" ", Rex::Space},
-		{"\t", Rex::Space},
-		{"\f", Rex::Space},
-		{"\b", Rex::Space}
+	cmap->_map.insert( { 
+		{'=', Rex::Equal}, 
+		{'[', Rex::LSquare},
+		{']', Rex::RSquare},
+		{'.', Rex::Dot},
+		{',', Rex::Comma},
+		{'{', Rex::LCurly},
+		{'}', Rex::RCurly},
+		{'\'', Rex::Apost1},
+		{'\"', Rex::Quote1},
+		{'#', Rex::Hash},
+		{'\\', Rex::Escape},
+		{' ', Rex::Space},
+		{'\t', Rex::Space},
+		{'\f', Rex::Space},
+		{'\b', Rex::Space}
 	});
 
 	_keyRe = std::move(std::vector<int>( {Rex::Space, Rex::BareKey, Rex::Integer}));
@@ -149,6 +153,7 @@ TomlReader::TomlReader() :
 	_ts->fn_setEOL(Rex::Newline);
 	_ts->fn_setUnknown(Rex::AnyChar);
 	_ts->fn_setRe8map(_myrex->_re8);
+	_ts->fn_setSingles(_myrex->_singles);
 	_valueText.fn_setRe8map(_myrex->_re8->_remap);
 
 	this->setExpSet(eKey);
@@ -199,8 +204,12 @@ Php::Value TomlReader::parse(Php::Parameters& param)
 	_table = _root;
 
 	auto tokenId = _ts->fn_moveNextId();
+	//unsigned int loopct = 0;
 	while (tokenId != Rex::EOS)
 	{
+		//loopct++;
+		//Php::out << loopct << ": " << _ts->fn_beforeChar(10) << std::endl;
+		//Php::out << "id: " << tokenId <<  " pos: " <<  _ts->fn_getOffset() << std::endl;
 		switch(tokenId)
 		{
 		case Rex::Hash:
@@ -298,6 +307,7 @@ void TomlReader::parseQString(std::string& val)
 			this->syntaxError("parseEscString: Unfinished string value");
 		}
 		else if (id == Rex::EscapedChar) {
+
 			this->parseEscChar(result);
 		}
 		else {
@@ -343,7 +353,10 @@ void TomlReader::parseLitString(std::string& val)
 
 void  TomlReader::parseEscChar(std::ostream& os)
 {
-	char val = _token._value.at(1);
+	const std::string& sval = _ts->fn_getValue();
+
+	//Php::out << "parseEscChar len " << sval.size() << ": " << sval << std::endl;
+	char val = sval.at(1);
 	switch(val) {
 	case 'n':
 		os << '\n';
@@ -367,10 +380,10 @@ void  TomlReader::parseEscChar(std::ostream& os)
 		os << '\\';
 		break;
 	case 'u':
-		pun::hexUniStr8(_token._value.substr(2,4),os);
+		pun::hexUniStr8(sval.substr(2,4),os);
 		break;
 	case 'U':
-		pun::hexUniStr8(_token._value.substr(2,8),os);
+		pun::hexUniStr8(sval.substr(2,8),os);
 		break;
 	default:
 		invalidEscChar(val);
@@ -419,7 +432,7 @@ void  TomlReader::parseKeyValue()
 
 	this->parseKeyName(keyName);
 
-	if (_table->hasKey(keyName)) {
+	if (_table->fn_hasK(keyName)) {
 		this->syntaxError("Duplicate key");
 	}
 
@@ -429,6 +442,7 @@ void  TomlReader::parseKeyValue()
 	}
 	_ts->fn_peekToken(&_token);
 	Php::Value rhsValue;
+	//Php::out << "KeyVal id " << _token._id << " = " <<  _token._value << std::endl;
 	if (_token._id == Rex::LSquare) {
 		_ts->fn_acceptToken(&_token);	
 		ValueList* vlist = new ValueList();
@@ -447,7 +461,7 @@ void  TomlReader::parseKeyValue()
 	else {
 		parseValue(rhsValue);
 	}
-	Php::out << "Set " << keyName << " value " << rhsValue.debugZval() << std::endl;
+	//Php::out << "Set " << keyName << " value " << rhsValue.debugZval() << std::endl;
 	_table->fn_setKV(keyName, rhsValue);
 }
 
@@ -579,6 +593,7 @@ void TomlReader::fn_checkFullMatch(const std::string& target, const std::string&
 void TomlReader::parseValue(Php::Value& val)
 {
 	std::string sval;
+	//Php::out << "Val id " << _token._id << " = " <<  _token._value << std::endl;
 	if (_token._id == Rex::Apost1 )
 	{
 		
@@ -595,12 +610,14 @@ void TomlReader::parseValue(Php::Value& val)
 		return;
 	}
 	else if (_token._id == Rex::Quote1) {
+
 		if (_ts->fn_moveRegId(Rex::Quote3))
 		{
 			parseMLQString(sval);
 		}
 		else {
 			_ts->fn_acceptToken(&_token);
+			
 			parseQString(sval);
 		}
 		val = sval;
@@ -753,24 +770,25 @@ void TomlReader::parseMLQString(std::string& sval) {
 	popExpSet();
 }
 
-static std::string sfn_makePath(std::vector<TomlBase*> & parts, bool withIndex = true)
+// make a descriptive path for generating an exception
+static std::string sfn_makePath(std::vector<TomlPartTag> & parts, bool withIndex = true)
 {
 	std::stringstream result;
 
 	auto ait = parts.begin();
 	auto zit = parts.end();
 	while (ait != zit) {
-		TomlBase* b = *ait;
+		TomlBase* b = ait->_base;
 		auto tag = b->tomlTag();
 		if (tag._objAOT) {
-			result << "[" << tag._part;
+			result << "[" << ait->_part;
 			if (withIndex) {
 				result << "/" << b->fn_endIndex();
 			}
 			result << "]";
 		}
 		else {
-			result << "{" << tag._part << "}";
+			result << "{" << ait->_part << "}";
 		}
 		ait++;
 	}
@@ -805,7 +823,7 @@ void TomlReader::parseObjectPath()
 	bool isAOT = false;
 	bool hitNew = false;
 
-	std::vector<TomlBase*> parts;
+	std::vector<TomlPartTag> parts;
 	int  dotCount = 0;
 	int  aotLength = 0;
 	unsigned int firstNew = std::numeric_limits<unsigned int>::max();
@@ -815,8 +833,8 @@ void TomlReader::parseObjectPath()
 	Php::Value val;
 
 	auto id = _ts->fn_moveNextId();
-	bool doLoop = true;
-
+	bool doLoop = true;	
+	
 	while(doLoop) {
 		switch(id) {
 		case Rex::Hash:
@@ -871,19 +889,22 @@ void TomlReader::parseObjectPath()
 				syntaxError("Expected a '.' after path part");
 			}
 			dotCount = 0;
-			if (pObj->hasKey(partName)) {
+			TomlPartTag otag(isAOT);
+			if (pObj->fn_hasK(partName)) {
+				// There's a key-value stored already
 				val = pObj->fn_getV(partName);
 				if (val.isObject()) {
 					// There are only two kinds of object inserted here, both are TomlBase;
 					testObj = reinterpret_cast<TomlBase*>(val.implementation());
 				}
 				else {
+					// its a value and we want to set an object
 					std::stringstream ss;
 					ss << "Duplicate key path: " << sfn_makePath(parts) << "." << partName;
 					syntaxError(ss.str());
 				}
 				auto tag = testObj->tomlTag();
-				tag._isAOT = isAOT;
+
 				if (tag._objAOT) {
 					aotLength++;
 					tableList = reinterpret_cast<ValueList*>( testObj);
@@ -911,13 +932,14 @@ void TomlReader::parseObjectPath()
 					pObj = sfn_pushKeyTable(partName, pObj);
 					testObj = reinterpret_cast<TomlBase*>(pObj);
 				}
-				auto tag = testObj->tomlTag();
-				tag._part = partName;
-				tag._isAOT = isAOT;
+				TomlTag& tag = testObj->tomlTag();
+				//tag._part = partName;
 				tag._objAOT = isAOT;
 				// cannot set implicit yet, do not know the ending
 			}
-			parts.push_back(testObj);
+			otag._base = testObj;
+
+			parts.push_back(std::move(otag));
 			id = _ts->fn_moveNextId();
 			break;
 		}
@@ -926,20 +948,24 @@ void TomlReader::parseObjectPath()
 		syntaxError("Table path cannot be empty");
 	}
 	if (!hitNew) {
-		auto tag = testObj->tomlTag();
+		// check last object && last parts value
+		TomlPartTag& otag = parts.back();
+		TomlTag& tag = testObj->tomlTag();
 		if (tag._objAOT) {
-			if (tag._isAOT) {
+			if (otag._isAOT) {
 				pObj = sfn_pushNewTable(reinterpret_cast<ValueList*>(testObj));
 			}
 			else {
+				// Have an AOT already, but just asked for plain table
 				std::stringstream ss;
 				ss << "Table path mismatch with " << sfn_makePath(parts, false);
 				syntaxError(ss.str());
 			}
 		}
 		else {
+			// Table part created earlier, allow if it was just implicit creation
 			if (tag._implicit) {
-				tag._implicit = false;
+				tag._implicit = false; // won't allow this to happen again
 			}
 			else {
 				std::stringstream ss;
@@ -952,8 +978,8 @@ void TomlReader::parseObjectPath()
 		auto partsCt = (unsigned int) parts.size() - 1;
 
 		while ( firstNew < partsCt ) {
-			testObj = parts[firstNew];
-			auto tag = testObj->tomlTag();
+			TomlPartTag& otag = parts[firstNew];
+			TomlTag& tag = otag._base->tomlTag();
 			tag._implicit = true;
 			firstNew++;
 		}
