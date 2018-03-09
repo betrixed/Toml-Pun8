@@ -41,6 +41,41 @@ void Token8Stream::checkLineFeed(Token8* token)
 	throw Php::Exception(pun::invalidCharacter(_input._myChar));
 }
 
+unsigned char    
+Token8Stream::fn_peekByte() const
+{
+	if (_input._mystr.size() > _input._index)
+	{
+		return (unsigned char) _input._mystr[_input._index];
+	}
+	throw Php::Exception("PeekByte past end of string");
+}
+
+unsigned int  Token8Stream::fn_size() const
+{
+	return _input._mystr.size();
+}
+
+const char*      
+Token8Stream::fn_data() const
+{
+	return _input._mystr.data();
+}
+
+void Token8Stream::fn_addOffset(unsigned int offset)
+{
+	_input._index += offset;
+}
+
+unsigned char   
+Token8Stream::fn_movePeekByte()
+{
+	_input._index++;
+	return fn_peekByte();
+}
+
+
+
 void Token8Stream::fn_peekToken(Token8* token) {
 	auto nextCt = _input.fn_peekChar();
 	if (nextCt==0) {
@@ -250,6 +285,7 @@ Php::Value Token8Stream::getExpSet()
 	return result;
 }
 // argument is associative array, of string => id
+// convert to char32_t -> id
 void Token8Stream::setSingles(Php::Parameters& params)
 {
 	bool isArray = pun::option_Array(params,0);
@@ -271,6 +307,7 @@ void Token8Stream::setSingles(Php::Parameters& params)
 		if (cpsize > 0) {
 			char32_t code = cp[0];
 			int id = iter.second;
+			//Php::out << "Cmap setKV " << cp << " "<< code << " id " << id << std::endl;
 			cmap->setKV(code,id);
 		}
 	}
@@ -281,8 +318,6 @@ Token8Stream::getOffset() const {
     return Php::Value(int(_input._index));
 }
 
-
-
 Php::Value  Token8Stream::beforeEOL()  {
 	return Php::Value(fn_beforeChar(10));
 }
@@ -292,9 +327,15 @@ void Token8Stream::setRe8map(Php::Parameters& params)
 	_input.setRe8map(params);
 }
 
+void Token8Stream::setString(std::string &&m)
+{
+	_input.fn_setString(m);
+	_flagLF = true;
+}
 void Token8Stream::setString(const char* ptr, unsigned int len)
 {
 	_input.fn_setString(ptr,len);
+	_flagLF = true;
 }
 
 void Token8Stream::setInput(Php::Parameters& params)
@@ -314,6 +355,11 @@ std::string&
 Token8Stream::fn_getValue()
 {
 	return _token._value;
+}
+
+void Token8Stream::fn_restoreValue(std::string &&m)
+{
+	_token._value = std::move(m);
 }
 
 void Token8Stream::fn_setSingles(CharMap_sp& sp)

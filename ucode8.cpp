@@ -140,3 +140,89 @@ EncodeUTF8::encode(char32_t d)
         return 4;
     }
 }
+
+BOM_CODE getBOMCode(const char* sptr, unsigned int slen)
+{
+    if (slen == 0)
+    {
+        return BOM_CODE::NO_BOM;
+    }
+    auto raw = reinterpret_cast<const unsigned char*>(sptr);
+
+    if (*raw == 0xEF || *raw == 0xFE || *raw == 0xFF || *raw == 0x00) 
+    {
+        if (*raw == 0xEF) {
+            // only one handled here. Next 2 have to match
+
+            if (slen < 3)
+            {
+                return BOM_CODE::BAD_BOM;
+            }
+            if (*(raw+1) == 0xBB && *(raw+2) == 0xBF) {
+                return BOM_CODE::UTF_8;
+            }
+            return BOM_CODE::BAD_BOM;
+        }
+        else if (*raw == 0xFE) {
+            if (slen < 2)
+            {
+                return BOM_CODE::BAD_BOM;
+            }
+            raw++;
+            if (*raw == 0xFF) {
+                return BOM_CODE::UTF_16BE;
+            }
+            return BOM_CODE::BAD_BOM;
+        }
+        else if (*raw == 0xFF) {
+            if (slen < 4)
+            {
+                return BOM_CODE::BAD_BOM;
+            }
+            raw++;
+            if (*raw == 0xFE) {
+                if (*(raw+1) != 0x00) {
+                    return BOM_CODE::UTF_16LE;
+                }
+                if (*(raw+2) == 0x00) {
+                    return BOM_CODE::UTF_32LE;
+                }
+            }
+            return BOM_CODE::BAD_BOM;
+        }
+        else if (*raw == 0x00) {
+            if (slen < 4)
+            {
+                return BOM_CODE::BAD_BOM;
+            }
+            if (*(raw+1) == 0x00 && *(raw+2) == 0xFE && *(raw+3) == 0xFF) {
+                return BOM_CODE::UTF_32BE;
+            }
+            return BOM_CODE::BAD_BOM;
+        }
+    }
+
+    return BOM_CODE::NO_BOM;
+
+}
+
+
+const char* getBOMName(BOM_CODE code)
+{
+    switch(code) {
+    case BOM_CODE::NO_BOM:
+    case BOM_CODE::UTF_8:
+        return "UTF-8";
+    case BOM_CODE::UTF_16LE:
+        return "UTF-16LE";
+    case BOM_CODE::UTF_16BE:
+        return "UTF-16BE";
+    case BOM_CODE::UTF_32LE:
+        return "UTF-32LE";
+    case BOM_CODE::UTF_32BE:
+        return "UTF-32BE";
+    case BOM_CODE::BAD_BOM:
+    default:
+        return "Unknown BOM";
+    }
+}

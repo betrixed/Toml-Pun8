@@ -27,7 +27,7 @@ public:
     // Get array of integer id's in map
 	Php::Value getIds() const;
 
-   
+    Php::Value getValue() const;
 
     // Same parameters as setString
     void __construct(Php::Parameters& params);
@@ -77,11 +77,13 @@ public:
     int fn_matchRegId(int id, Pcre8_match& matches);
     void fn_copyIdList(Php::Value& v);
     void fn_setString(const char* ptr, unsigned int len);
+    void fn_setString(std::string &&m);
     void fn_setString(const std::string& s);
     std::string fn_beforeChar(char32_t c) const;
+    const std::string& fn_getValue() const;
 
     void fn_setRe8map(Re8map_share& smap);
-    const std::string& str();
+    std::string& str();
 
 private:
 

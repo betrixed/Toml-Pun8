@@ -7,6 +7,7 @@
 
 #include <ostream>
 #include <sstream>
+#include <fstream>
 #include <limits>
 #include <algorithm>
 
@@ -17,7 +18,7 @@ const char* const cRexBool = "^(true|false)";
 const char* const cDateTime = "^(\\d{4}-\\d{2}-\\d{2}(T\\d{2}:\\d{2}:\\d{2}(\\.\\d{6})?(Z|-\\d{2}:\\d{2})?)?)";
 const char* const cFloatExp = "^([+-]?((\\d_?)+([\\.](\\d_?)*)?)([eE][+-]?(_?\\d_?)+))";
 const char* const cFloatDot = "^([+-]?((\\d_?)+([\\.](\\d_?)*)))";
-const char* const cInteger = "^([+-]?((\\d_?)+([\\.](\\d_?)*)))";
+const char* const cInteger = "^([+-]?(\\d_?)+)";
 
 const char* const cQuote3 = "^(\"\"\")";
 const char* const cApost3 = "^(\'\'\')";
@@ -132,6 +133,30 @@ TomlReader::~TomlReader()
 
 }
 
+Php::Value
+TomlReader::getUseVersion()
+{
+	return "Pun\\TomlReader 0.4 PHP-CPP 2.0.0";
+}
+
+Php::Value 
+TomlReader::getTomlVersion()
+{
+	return "0.4 Toml Specification";
+}
+
+Php::Value TomlReader::parseFile(Php::Parameters& param)
+{
+	pun::check_String(param,0);
+	std::string path = param[0];
+	std::stringstream ss;
+	ss << std::ifstream(path).rdbuf();
+
+	std::string content = ss.str();
+	auto parser = new TomlReader();
+	return parser->parseStr(std::move(content));
+}
+
 TomlReader::TomlReader() : 
 	_myrex(nullptr),
 	_table(nullptr),
@@ -142,9 +167,7 @@ TomlReader::TomlReader() :
 	_myrex = Rex::getGlobalRex();
 
 	// Reference counted objects ??
-	_root = new KeyTable();
-	_v_root = Php::Object(KeyTable::PHP_NAME, _root);
-	_table  = _root;
+	
 	_ts = new Token8Stream();
 	_v_ts = Php::Object(Token8Stream::PHP_NAME, _ts);
 
@@ -197,43 +220,91 @@ void TomlReader::setExpSet(int id)
 	}
 }
 
-Php::Value TomlReader::parse(Php::Parameters& param)
+
+unsigned int TomlReader::checkBOM(const char* sptr, unsigned int slen)
+{
+	auto bomCode = getBOMCode(sptr,slen);
+	if (bomCode == BOM_CODE::UTF_8) {
+		return 3;
+	}
+	else if (bomCode != BOM_CODE::NO_BOM) {
+		std::stringstream ss;
+		ss << "Unhandled BOM type: " << getBOMName(bomCode);
+		throw Php::Exception(ss.str()); 
+	}
+	return 0;
+}
+
+Php::Value TomlReader::parse(Php::Parameters &param)
 {
 	pun::check_String(param,0);
-	_ts->setString((const char*) param[0], param[0].size());
-	_table = _root;
+	const char* sptr = (const char*) param[0];
+	auto slen = param[0].size();
+	std::string content(sptr, slen);
+	return parseStr(std::move(content));
+}
+Php::Value TomlReader::parseStr(std::string &&m)
+{
+	try {
+		_ts->setString(std::move(m));
+		_root = new KeyTable();
+		_v_root = Php::Object(KeyTable::PHP_NAME, _root);
+		_table  = _root;
+		
+		// check for UTF-8, UTF-16, UTF-32 start BOM characters
+		
 
-	auto tokenId = _ts->fn_moveNextId();
-	//unsigned int loopct = 0;
-	while (tokenId != Rex::EOS)
-	{
-		//loopct++;
-		//Php::out << loopct << ": " << _ts->fn_beforeChar(10) << std::endl;
-		//Php::out << "id: " << tokenId <<  " pos: " <<  _ts->fn_getOffset() << std::endl;
-		switch(tokenId)
-		{
-		case Rex::Hash:
-			parseComment();
-			tokenId = _ts->fn_moveNextId();
-			break;
-		case Rex::Space:
-		case Rex::Newline:
-			tokenId = _ts->fn_moveNextId();
-			break;
-		case Rex::Quote1:
-		case Rex::BareKey:
-		case Rex::Apost1:
-		case Rex::Integer:
-			parseKeyValue();
-			tokenId = finishLine();
-			break;
-		case Rex::LSquare:
-			tokenId = parseTablePath();
-			break;
-		default:
-			syntaxError("Expect Key = , [Path] or # Comment");
-			break;
+		auto offset = checkBOM(_ts->fn_data(), _ts->fn_size());
+		if (offset > 0) {
+			_ts->fn_addOffset(offset);
 		}
+		
+		auto tokenId = _ts->fn_moveNextId();
+		//unsigned int loopct = 0;
+		while (tokenId != Rex::EOS)
+		{
+			//loopct++;
+			//Php::out << loopct << ": " << _ts->fn_beforeChar(10) << std::endl;
+			//Php::out << "id: " << tokenId <<  " pos: " <<  _ts->fn_getOffset() << std::endl;
+			switch(tokenId)
+			{
+			case Rex::Hash:
+				parseComment();
+				tokenId = _ts->fn_moveNextId();
+				break;
+			case Rex::Space:
+			case Rex::Newline:
+				tokenId = _ts->fn_moveNextId();
+				break;
+			case Rex::Quote1:
+			case Rex::BareKey:
+			case Rex::Apost1:
+			case Rex::Integer:
+				parseKeyValue();
+				tokenId = finishLine();
+				break;
+			case Rex::LSquare:
+				tokenId = parseTablePath();
+				break;
+			default:
+				syntaxError("Expect Key = , [Path] or # Comment");
+				break;
+			}
+		}
+	}
+	// some exceptions don't know the parse context, so all line, value
+	// context information to be added here.
+	catch (Php::Exception& oh_no) {
+			std::stringstream ss;
+			ss << "Toml Parse at line " << _ts->getLine() << ". " << oh_no.message();
+			const std::string& value = _ts->getValue();
+			if (value.size() > 0) {
+				ss << ". Value { " << value << " }.";
+			}
+			else {
+				ss << ".";
+			}
+			throw Php::Exception(ss.str());
 	}
 	return _v_root;
 }
@@ -242,20 +313,14 @@ void TomlReader::syntaxError(const std::string& s) {
 	syntaxError(s.data());
 }
 
+void TomlReader::valueError(const char* msg, const std::string& value) {
+	std::stringstream ss;
+	ss << msg << ". Value { " << value << " }.";
+	throw Php::Exception(ss.str());
+}
 void TomlReader::syntaxError(const char* msg)
 {
-	_ts->fn_getToken(_token);
-	std::stringstream ss;
-
-	ss << "Error line " <<  _token._line << ": " << msg;
-
-	if (_token._value.size() > 0) {
-		ss << ". Value { " << _token._value << " }.";
-	}
-	else {
-		ss << ".";
-	}
-	throw Php::Exception(ss.str());
+	throw Php::Exception(msg);
 }
 
 void  TomlReader::parseComment()
@@ -445,9 +510,11 @@ void  TomlReader::parseKeyValue()
 	//Php::out << "KeyVal id " << _token._id << " = " <<  _token._value << std::endl;
 	if (_token._id == Rex::LSquare) {
 		_ts->fn_acceptToken(&_token);	
-		ValueList* vlist = new ValueList();
-		rhsValue = Php::Object(ValueList::PHP_NAME, vlist);
-		parseArray(vlist);
+		// ValueList throws exceptions without line context
+
+			ValueList* vlist = new ValueList();
+			rhsValue = Php::Object(ValueList::PHP_NAME, vlist);
+			parseArray(vlist);		
 	}
 	else if (_token._id == Rex::LCurly) {
 		_ts->fn_acceptToken(&_token);
@@ -539,6 +606,7 @@ void TomlReader::parseArray(ValueList *vlist)
 				}
 				_ts->fn_acceptToken(&_token);
 				_ts->fn_peekToken(&_token);
+				break;
 			case Rex::RSquare:
 				_ts->fn_acceptToken(&_token);
 			default:
@@ -585,11 +653,25 @@ void TomlReader::fn_checkFullMatch(const std::string& target, const std::string&
 {
 	if (target.size() > cap.size()) {
 		std::stringstream ss;
-		ss << "Value { " << cap << " } is not full match";
+		ss << "Value { " << cap << " } is not full match for { " << target <<  " }";
 		syntaxError(ss.str());
 	}
 }
-// assume peekToken as just occurred
+
+struct RestoreTokenValue {
+	TomlReader* tr;
+	RestoreTokenValue(TomlReader *me) : tr(me) {}
+	~RestoreTokenValue() {
+		tr->restoreTokenValue();
+	}
+};
+
+void 
+TomlReader::restoreTokenValue()
+{
+	_ts->fn_restoreValue(std::move(_valueText.str()));
+}
+// assume peekToken as just occurred, return value in val.
 void TomlReader::parseValue(Php::Value& val)
 {
 	std::string sval;
@@ -623,47 +705,54 @@ void TomlReader::parseValue(Php::Value& val)
 		val = sval;
 		return;
 	}
-	if (_ts->fn_moveRegId(Rex::AnyValue)) {
-		_valueText.fn_setString(_ts->fn_getValue());
-	}
-	else {
+	//Php::out << "value " << _ts->fn_beforeChar(10) << std::endl;
+	if (!_ts->fn_moveRegId(Rex::AnyValue)) {
 		syntaxError("No value after = ");
 	}
-	Pcre8_match matches;
+	else {
+		_valueText.fn_setString(std::move(_ts->fn_getValue()));
 
-	int ct = _valueText.fn_matchRegId(Rex::Bool, matches);
-	if (ct > 1) {
-		bool bresult =  (matches._slist[1] == "true") ? true : false;
-	    val = bresult;
-		return;
-	}
-	ct = _valueText.fn_matchRegId(Rex::DateTime, matches);
-	if (ct > 1) {
-		fn_checkFullMatch(_valueText.str(), matches._slist[1]);
-		parseDateTime(val);
-		return;
-	}
-	ct = _valueText.fn_matchRegId(Rex::FloatExp, matches);
-	if (ct > 1) {
-		fn_checkFullMatch(_valueText.str(), matches._slist[1]);
-		parseFloatExp(val);
-		return;
-	}
-	ct = _valueText.fn_matchRegId(Rex::FloatDot, matches);
-	if (ct > 1) {
-		fn_checkFullMatch(_valueText.str(), matches._slist[1]);
-		parseFloat(val,matches);
-		return;
-	}
-	ct = _valueText.fn_matchRegId(Rex::Integer, matches);
-	if (ct > 1) {
-		fn_checkFullMatch(_valueText.str(), matches._slist[1]);
-		parseInteger(sval);
-		val = sval;
-		return;
+		RestoreTokenValue restorer(this);
+
+		Pcre8_match matches;
+
+		int ct = _valueText.fn_matchRegId(Rex::Bool, matches);
+		if (ct > 1) {
+			bool bresult =  (matches._slist[1] == "true") ? true : false;
+		    val = bresult;
+			return;
+		}
+		ct = _valueText.fn_matchRegId(Rex::DateTime, matches);
+		if (ct > 1) {
+			fn_checkFullMatch(_valueText.str(), matches._slist[1]);
+			parseDateTime(val);
+			return;
+		}
+		ct = _valueText.fn_matchRegId(Rex::FloatExp, matches);
+		if (ct > 1) {
+			fn_checkFullMatch(_valueText.str(), matches._slist[1]);
+			parseFloatExp(val);
+			return;
+		}
+		ct = _valueText.fn_matchRegId(Rex::FloatDot, matches);
+		if (ct > 1) {
+			fn_checkFullMatch(_valueText.str(), matches._slist[1]);
+			parseFloat(val,matches);
+			return;
+		}
+		ct = _valueText.fn_matchRegId(Rex::Integer, matches);
+
+		if (ct > 1) {
+			fn_checkFullMatch(_valueText.str(), matches._slist[1]);
+			parseInteger(sval);
+			val = std::stol(sval);
+			return;
+		}
 	}
 	std::stringstream ss;
-	ss << "No value type match found for " << _valueText.str();
+	ss << "No value type match found for " << _ts->fn_getValue();
+	// Undo (_ts->fn_getValue()) before throwing.
+	//Php::out << "Restored = " << _ts->fn_getValue() << std::endl;
 	syntaxError(ss.str());
 }
 
@@ -671,14 +760,16 @@ void TomlReader::parseInteger(std::string& val)
 {
 	Pcre8_match matches;
 	if (_valueText.fn_matchRegId(Rex::Dig_Dig, matches)) {
-		syntaxError("Invalid integer: Underscore must be between digits");
+		valueError("Invalid integer: Underscore must be between digits", _valueText.str());
 	}
-	std::string extract = _valueText.str();
+	std::string copy = _valueText.str();
+
+	std::string& extract = _valueText.str();
+
 	extract.erase(std::remove(extract.begin(), extract.end(), '_'), extract.end());
 
-	_valueText.fn_setString(extract);
 	if (_valueText.fn_matchRegId(Rex::No_0Digit, matches)) {
-		syntaxError("Invalid integer: Leading zeros not allowed");
+		valueError("Invalid integer: Leading zeros not allowed", copy);
 	}
 	val = _valueText.str();
 }
@@ -687,44 +778,49 @@ void TomlReader::parseFloatExp(Php::Value& val)
 {
 	Pcre8_match matches;
 	if (_valueText.fn_matchRegId(Rex::Float_E, matches)) {
-		syntaxError("Invalid float with exponent: Underscore must be between digits");
+		valueError("Invalid float with exponent: Underscore must be between digits", _valueText.str());
 	}
-	std::string extract = _valueText.str();
+	std::string copy =  _valueText.str();
+	std::string& extract =  _valueText.str();
 	extract.erase(std::remove(extract.begin(), extract.end(), '_'), extract.end());
 
-	_valueText.fn_setString(extract);
 	if (_valueText.fn_matchRegId(Rex::No_0Digit, matches)) {
-		syntaxError("Invalid float with exponent: Underscore must be between digits");
+		valueError("Invalid float with exponent: Underscore must be between digits", copy);
 	}
-	val = std::stof(_valueText.str());
+	//Php::Value sval = _valueText.str();
+	//val = sval.floatValue(); 
+	val = std::stod(_valueText.str());
 }
 
 
 void TomlReader::parseFloat(Php::Value& val, Pcre8_match& matches)
 {
 	if (matches._slist.size() < 5) {
-		syntaxError("Wierd Float Capture");
+		valueError("Wierd Float Capture",_valueText.str());
 	}
 
 	if (matches._slist[4].size() <= 1) {
-		syntaxError("Float needs at least one digit after decimal point");
+		valueError("Float needs at least one digit after decimal point", _valueText.str());
 	}
 
 	if (_valueText.fn_matchRegId(Rex::Dig_Dig, matches)) {
-		syntaxError("Invalid float: Underscore must be between digits");
+		valueError("Invalid float: Underscore must be between digits", _valueText.str());
 	}
-	std::string extract = _valueText.str();
+	std::string copy =  _valueText.str();
+	std::string& extract = _valueText.str();
 	extract.erase(std::remove(extract.begin(), extract.end(), '_'), extract.end());
 
-	_valueText.fn_setString(extract);
 	if (_valueText.fn_matchRegId(Rex::No_0Digit, matches)) {
-		syntaxError("Invalid float: Leading zeros not allowed");
+		valueError("Invalid float: Leading zeros not allowed",copy);
 	}
-	val = std::stof(_valueText.str());
+	//Php::Value sval = _valueText.str();
+	//val = sval.floatValue(); 
+	val = std::stod(_valueText.str());
+
 }
 void TomlReader::parseDateTime(Php::Value& val)
 {
-	val = Php::call("DateTime", Php::Value(_valueText.str()));
+	val = Php::Object("DateTime", _valueText.str());
 }
 
 void TomlReader::parseMLQString(std::string& sval) {
@@ -733,6 +829,10 @@ void TomlReader::parseMLQString(std::string& sval) {
 	std::stringstream result;
 
 	auto id = _ts->fn_moveNextId();
+	// Newline straight after opening quotes is ignored
+	if (id == Rex::Newline) {
+		id = _ts->fn_moveNextId(); 
+	}
 	bool doLoop = true;
 	while(doLoop) {
 		switch(id) {
@@ -779,8 +879,8 @@ static std::string sfn_makePath(std::vector<TomlPartTag> & parts, bool withIndex
 	auto zit = parts.end();
 	while (ait != zit) {
 		TomlBase* b = ait->_base;
-		auto tag = b->tomlTag();
-		if (tag._objAOT) {
+		auto tag = b->fn_getPathTag();
+		if (tag->_objAOT) {
 			result << "[" << ait->_part;
 			if (withIndex) {
 				result << "/" << b->fn_endIndex();
@@ -822,11 +922,9 @@ void TomlReader::parseObjectPath()
 	std::string partName;
 	bool isAOT = false;
 	bool hitNew = false;
-
 	std::vector<TomlPartTag> parts;
 	int  dotCount = 0;
 	int  aotLength = 0;
-	unsigned int firstNew = std::numeric_limits<unsigned int>::max();
 	TomlBase*  testObj = nullptr;
 	ValueList* tableList = nullptr;
 	KeyTable*  pObj = _root;
@@ -884,15 +982,15 @@ void TomlReader::parseObjectPath()
 			break;
 		case Rex::Quote1:
 		default:
-			parseKeyName(partName);
+			TomlPartTag otag(isAOT);
+			parseKeyName(otag._part);
 			if (dotCount < 1 && parts.size() > 0) {
 				syntaxError("Expected a '.' after path part");
 			}
 			dotCount = 0;
-			TomlPartTag otag(isAOT);
-			if (pObj->fn_hasK(partName)) {
+			if (pObj->fn_hasK(otag._part)) {
 				// There's a key-value stored already
-				val = pObj->fn_getV(partName);
+				val = pObj->fn_getV(otag._part);
 				if (val.isObject()) {
 					// There are only two kinds of object inserted here, both are TomlBase;
 					testObj = reinterpret_cast<TomlBase*>(val.implementation());
@@ -900,15 +998,15 @@ void TomlReader::parseObjectPath()
 				else {
 					// its a value and we want to set an object
 					std::stringstream ss;
-					ss << "Duplicate key path: " << sfn_makePath(parts) << "." << partName;
+					ss << "Duplicate key path: " << sfn_makePath(parts) << "." << otag._part;
 					syntaxError(ss.str());
 				}
-				auto tag = testObj->tomlTag();
+				auto tag = testObj->fn_getPathTag();
 
-				if (tag._objAOT) {
+				if (tag->_objAOT) {
 					aotLength++;
 					tableList = reinterpret_cast<ValueList*>( testObj);
-					val = tableList->getLast();
+					val = tableList->back();
 					pObj = reinterpret_cast<KeyTable*>(val.implementation());
 				}
 				else {
@@ -919,23 +1017,25 @@ void TomlReader::parseObjectPath()
 				// make new branch
 				if (!hitNew) {
 					hitNew = true;
-					firstNew = parts.size();
 				}
 				// first branch declaration has to be correct
 				if (isAOT) {
 					aotLength++;
-					tableList = sfn_setNewAOT(partName, pObj);
+					tableList = sfn_setNewAOT(otag._part, pObj);
 					pObj = sfn_pushNewTable(tableList);
 					testObj = reinterpret_cast<TomlBase*>(tableList);
 				}
 				else {
-					pObj = sfn_pushKeyTable(partName, pObj);
+					pObj = sfn_pushKeyTable(otag._part, pObj);
 					testObj = reinterpret_cast<TomlBase*>(pObj);
 				}
-				TomlTag& tag = testObj->tomlTag();
+				PathTag* tag = new PathTag();
+
 				//tag._part = partName;
-				tag._objAOT = isAOT;
-				// cannot set implicit yet, do not know the ending
+				tag->_objAOT = isAOT;
+				tag->_implicit = true;
+
+				testObj->fn_setPathTag(tag);
 			}
 			otag._base = testObj;
 
@@ -950,8 +1050,8 @@ void TomlReader::parseObjectPath()
 	if (!hitNew) {
 		// check last object && last parts value
 		TomlPartTag& otag = parts.back();
-		TomlTag& tag = testObj->tomlTag();
-		if (tag._objAOT) {
+		auto tag = testObj->fn_getPathTag();
+		if (tag->_objAOT) {
 			if (otag._isAOT) {
 				pObj = sfn_pushNewTable(reinterpret_cast<ValueList*>(testObj));
 			}
@@ -964,8 +1064,8 @@ void TomlReader::parseObjectPath()
 		}
 		else {
 			// Table part created earlier, allow if it was just implicit creation
-			if (tag._implicit) {
-				tag._implicit = false; // won't allow this to happen again
+			if (tag->_implicit) {
+				tag->_implicit = false; // won't allow this to happen again
 			}
 			else {
 				std::stringstream ss;
@@ -975,14 +1075,8 @@ void TomlReader::parseObjectPath()
 		}
 	}
 	else {
-		auto partsCt = (unsigned int) parts.size() - 1;
-
-		while ( firstNew < partsCt ) {
-			TomlPartTag& otag = parts[firstNew];
-			TomlTag& tag = otag._base->tomlTag();
-			tag._implicit = true;
-			firstNew++;
-		}
+		auto tag = testObj->fn_getPathTag();
+		tag->_implicit = false; // end of path cannot be implicit
 	}
 	_table = pObj;
 }

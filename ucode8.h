@@ -14,4 +14,19 @@ struct EncodeUTF8 {
 	unsigned int encode(const char32_t d);
 };
 
+enum BOM_CODE {
+	BAD_BOM = -1,
+	NO_BOM = 0,
+	UTF_8 = 1,
+	UTF_16LE = 2,
+	UTF_16BE = 3,
+	UTF_32LE = 4,
+	UTF_32BE = 5
+};
+
+const char* getBOMName(BOM_CODE code);
+
+// byte by byte check
+BOM_CODE getBOMCode(const char* sptr, unsigned int len);
+
 #endif

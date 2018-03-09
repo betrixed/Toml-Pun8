@@ -1,8 +1,40 @@
 #include "valuelist.h"
 #include "parameter.h"
 #include "keytable.h"
+#include <ostream>
+#include <sstream>
 
 const char* ValueList::PHP_NAME = "Pun\\ValueList";
+
+Php::Value ValueList::getTag() const
+{
+	return _tag;
+}
+
+void ValueList::setTag(Php::Parameters& param)
+{
+	if ((param.size()< 1)) {
+		throw Php::Exception("setTag: Php Value expected");
+	}
+	_tag = param[0];
+}
+
+std::string ValueList::fn_typeConflict(Php::Type odd)
+{
+	std::stringstream ss;
+
+	ss << "Cannot add " << pun::getTypeName(odd) << " to list of " << pun::getTypeName(_type);
+	return ss.str();
+}
+
+std::string ValueList::fn_classConflict(Php::Value& val)
+{
+	auto oddClass = Php::call("get_class", val);
+	std::stringstream ss;
+
+	ss << "Cannot add " << oddClass << " to list of " << _className;
+	return ss.str();
+}
 
 void ValueList::fn_pushBack(Php::Value& val)
 {
@@ -15,12 +47,15 @@ void ValueList::fn_pushBack(Php::Value& val)
 	}
 	else {
 		auto addType = val.type();
-		if (addType != _type) {
-			throw Php::Exception("ValueList\\Pushback(value): value type conflict");
+		if (addType != _type){
+			// brain damage ahead
+			if ((_type != Php::Type::True) && (_type != Php::Type::False) 
+				&& (addType != Php::Type::False) && (addType != Php::Type::True))
+					throw Php::Exception(fn_typeConflict(addType));
 		}
 		if (val.isObject()) {
 			if (! val.instanceOf(_className, _className.size(), true)) {
-				throw Php::Exception("ValueList\\Pushback(value): class name conflict");
+				throw Php::Exception(fn_classConflict(val));
 			}
 		}
 	}
@@ -57,7 +92,7 @@ Php::Value ValueList::getV(Php::Parameters& params) const
 	return Php::Value(_store[index]);
 }
 
-Php::Value ValueList::getLast() const
+Php::Value ValueList::back() const
 {
 	if (_store.size() == 0) {
 		throw Php::Exception("ValueList getLast on empty list");
@@ -66,7 +101,7 @@ Php::Value ValueList::getLast() const
 	return Php::Value(_store[index]);
 }
 
-Php::Value ValueList::count() const
+Php::Value ValueList::size() const
 {
 	return Php::Value((int)_store.size());
 }
@@ -77,7 +112,7 @@ Php::Value ValueList::toArray()
 	Php::Array result;
 	// all the keys are integers, but values need to be checked
 	int idx = 0;
-	for( auto ait = _store.begin(); ait != _store.end(); ait++) {
+	for( auto ait = _store.begin(); ait != _store.end(); idx++, ait++) {
 		Php::Value& v = (*ait);
 		if (v.isObject()) {
 			if (v.instanceOf(ValueList::PHP_NAME)) {

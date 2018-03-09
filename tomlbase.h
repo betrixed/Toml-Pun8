@@ -4,12 +4,15 @@
 #include <phpcpp.h>
 
 
-class TomlTag {
+class PathTag : public Php::Base{
 public:
-	//std::string _part;
-	//bool		_isAOT;
+	static const char* PHP_NAME;
 	bool		_objAOT;  // ValueList for Array of Tables
-	bool		_implicit; // Implicity created by Toml Path, not yset used as KeyTable
+	bool		_implicit; // Implicity created by Toml Path, not yet used as KeyTable
+
+	PathTag() : _objAOT(false), _implicit(true) {
+
+	}
 };
 
 
@@ -17,11 +20,17 @@ typedef std::map<std::string, Php::Value> ValueMap;
 typedef std::vector<Php::Value> ValueArray;
 
 class TomlBase : public Php::Base {
-private:
-	TomlTag 			_tag;
+protected:
+	Php::Value 			_tag;
 public:
-	TomlTag& tomlTag() { return _tag; }
+
+	static const char* PHP_NAME;
 	virtual int fn_endIndex() { return 0; }
+	// interface for PHP
+	Php::Value getTag() const;
+	void setTag(Php::Parameters& param);
+	PathTag*  fn_getPathTag();
+	void	  fn_setPathTag(PathTag* tag);
 };
 
 // Temporary created during Table path parse

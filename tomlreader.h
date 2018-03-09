@@ -73,19 +73,22 @@ public:
 class TomlReader : public Php::Base {
 public:
 	static const char* PHP_NAME;
-
-
+	static Php::Value parseFile(Php::Parameters& param);
+	static Php::Value getUseVersion();
+	static Php::Value getTomlVersion();
 	TomlReader();
 	~TomlReader();
 
-	Php::Value parse(Php::Parameters& param);
-	
+	Php::Value parseStr(std::string &&m);
+	Php::Value parse(Php::Parameters &param);
 
 protected:
 	void popExpSet();
 	void pushExpSet(int id);
 	void setExpSet(int id);
 	void syntaxError(const char* msg);
+	void valueError(const char* msg, const std::string& value);
+
 	void syntaxError(const std::string& msg);
 	void  parseComment();
 
@@ -118,8 +121,10 @@ protected:
 	void parseFloatExp(Php::Value& val);
 	void parseInteger(std::string& val);
 private:
-
-
+	friend class RestoreTokenValue;
+	void restoreTokenValue();
+	
+	unsigned int checkBOM(const char* sptr, unsigned int slen);
 	enum {
 		eKey,
 		eScaler,

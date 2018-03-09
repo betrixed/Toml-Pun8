@@ -36,6 +36,10 @@ void Pun8::setString(Php::Parameters& params)
     } 
 }
 
+Php::Value Pun8::getValue() const 
+{
+    return _mystr;
+}
 
 Php::Value 
 Pun8::getCode() const {
@@ -286,7 +290,7 @@ int Pun8::fn_firstMatch(Pcre8_match& matches)
 
 
 
-const std::string& Pun8::str()
+std::string& Pun8::str()
 {
     return _mystr;
 }
@@ -299,22 +303,34 @@ void Pun8::fn_setString(const char* ptr, unsigned int len)
      _mystr.assign(ptr, len);
 }
 
+const std::string& Pun8::fn_getValue() const
+{
+    return _mystr;
+}
 // return string from current , to just before char c
 std::string 
 Pun8::fn_beforeChar(char32_t c) const
 {
     auto offset = _index;
-    auto prev = offset;
+    //auto prev = offset;
     auto bptr = _mystr.data();
     auto test = _myChar;
     while(test != c && offset < _size) {
-        prev = offset;
+        //prev = offset;
         ucode8Fore(bptr, _size, offset, test );
     }
 
-    return std::string(bptr+_index, prev-_index);
+    return std::string(bptr+_index, offset-_index);
 }
 
+void Pun8::fn_setString(std::string &&m)
+{
+    _mystr = std::move(m);
+    _size = _mystr.size();
+    _index = 0;
+    _myChar = 0;
+
+}
 void Pun8::fn_setString(const std::string& s)
 {
      _index = 0;

@@ -57,6 +57,9 @@ public:
 	void unsetK(Php::Parameters& params);
 	// Return keys as Array 
 	Php::Value getKeys();
+
+	Php::Value getTag() const;
+	void setTag(Php::Parameters& param);
 	// Countable and ArrayAccess
 	virtual long count() override;
 	virtual bool offsetExists(const Php::Value &key) override;

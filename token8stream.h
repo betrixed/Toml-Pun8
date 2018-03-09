@@ -85,6 +85,8 @@ public:
 public:
     void setExpSet(const IdList& list);
     void setString(const char* ptr, unsigned int len);
+    void setString(std::string &&m);
+
     int  fn_moveNextId();
     void fn_setEOS(int id) { _eosId = id; }
     void fn_setEOL(int id) { _eolId = id; }
@@ -92,18 +94,26 @@ public:
     bool fn_moveRegId(int id);
     int  fn_getId() const { return _token._id;}
     void fn_setRe8map(Re8map* map) { _input._remap = map->_remap; }
+    char32_t fn_getChar32() const { return _input._myChar; }
     unsigned int fn_getOffset() const;
+
+    unsigned char    fn_peekByte() const;
+    unsigned char    fn_movePeekByte();
+    unsigned int     fn_size() const;
+    const char*      fn_data() const;
+    void             fn_addOffset(unsigned int offset);
 
     std::string fn_beforeChar(char32_t c) const;
 
     std::string& fn_moveValue(std::string& val) { val = std::move(_token._value); return val;}
     
     void     fn_peekToken(Token8* token);
+
     void     fn_acceptToken(Token8* token);
     void     fn_setSingles(CharMap_sp& sp);
     Token8*  fn_getToken(Token8 &token);
-    std::string& fn_getValue();
-
+    std::string& fn_getValue(); 
+    void     fn_restoreValue(std::string&& m);
 
     
 private:

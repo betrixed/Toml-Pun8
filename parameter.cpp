@@ -10,6 +10,51 @@
 #include <cstdint>
 
 #include "ucode8.h"
+
+/*
+Undefined       =   0,  // Variable is not set
+    Null            =   1,  // Null will allow any type
+    False           =   2,  // Boolean false
+    True            =   3,  // Boolean true
+    Numeric         =   4,  // Integer type
+    Float           =   5,  // Floating point type
+    String          =   6,  // A string obviously
+    Array           =   7,  // An array of things
+    Object          =   8,  // An object
+    Resource        =   9,  // A resource
+    Reference       =  10,  // Reference to another value (can be any type!)
+    Constant        =  11,  // A constant value
+    ConstantAST     =  12,  // I think an Abstract Syntax tree, not quite sure
+*/
+
+const char* pun::getTypeName(Php::Type ptype)
+{
+    switch(ptype) {
+    case Php::Type::String:
+        return "string";
+    case Php::Type::Numeric:
+        return "integer";
+    case Php::Type::Float:
+        return "float";
+    case Php::Type::Array:
+        return "array";
+    case Php::Type::Object:
+        return "object";
+    case Php::Type::False:
+    case Php::Type::True:
+        return "boolean";
+    case Php::Type::Null:
+        return "null";
+    case Php::Type::Resource:
+        return "resource";
+    case Php::Type::Reference:
+        return "reference";
+    case Php::Type::Undefined:        
+    default:
+        return "undefined";
+    }
+}
+
 void pun::hexUniStr8(const std::string& hexval, std::ostream& os)
 {
     char32_t val = (char32_t) strtol(hexval.data(), 0, 16);

@@ -125,29 +125,55 @@ PHPCPP_EXPORT void *get_module()
     token.method<&Token8::isSingle> ("isSingle");
     extension.add(std::move(token));
 
+    Php::Class<PathTag> tag(PathTag::PHP_NAME);
+    extension.add(std::move(tag));
+
+    Php::Class<TomlBase> tbase(TomlBase::PHP_NAME);
+    tbase.method<&TomlBase::setTag> ("setTag");
+    tbase.method<&TomlBase::getTag> ("getTag");
+    extension.add(std::move(tbase));
+
+    Php::Class<ValueList> valList(ValueList::PHP_NAME);
+
+
+
+    valList.extends(tbase);
+
+    valList.method<&ValueList::pushBack> ("pushBack");
+    valList.method<&ValueList::popBack> ("popBack");
+    valList.method<&ValueList::getV> ("getV");
+    valList.method<&ValueList::back> ("back");
+    valList.method<&ValueList::size> ("size");
+    valList.method<&ValueList::toArray> ("toArray");
+    valList.method<&ValueList::getType> ("getType");
+    valList.method<&ValueList::setTag> ("setTag");
+    valList.method<&ValueList::getTag> ("getTag");
+
+    extension.add(std::move(valList));
+
+
     Php::Class<KeyTable> keytab(KeyTable::PHP_NAME);
+
+    keytab.extends(tbase);
     keytab.method<&KeyTable::setKV> ("setKV");
     keytab.method<&KeyTable::getV> ("getV");
     keytab.method<&KeyTable::unsetK> ("unsetK");
     keytab.method<&KeyTable::hasK> ("hasK");
     //keytab.method<&KeyTable::count> ("count");
     keytab.method<&KeyTable::toArray> ("toArray");
+    keytab.method<&KeyTable::setTag> ("setTag");
+    keytab.method<&KeyTable::getTag> ("getTag");
     extension.add(std::move(keytab));
-
-    Php::Class<ValueList> valList(ValueList::PHP_NAME);
-    valList.method<&ValueList::pushBack> ("pushBack");
-    valList.method<&ValueList::popBack> ("popBack");
-    valList.method<&ValueList::getV> ("getV");
-    valList.method<&ValueList::getLast> ("getLast");
-    valList.method<&ValueList::count> ("count");
-    valList.method<&ValueList::toArray> ("toArray");
-    valList.method<&ValueList::getType> ("getType");
-    extension.add(std::move(valList));
 
     Php::Class<TomlReader> rdr(TomlReader::PHP_NAME);
     rdr.method<&TomlReader::parse> ("parse");
+    rdr.method<&TomlReader::parseFile>("parseFile");
+    rdr.method<&TomlReader::getUseVersion>("getUseVersion");
+    rdr.method<&TomlReader::getTomlVersion>("getTomlVersion");
     extension.add(std::move(rdr));
 
+    
+   
     return extension;
 }
 

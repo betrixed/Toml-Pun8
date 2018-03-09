@@ -10,17 +10,19 @@ public:
 	void pushBack(Php::Parameters& param);
 	void popBack();
 	Php::Value getV(Php::Parameters& params) const;
-	Php::Value getLast() const;
-	Php::Value count() const;
+	Php::Value back() const;
+	Php::Value size() const;
 	// Return the Array as stored
 	Php::Value toArray();
 	Php::Value getType();
-	
+	Php::Value getTag() const;
+	void setTag(Php::Parameters& param);
 public:
 	void fn_pushBack(Php::Value& vtype);
 	int fn_endIndex() override;
 	Php::Value fn_getLast() const;
-	
+	std::string fn_typeConflict(Php::Type odd);
+	std::string fn_classConflict(Php::Value& val);
 private:
 	ValueArray 		_store;
 	// if storing objects, require same class name

@@ -27,7 +27,7 @@ namespace pun {
 	 bool option_Array(Php::Parameters& params, unsigned int offset=0);
      Re8map* check_Re8map(Php::Parameters& params, unsigned int offset=0);
      Recap8* option_Recap8(Php::Parameters& params, unsigned int offset=0);
-    
+     const char* getTypeName(Php::Type);
      Pcre8* check_Pcre8(Php::Parameters& params,unsigned int offset=0);
      int check_IntString(Php::Parameters& params);
      bool check_String(Php::Parameters& params,unsigned int offset = 0);

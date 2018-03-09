@@ -110,6 +110,33 @@ class Lexer
         }
         return Lexer::$_AllExpIds;
     }
+    static private $_AllSingles;
+    
+    static public function getAllSingles(): array
+    {
+        if (empty(Lexer::$_AllSingles)) {
+            $kt = [];
+            $kt["="] = Lexer::T_EQUAL;
+            $kt["["] = Lexer::T_LEFT_SQUARE_BRACE;
+            $kt["]"] = Lexer::T_RIGHT_SQUARE_BRACE;
+            $kt["."] = Lexer::T_DOT;
+            $kt[","] = Lexer::T_COMMA;
+            $kt["\""] = Lexer::T_QUOTATION_MARK;
+            $kt["."] = Lexer::T_DOT;
+            $kt["{"] = Lexer::T_LEFT_CURLY_BRACE;
+            $kt["}"] = Lexer::T_RIGHT_CURLY_BRACE;
+            $kt["'"] = Lexer::T_APOSTROPHE;
+            $kt["#"] = Lexer::T_HASH;
+            $kt["\\"] = Lexer::T_ESCAPE;
+            $kt[" "] = Lexer::T_SPACE;
+            $kt["\t"] = Lexer::T_SPACE;
+            // maybe these are not necessary
+            $kt["\f"] = Lexer::T_SPACE;
+            $kt["\b"] = Lexer::T_SPACE;
+            Lexer::$_AllSingles = $kt;
+        }
+        return Lexer::$_AllSingles;
+    }
 }
 
 
@@ -209,6 +236,7 @@ function routine() {
             Lexer::T_UNQUOTED_KEY,
             Lexer::T_INTEGER]  );
     $ts->setInput("t = true");
+    $ts->setSingles(Lexer::getAllSingles());
 
     $id = $ts->moveNextId();
     gc_collect_cycles();
@@ -239,6 +267,25 @@ toml;
     echo "TOML Reader " . print_r($result->toArray()) . PHP_EOL;
 }
 
+function match_integer() {
+    $pun = new Pun8("42");
+    $map = Lexer::getAllRegex();
+    $pun->setRe8map($map);
+    $caps = new Recap8();
+    $pun->matchMapId(Lexer::T_INTEGER, $caps);
+    $ct = $caps->count();
+    for($i = 0; $i < $ct; $i++)
+    {
+        echo "Capture " . $caps->getCap($i);
+    }
+
+}
+
+function parser() {
+    $parser = new TomlReader();
+    $parser->parse("ints = [1,2,3]");
+    $parser->parse(" x = _42");
+}
 keytable();
 testMatch();
 
@@ -262,3 +309,5 @@ echo "*** Memory Inc  = " . $memInc . PHP_EOL;
 keytable();
 valuelist();
 reader_0();
+routine();
+parser();

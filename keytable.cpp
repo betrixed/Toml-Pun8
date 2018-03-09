@@ -91,6 +91,20 @@ Php::Value KeyTable::hasK(Php::Parameters& params) {
 	return (_store.find(params[0].stringValue()) != _store.end());
 }
 
+Php::Value KeyTable::getTag() const
+{
+	return _tag;
+}
+
+void KeyTable::setTag(Php::Parameters& param)
+{
+	if ((param.size()< 1)) {
+		throw Php::Exception("setTag: Php Value expected");
+	}
+	_tag = param[0];
+}
+
+
 bool KeyTable::fn_hasK(std::string& key) const
 {
 	return (_store.find(key) != _store.end());
