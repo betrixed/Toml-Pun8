@@ -1,5 +1,5 @@
 # Toml Parser extension for PHP implemented with PHP-CPP
-This was the main goal of creating all the other bitty classes, whose interfaces are described below. Everything was done in PHP-CPP to gain order of magnitude of speed.
+This was the main goal of creating all the other bitty classes, whose interfaces are described below. All parser processing is done in PHP-CPP for the expected order of magnitude of speed gain.
 
 ##Requirements 
   Linux version only.
@@ -48,7 +48,7 @@ The $doc_model returned by the Toml Parser, is a tree of "Pun\\KeyTable" and "Pu
 ### Pun\\KeyTable 
 This Php class also supports the \\ArrayAccess interface, even though the methods are not directly available. Its accessible methods for getting, setting values use string keys, internal keys are strings only, and Php-numeric type is converted to string, whereas PHP ArrayAccess and array syntax converts string keys that are numeric to integer.
 
-Currently internal storage is a C++ std::map - hence a traversible interface could be implemented from that.
+Currently internal storage is a C++ std::map.  The Traversable interface will iterate keys in alphabetical order.
 ```php
 // Set a string key, and PHP value type
         setKV(string $key, $value);
@@ -62,8 +62,10 @@ Currently internal storage is a C++ std::map - hence a traversible interface cou
 // check if key exists
         hasK(string $key);
 
-// Recursive copy everything to Php Array.
-// Leaves out the KeyTable or ValueList intermediary classes.
+// Clear out all keys and values
+        clear();
+
+// Recursive copy everything to Php Array, without KeyTable or ValueList objects.
         toArray() : array;
 
 // Set a general use "Tag" property
@@ -72,7 +74,7 @@ Currently internal storage is a C++ std::map - hence a traversible interface cou
         getTag() : mixed;
 ```
 ### Pun\ValueList
-This class checks that everything that is set inside is of the same type, and for objects, the same class name.  It is implemented with C++ std::vector of PHP Value. Everything added must match the kind of value set with the first pushBack call. Yet to be added as implementation is a random access interface for PHP, and a Traversible interface.
+This class checks that everything that is set inside is of the same type, and for objects, the same class name.  It is implemented with C++ std::vector of PHP Value. Everything added must match the kind of value set with the first pushBack call. Traversable and Countable interfaces are implemented. ArrayAccess interface isn't implemented.
 ```php
 // Add a value to the stack
       pushBack($value);
@@ -82,7 +84,17 @@ This class checks that everything that is set inside is of the same type, and fo
       popBack();
 // Get the number of values
       size() : int;
-// return contents as a PHP array
+// Clear all values, size back to zero.
+      clear();
+// Set value at non-negative index, range checked
+      setV(int $index, $value);
+// Get value at non-negative index, range checked
+      getV(int $index) : mixed;
+// Set arbitrary tag value
+      setTag($tag);
+// Get previously set tag value
+      getTag() : mixed;
+// Return recursive contents as a PHP array,  without KeyTable or ValueList objects.
       toArray() : array;
 
 ```
@@ -324,4 +336,25 @@ Adding this as a C++ extension cut TOML parser execution time around 50%
 
 // Advanced the offset by the match argument from the integer key, or failed to match
         moveRegId(int $mapId) : bool;
+```
+
+This interface hasn't been used much yet, because it is just a wrapper around the enum value.
+Pun extension and the Toml tree use a different list of enum values than PHP. For instance - True and False get to have the same Pun type enum, whereas in PHP they are different. There are values for integer, string, float, array (php-kind).
+
+Php objects have an enum, excepting that KeyTable, ValueList and Php's DateTime are assigned individual type enum, as they are used by the TOML parser.
+
+### Pun//Type
+```php
+/* DateTime has a type enum, and so does KeyTable and ValueList,
+ * all other PHP objects are just an "Object". The type enums are used by Toml document tree.
+ */
+ // Set the enum from example Php value.
+  fromValue($any);
+ // return the type as a number
+  type();
+ // return the type as a string
+  name();
+ // return 1 if argument  matches the type, 0 if it doesn't
+  isMatch($any);
+
 ```

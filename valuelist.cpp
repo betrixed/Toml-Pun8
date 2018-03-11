@@ -6,6 +6,8 @@
 
 const char* ValueList::PHP_NAME = "Pun\\ValueList";
 
+const std::string CPunk::valuelist_classname(ValueList::PHP_NAME);
+
 Php::Value ValueList::getTag() const
 {
 	return _tag;
@@ -19,46 +21,16 @@ void ValueList::setTag(Php::Parameters& param)
 	_tag = param[0];
 }
 
-std::string ValueList::fn_typeConflict(Php::Type odd)
-{
-	std::stringstream ss;
+// It was bad design to do the value type checking and instanceOf inside ValueList
+// In terms of efficiency should force TOML (class user) code to do it.
+// Take advantage of the TOML base Tag property
+// Values could be any Php kind of thing. Why limit ValueList just for them?
+// Force caller to decide on action, exception calls, if not same.
 
-	ss << "Cannot add " << pun::getTypeName(odd) << " to list of " << pun::getTypeName(_type);
-	return ss.str();
-}
 
-std::string ValueList::fn_classConflict(Php::Value& val)
-{
-	auto oddClass = Php::call("get_class", val);
-	std::stringstream ss;
-
-	ss << "Cannot add " << oddClass << " to list of " << _className;
-	return ss.str();
-}
 
 void ValueList::fn_pushBack(Php::Value& val)
 {
-	int index = (int) _store.size();
-	if (index == 0) {
-		_type = val.type();
-		if (_type == Php::Type::Object) {
-			_className = Php::call("get_class", val);
-		}
-	}
-	else {
-		auto addType = val.type();
-		if (addType != _type){
-			// brain damage ahead
-			if ((_type != Php::Type::True) && (_type != Php::Type::False) 
-				&& (addType != Php::Type::False) && (addType != Php::Type::True))
-					throw Php::Exception(fn_typeConflict(addType));
-		}
-		if (val.isObject()) {
-			if (! val.instanceOf(_className, _className.size(), true)) {
-				throw Php::Exception(fn_classConflict(val));
-			}
-		}
-	}
 	_store.push_back(val);
 }
 void ValueList::pushBack(Php::Parameters& param)
@@ -73,24 +45,26 @@ void ValueList::popBack()
 	_store.pop_back();
 }
 
-Php::Value ValueList::getType()
-{
-	if (_type == Php::Type::Object) {
-		return _className;
-	}
-	else {
-		return _type;
-	}
+static void checkIndex(int index, unsigned int vlen) {
+	if (index < 0 || index >= (int) vlen) {
+		throw Php::Exception("ValueList index out of range");
+	}	
 }
-
+void ValueList::setV(Php::Parameters& param)
+{
+	int index = pun::check_Int(param,0);
+	checkIndex(index, _store.size());
+	pun::need_Value(param,1);
+	_store[index] = param[1];
+	
+}
 Php::Value ValueList::getV(Php::Parameters& params) const
 {
 	int index = pun::check_Int(params,0);
-	if (index < 0 || index >= (int) _store.size()) {
-		throw Php::Exception("ValueList index out of range");
-	}
+	checkIndex(index, _store.size());
 	return Php::Value(_store[index]);
 }
+
 
 Php::Value ValueList::back() const
 {

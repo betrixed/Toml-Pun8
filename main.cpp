@@ -8,6 +8,8 @@
 #include "keytable.h"
 #include "valuelist.h"
 #include "tomlreader.h"
+#include "puntype.h"
+
 /**
 * Iterate through a UTF-8 string,
 * Keep an internal array index to beginning of
@@ -134,18 +136,17 @@ PHPCPP_EXPORT void *get_module()
     extension.add(std::move(tbase));
 
     Php::Class<ValueList> valList(ValueList::PHP_NAME);
-
-
-
     valList.extends(tbase);
 
     valList.method<&ValueList::pushBack> ("pushBack");
     valList.method<&ValueList::popBack> ("popBack");
     valList.method<&ValueList::getV> ("getV");
+    valList.method<&ValueList::setV> ("setV");
     valList.method<&ValueList::back> ("back");
     valList.method<&ValueList::size> ("size");
+    valList.method<&ValueList::clear> ("clear");
     valList.method<&ValueList::toArray> ("toArray");
-    valList.method<&ValueList::getType> ("getType");
+
     valList.method<&ValueList::setTag> ("setTag");
     valList.method<&ValueList::getTag> ("getTag");
 
@@ -153,12 +154,13 @@ PHPCPP_EXPORT void *get_module()
 
 
     Php::Class<KeyTable> keytab(KeyTable::PHP_NAME);
-
     keytab.extends(tbase);
+    
     keytab.method<&KeyTable::setKV> ("setKV");
     keytab.method<&KeyTable::getV> ("getV");
     keytab.method<&KeyTable::unsetK> ("unsetK");
     keytab.method<&KeyTable::hasK> ("hasK");
+    keytab.method<&KeyTable::clear> ("clear");
     //keytab.method<&KeyTable::count> ("count");
     keytab.method<&KeyTable::toArray> ("toArray");
     keytab.method<&KeyTable::setTag> ("setTag");
@@ -166,14 +168,20 @@ PHPCPP_EXPORT void *get_module()
     extension.add(std::move(keytab));
 
     Php::Class<TomlReader> rdr(TomlReader::PHP_NAME);
-    rdr.method<&TomlReader::parse> ("parse");
+        rdr.method<&TomlReader::parse> ("parse");
     rdr.method<&TomlReader::parseFile>("parseFile");
     rdr.method<&TomlReader::getUseVersion>("getUseVersion");
     rdr.method<&TomlReader::getTomlVersion>("getTomlVersion");
     extension.add(std::move(rdr));
 
-    
-   
+    Php::Class<PunType> ptype(PunType::PHP_NAME);
+    ptype.method<&PunType::fromValue> ("fromValue");
+    ptype.method<&PunType::isMatch> ("isMatch");
+    ptype.method<&PunType::type> ("type");
+    ptype.method<&PunType::name> ("name");
+
+    extension.add(std::move(ptype));
+
     return extension;
 }
 

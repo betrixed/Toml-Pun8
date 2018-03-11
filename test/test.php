@@ -8,6 +8,8 @@ use Pun\Token8;
 use Pun\Token8Stream;
 use Pun\KeyTable;
 use Pun\ValueList;
+use Pun\Type;
+
 use Pun\TomlReader;
 
 class Lexer
@@ -219,11 +221,23 @@ function valuelist() {
     $kt = new KeyTable();
     $list = new ValueList();
 
+    $ptype = new Type();
+    $ptype->fromValue($kt);
+
     $list->pushBack($kt);
 
-    echo "Type is " . $list->getType() . PHP_EOL;
+    echo "Type is " . $ptype->name() . PHP_EOL;
+
     $a = $list->toArray();
     echo "ValueList " . print_r($a,true) . PHP_EOL;
+
+    $list->clear();
+    for($i = 0; $i <= 10; $i++) {
+        $list->pushBack($i);
+    }
+    foreach($list as $idx => $val) {
+        echo "list " . $idx . ": " . $val . PHP_EOL;
+    }
 }
 function routine() {
 	
@@ -283,8 +297,25 @@ function match_integer() {
 
 function parser() {
     $parser = new TomlReader();
-    $parser->parse("ints = [1,2,3]");
-    $parser->parse(" x = _42");
+
+    try {
+        $parser->parse("ints = [1,2,3]");
+        $parser->parse(" x = _42");
+
+    }
+    catch(Exception $ex) {
+        echo $ex->getMessage();
+    }
+    $input = "Zebra = 'stripes'\nLeopard = 'spots'\nMan = 'naked'\nArmidillo = 'scales'";
+
+    $kt = $parser->parse($input);
+    echo print_r($kt->toArray(),true) . PHP_EOL;
+    $isTraversable = ($kt instanceOf \Traversable) ? 1 : 0;
+
+    echo "KeyTable is " . $isTraversable . PHP_EOL;
+    foreach($kt as $key => $value) {
+        echo $key . " : " . $value . PHP_EOL;
+    }
 }
 keytable();
 testMatch();

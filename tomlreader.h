@@ -90,6 +90,8 @@ protected:
 	void valueError(const char* msg, const std::string& value);
 
 	void syntaxError(const std::string& msg);
+	void arrayMatchError(pun::Type spunt, pun::Type punt);
+
 	void  parseComment();
 
 	void  parseKeyValue();
@@ -104,7 +106,7 @@ protected:
 	
 	void parseInlineTable();
 	
-	void parseValue(Php::Value& val);
+	void parseValue(Php::Value& val, pun::Type& punt);
 
 	void parseQString(std::string& val);
 	void parseMLQString(std::string& val);

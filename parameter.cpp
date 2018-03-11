@@ -27,6 +27,86 @@ Undefined       =   0,  // Variable is not set
     ConstantAST     =  12,  // I think an Abstract Syntax tree, not quite sure
 */
 
+const std::string CPunk::datetime_classname = "DateTime";
+
+pun::Type 
+pun::getPunType(Php::Value& val) {
+    auto t = pun::getPunType(val.type());
+    if (t == pun::Type::Object) {
+        if (val.instanceOf(CPunk::keytable_classname)) {
+            return pun::Type::KeyTable;
+        }
+        else if (val.instanceOf(CPunk::valuelist_classname)) {
+            return pun::Type::ValueList;
+        }
+        else if (val.instanceOf(CPunk::datetime_classname)) {
+            return pun::Type::DateTime;
+        }
+    }
+    return t;
+}
+
+pun::Type pun::getPunType(Php::Type t) {
+    switch(t) {
+    case Php::Type::String:
+        return pun::Type::String;
+    case Php::Type::Numeric:
+        return pun::Type::Integer;
+    case Php::Type::Float:
+        return pun::Type::Float;
+    case Php::Type::Array:
+        return pun::Type::Array;
+    case Php::Type::Object:
+        return pun::Type::Object;
+    case Php::Type::False:
+    case Php::Type::True:
+        return pun::Type::Bool;
+    case Php::Type::Null:
+        return pun::Type::Null;
+    case Php::Type::Resource:
+        return pun::Type::Resource;
+    case Php::Type::Reference:
+        return pun::Type::Reference;
+    case Php::Type::Undefined:        
+    default:
+        return pun::Type::Undefined;
+    }
+}
+
+const char* pun::getPunTName(Type t)
+{
+    switch(t) {
+    case pun::Type::String:
+        return "string";
+    case pun::Type::Integer:
+        return "integer";
+    case pun::Type::Float:
+        return "float";
+    case pun::Type::KeyTable:
+        return "table";
+    case pun::Type::ValueList:
+        return "list";
+    case pun::Type::DateTime:
+        return "datetime";
+    case pun::Type::Array:
+        return "array";
+    case pun::Type::Object:
+        return "object";
+    case pun::Type::Bool:
+        return "boolean";
+    case pun::Type::Null:
+        return "null";
+    case pun::Resource:
+        return "resource";
+    case pun::Type::Reference:
+        return "reference";
+    case pun::Type::Undefined:        
+    default:
+        return "undefined";
+    }
+
+}
+
 const char* pun::getTypeName(Php::Type ptype)
 {
     switch(ptype) {
@@ -55,6 +135,7 @@ const char* pun::getTypeName(Php::Type ptype)
     }
 }
 
+
 void pun::hexUniStr8(const std::string& hexval, std::ostream& os)
 {
     char32_t val = (char32_t) strtol(hexval.data(), 0, 16);
@@ -65,6 +146,13 @@ void pun::hexUniStr8(const std::string& hexval, std::ostream& os)
     os << ec8.result;
 }
 
+
+void pun::need_Value(Php::Parameters& param, unsigned int offset)
+{
+    if (param.size() < offset) {
+        throw Php::Exception(missingParameter("Value", offset));
+    }
+}
 
 std::string 
 pun::missingParameter(const char* shouldBe, unsigned int offset)

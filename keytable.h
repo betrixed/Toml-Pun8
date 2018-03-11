@@ -41,8 +41,45 @@
 // Php::Value also has a mapValue() method to return ValueMap
 // string keys are forced by Value.stringValue()
 
+class KT_Iterator : public Php::Iterator {
+	ValueMap &_ref;
+	ValueMap::const_iterator _iter;
+public:
+	KT_Iterator(Php::Base* pobj, ValueMap& mapRef)
+		: Php::Iterator(pobj), _ref(mapRef), _iter(mapRef.begin()) 
+	{
+	}
+
+	virtual ~KT_Iterator() {}
+
+	virtual bool valid() override
+	{
+		return _iter != _ref.end();
+	}
+
+	virtual Php::Value current() override 
+	{
+		return _iter->second;
+	}
+
+	virtual Php::Value key() override
+	{
+		return _iter->first;
+	}
+
+	virtual void next() override
+	{
+		_iter++;
+	}
+
+	virtual void rewind() override
+	{
+		_iter = _ref.begin();
+	}
+};
+
 class KeyTable : public TomlBase, public Php::Countable, 
-				public Php::ArrayAccess//, public Php::Traversable
+				public Php::ArrayAccess, public Php::Traversable
 {
 public:
 	static const char* PHP_NAME;
@@ -66,8 +103,12 @@ public:
 	virtual void offsetSet(const Php::Value &key, const Php::Value &value) override;
 	virtual Php::Value offsetGet(const Php::Value &key) override;
 	virtual void offsetUnset(const Php::Value &key) override;
-	//virtual Php::Iterator *getIterator() override;
-
+	
+	virtual Php::Iterator *getIterator() override 
+	{
+		return new KT_Iterator( this, _store);
+	}
+	void clear() { _store.clear(); } 
 	// Return the Array as stored
 	Php::Value toArray();
 public:
@@ -79,6 +120,8 @@ private:
 	ValueMap _store;
 
 };
+
+const std::string keytable_classname;
 /*
 class KT_Iterator : public Php::Iterator {
 	Php::Array         _array;

@@ -5,7 +5,7 @@
 #include <ostream>
 
 const char* KeyTable::PHP_NAME = "Pun\\KeyTable";
-
+const std::string CPunk::keytable_classname(KeyTable::PHP_NAME);
 
 long KeyTable::count() 
 {
