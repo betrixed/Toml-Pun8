@@ -3,6 +3,7 @@
 #include "valuelist.h"
 #include "parameter.h"
 #include <ostream>
+#include <sstream>
 
 const char* KeyTable::PHP_NAME = "Pun\\KeyTable";
 const std::string CPunk::keytable_classname(KeyTable::PHP_NAME);
@@ -138,4 +139,11 @@ Php::Value KeyTable::toArray()
 		result[ ait->first ] = ait->second;
 	}
 	return result;
+}
+
+Php::Value KeyTable::__toString() {
+	std::stringstream ss;
+
+	ss << "KeyTable [ tag " << _tag << " size " << _store.size() << "]";
+	return ss.str();
 }

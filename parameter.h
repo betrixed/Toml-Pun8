@@ -50,7 +50,7 @@ namespace pun {
      Type getPunType(Php::Type t);
      const char* getPunTName(Type t);
 
-     void hexUniStr8(const std::string& hexval, std::ostream& os);
+     void hexUniStr8(std::string_view hexval, std::ostream& os);
 	 Token8* check_Token8(Php::Parameters& params, unsigned int offset=0);
 	 bool option_Array(Php::Parameters& params, unsigned int offset=0);
      Re8map* check_Re8map(Php::Parameters& params, unsigned int offset=0);

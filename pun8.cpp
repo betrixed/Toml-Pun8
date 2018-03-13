@@ -66,9 +66,9 @@ void Pun8::addOffset(Php::Parameters& params) {
 Php::Value Pun8::peekChar() {
     if (_index < _size) {
         char const* buf = _mystr.data();
-        auto oldIndex = _index;
-        if (ucode8Fore(buf, _size, oldIndex, _myChar)) {
-            return Php::Value(&buf[_index], oldIndex -_index);
+        auto clen = ucode8Fore(buf + _index, _size - _index, _myChar);
+        if (_myChar != INVALID_CHAR) {
+            return Php::Value(&buf[_index], clen);
         }
     }
     return Php::Value(false);
@@ -79,9 +79,9 @@ Php::Value Pun8::peekChar() {
 Php::Value Pun8::nextChar() {
     if (_index < _size) {
         char const* buf = _mystr.data();
-        auto oldIndex = _index;
-        if (ucode8Fore(buf, _size, _index, _myChar)) {
-            return Php::Value(&buf[oldIndex], _index - oldIndex);
+        auto clen = ucode8Fore(buf + _index, _size - _index, _myChar); 
+        if (_myChar != INVALID_CHAR) {
+            return Php::Value(&buf[_index], clen);
         }
     }
     return Php::Value(false);
@@ -255,9 +255,9 @@ int Pun8::fn_peekChar()
 {
     if (_index < _size) {
         char const* buf = _mystr.data();
-        auto oldIndex = _index;
-        if (ucode8Fore(buf, _size, oldIndex, _myChar)) {
-            return oldIndex - _index;;
+        auto chSize = ucode8Fore(buf + _index, _size - _index, _myChar);
+        if (_myChar != INVALID_CHAR) {
+            return chSize;
         }
     }
     return 0;
@@ -295,6 +295,9 @@ std::string& Pun8::str()
     return _mystr;
 }
 
+//* This is the focal point of several
+//* String assigning classes - Token8Stream, TomlReader.
+
 void Pun8::fn_setString(const char* ptr, unsigned int len)
 {
      _index = 0;
@@ -308,6 +311,7 @@ const std::string& Pun8::fn_getValue() const
     return _mystr;
 }
 // return string from current , to just before char c
+// this doesn't check for INVALID_CHAR
 std::string 
 Pun8::fn_beforeChar(char32_t c) const
 {
@@ -315,12 +319,22 @@ Pun8::fn_beforeChar(char32_t c) const
     //auto prev = offset;
     auto bptr = _mystr.data();
     auto test = _myChar;
-    while(test != c && offset < _size) {
+    unsigned int clen = 0;
+    while(test != c) {
         //prev = offset;
-        ucode8Fore(bptr, _size, offset, test );
+        if (offset >= _size) {
+            clen = 0;
+            break;
+        }
+        clen = ucode8Fore(bptr+offset, _size-offset, test );
+        if (test == INVALID_CHAR)
+        {
+            break;
+        }
+        offset += clen;
     }
 
-    return std::string(bptr+_index, offset-_index);
+    return std::string(bptr+_index, offset-_index - clen);
 }
 
 void Pun8::fn_setString(std::string &&m)
@@ -350,3 +364,98 @@ void Pun8::fn_setString(const std::string& s)
         idx++;
     }
  }
+
+Php::Value  Pun8::getTag() const {
+    return _tag;
+}
+
+void  Pun8::setTag(Php::Parameters& param)
+{
+    if ((param.size()< 1)) {
+        throw Php::Exception("setTag: Php Value expected");
+    }
+    _tag = param[0];    
+}
+
+// return BOM for UTF16 as string on this platform
+Php::Value 
+Pun8::bomUTF16()
+{
+    uint16_t bom = 0xFEFF;
+    std::string bomstr( (const char* )&bom, 2);
+    return  Php::Value(std::move(bomstr));
+}
+
+// return BOM for UTF8  as string 
+Php::Value 
+Pun8::bomUTF8()
+{
+    return ("\xEF\xBB\xBF");
+}
+
+// Return PHP string converted to platform UTF16
+Php::Value 
+Pun8::asUTF16()
+{
+    std::string result;
+    toUTF16(_mystr, result);
+    return Php::Value(std::move(result));
+}
+
+Php::Value  Pun8::__toString()
+{
+    std::stringstream ss;
+
+    ss << "Pun8 { tag " << _tag << " text " << str() << " }";
+
+    return ss.str();
+}
+
+void Pun8::erase(Php::Parameters& param)
+{
+    int startPos = pun::check_Int(param,0);
+    int elength = pun::check_Int(param,1);
+
+    if (startPos < 0 || elength < 0 || startPos + elength > (int) _mystr.size())
+    {
+        throw new Php::Exception("erase range outside string limits");
+    }
+    if (elength > 0)
+    {
+        _mystr.erase(startPos, elength);
+    }
+    _index = 0;
+    _size = _mystr.size();
+}
+
+Php::Value 
+Pun8::getBOMId()
+{
+    auto code = getBOMCode(_mystr.data(), _mystr.size());
+    return getBOMName(code);
+}
+
+Php::Value 
+Pun8::ensureUTF8()
+{
+    auto offset = ::ensureUTF8(_mystr);
+    if (offset) {
+        _index = offset;
+    }
+    return (int) offset;
+}
+
+
+// Set artifical end string position, up to actual size.
+void Pun8::setRangeEnd(Php::Parameters& param)
+{
+    auto pos = pun::check_Int(param,0);
+    auto slen = (int) _mystr.size();
+    if (pos > slen) {
+        pos = slen;
+    }
+    else if (pos < 0) {
+        pos = 0;
+    }
+    _size = pos;
+}

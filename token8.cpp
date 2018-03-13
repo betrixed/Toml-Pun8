@@ -47,7 +47,7 @@ Token8::operator=(const Token8 &&m)
 Php::Value 
 Token8::getValue() const
 {
-	return Php::Value(_value);
+	return Php::Value(_value.data(), _value.size());
 }
 
 Php::Value 

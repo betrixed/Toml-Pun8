@@ -4,6 +4,7 @@ This was the main goal of creating all the other bitty classes, whose interfaces
 ##Requirements 
   Linux version only.
 
+  C++          C++17 - std::string_view STL gets used a little, which is marked C++17 "experimental".
   PHP          >= 7.1
   PHP-CPP      2.0.0  for compilation, and shared library installed.
   libpcre2-8   The latest version of the PCRE2 as shared library.
@@ -117,8 +118,10 @@ The cause of going to so much development trouble is to create a TOML parser PHP
 
 A toml-PHP and toml-zephir versions have already been created and have set execution performance to be beaten.
 
-## Classes
-  The classes, so far, in this first version design, are labelled "Pun\\Pun8", "Pun\\IdRex8", "Pun\\Re8map".
+## Lower Classes
+  Various classes have been used to try out lower level functions in the TomlReader.
+   Pun8, IdRex8, Re8map, Token8, Token8Stream, useful in trying out PHP versions of the TOML parser. 
+
 The interface methods are close to the the minimum needed for a Toml parser, because of the time investment required. 
 ### Pun\\Pun8 
 This was created first. It holds a reference to a PHP string, and maintains an absolute offset property. All regular expression matches start at the offset property.
@@ -147,10 +150,37 @@ It also has an internal shared IdRex8 map, and a list of key Ids to direct the f
     setOffset(int $offset);
     addOffset(int $offset); 
 
-  
+  // Return the real buffer size
+  size() : int;
+
+  // The end of range of string marker, is independent of the internal buffer length,
+  // and can be "moved" to end of a match operation range, from 0 to actual buffer size.
+    getRangeEnd() : int;
+
+    setRangeEnd(int $pos);
+
+  // some primative encoding detection and management is available();
+
+  // return a string describing BOM if it exists, such as after assigning file_get_contents();
+    getBOMId() : string;  
+
+    /* Detect BOM or not, convert to UTF8 if necessary.
+     * Throw exception if unknown or unconvertible. 
+     * If UTF8 BOM exists, return offset to first real character (maybe 3, else 0)
+     * No end of line character management.
+     */ 
+    ensureUTF8() : int;  
+
+    /*
+     * Delete a block of characters within the string buffer, collapse the hole.
+     * This resets the offset and rangeEnd properties, even if blockSize is zero.
+     */
+    erase(int $startPos, int $blockSize)
+
   /** 
    * Use the subset of key ids assigned by setIdList, return map index id of first matching PCRE2
    */
+
 
           firstMatch(Recap8 $captures) : int;
 
@@ -200,6 +230,14 @@ It also has an internal shared IdRex8 map, and a list of key Ids to direct the f
 
   // Set the current internal map, from a sharing Map object
           setRe8map(Re8map $map);
+/* 
+ * This is such a big investment class, the Tag association property is now thrown in.
+ */
+
+  // Set a general use "Tag" property
+        setTag($tag);
+  // Get the "Tag" property
+        getTag() : mixed;
  
 ```
 ### Pun\\IdRex8

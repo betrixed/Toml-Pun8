@@ -77,6 +77,10 @@ public:
 
 	Php::Value getTag() const;
 	void setTag(Php::Parameters& param);
+
+	Php::Value __toString();
+	
+
 public:
 	void fn_pushBack(Php::Value& vtype);
 	int fn_endIndex() override;

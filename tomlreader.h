@@ -7,6 +7,8 @@
 #include "token8.h"
 #include "pun8.h"
 
+#include <vector>
+
 // globals for TomlReader, shareable, for a static class member.
 
 class Rex : public Php::Base {
@@ -19,20 +21,20 @@ public:
 		Bool,
 		DateTime,
 		EOS,
-		Integer,
+		Integer, //5
 		Quote3,
 		Quote1,
 		Apost3,
 		Apost1,
-		Newline,
+		Newline, // 10
 		Space,
-		LSquare,
+		LSquare, //12
 		RSquare,
 		LCurly,
 		RCurly,
 		Comma,
 		Dot,
-		BareKey,
+		BareKey, // 18
 		EscapedChar,
 		Escape,
 		NoEscape,
@@ -95,10 +97,9 @@ protected:
 	void  parseComment();
 
 	void  parseKeyValue();
-	int  parseTablePath();
-	int  finishLine();
+	void  parseTablePath();
 
-	void parseObjectPath();
+	int  finishLine();
 	
 	void parseKeyName(std::string& name);
 	
@@ -122,9 +123,9 @@ protected:
 	void parseFloat(Php::Value& val, Pcre8_match& matches);
 	void parseFloatExp(Php::Value& val);
 	void parseInteger(std::string& val);
+
+	int fn_getExpSetId() const { return _expSetId; }
 private:
-	friend class RestoreTokenValue;
-	void restoreTokenValue();
 	
 	unsigned int checkBOM(const char* sptr, unsigned int slen);
 	enum {

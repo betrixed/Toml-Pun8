@@ -2,6 +2,7 @@
 #define _H_TOKEN
 
 #include <phpcpp.h>
+#include <string_view>
 
 class Token8: public Php::Base {
 public:
@@ -21,10 +22,10 @@ public:
     Php::Value getLine() const;
     Php::Value isSingle() const;
 
-	std::string		_value;
-	int				_id;
-	int    			_line;
-	bool			_isSingle;
+	std::string_view _value; // view of original source string
+	int				 _id;
+	int    			 _line;
+	bool			 _isSingle;
 };
 
 #endif

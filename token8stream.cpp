@@ -33,7 +33,7 @@ void Token8Stream::checkLineFeed(Token8* token)
 	if (_input._myChar == 10) {
 		_flagLF = true;
 		token->_id = _eolId;
-		token->_value.clear();
+		token->_value = std::string_view();
 		token->_line = _tokenLine;
 		token->_isSingle = true;
 		return;
@@ -44,7 +44,7 @@ void Token8Stream::checkLineFeed(Token8* token)
 unsigned char    
 Token8Stream::fn_peekByte() const
 {
-	if (_input._mystr.size() > _input._index)
+	if (_input._size > _input._index)
 	{
 		return (unsigned char) _input._mystr[_input._index];
 	}
@@ -53,7 +53,7 @@ Token8Stream::fn_peekByte() const
 
 unsigned int  Token8Stream::fn_size() const
 {
-	return _input._mystr.size();
+	return _input._size;
 }
 
 const char*      
@@ -80,7 +80,7 @@ void Token8Stream::fn_peekToken(Token8* token) {
 	auto nextCt = _input.fn_peekChar();
 	if (nextCt==0) {
 		token->_id = _eosId;
-		token->_value.clear();
+		token->_value = std::string_view();
 		token->_line = _tokenLine;
 		token->_isSingle = true;
 	}
@@ -90,7 +90,7 @@ void Token8Stream::fn_peekToken(Token8* token) {
 	else {
 		token->_line = _tokenLine;
 		const char* ccptr = _input._mystr.data();
-		token->_value.assign(ccptr + _input._index, nextCt);
+		token->_value = std::string_view(ccptr + _input._index, nextCt);
 		token->_isSingle = false;
 		if (nextCt == 1) {
 			auto cmap = _singles.get();
@@ -150,7 +150,7 @@ int  Token8Stream::fn_moveNextId() {
 	//Php::out << "peekChar " << nextCt << std::endl;
 	if (nextCt==0) {
 		_token._id = _eosId;
-		_token._value.clear();
+		_token._value = std::string_view();
 		_token._isSingle = true;
 	}
 	else if (_input._myChar < 20) {
@@ -162,14 +162,14 @@ int  Token8Stream::fn_moveNextId() {
 		auto matchId = _input.fn_firstMatch(_caps);
 		if (_caps._slist.size() > 1) {
 			_token._id = _caps._rcode;
-			_token._value = _caps._slist[1];
+			_token._value = _caps.capture(1);
 			_token._isSingle = false;
 			auto advance = _caps._slist[0].size();
 
-			/* Php::out << std::endl << "0: " << _caps._slist[0] << std::endl;
-			Php::out << "1: " << _caps._slist[1] << std::endl;
-			Php::out << "size " << advance << std::endl;
-			Php::out.flush(); */
+			//Php::out << std::endl << "0: " << _caps._slist[0] << std::endl;
+			//Php::out << "1: " << _caps._slist[1] << std::endl;
+			//Php::out << "size " << advance << std::endl;
+			//Php::out.flush(); 
 			_input._index += advance;
 		}
 		else {			// no capture, 
@@ -177,7 +177,7 @@ int  Token8Stream::fn_moveNextId() {
 				throw Php::Exception("Match Id without 2 captures");
 			}
 			const char* ccptr = _input._mystr.data();
-			_token._value.assign(ccptr + _input._index, nextCt);
+			_token._value = std::string_view(ccptr + _input._index, nextCt);
 			_input._index += nextCt;
 
 			_token._isSingle = false;
@@ -219,7 +219,7 @@ Php::Value Token8Stream::moveRegex(Php::Parameters& params)
     bool result = false;
     auto code = _input.matchSP(sp, _caps);
     if (code != 0 && _caps._slist.size() > 1) {
-    	_token._value = _caps._slist[1];
+    	_token._value = _caps.capture(1);
     	auto advance = _caps._slist[0].size();
     	_input._index += advance;
     	_token._id = _unknownId;
@@ -239,7 +239,7 @@ bool Token8Stream::fn_moveRegId(int id)
     bool result = false;
     auto code = _input.matchSP(sp, _caps);
     if (code != 0 && _caps._slist.size() > 1) {
-    	_token._value = _caps._slist[1];
+    	_token._value = _caps.capture(1);
     	auto advance = _caps._slist[0].size();
     	_input._index += advance;
     	_token._id = _unknownId;
@@ -351,15 +351,10 @@ Php::Value Token8Stream::hasPendingTokens() const
 }
 
 
-std::string& 
+std::string_view
 Token8Stream::fn_getValue()
 {
 	return _token._value;
-}
-
-void Token8Stream::fn_restoreValue(std::string &&m)
-{
-	_token._value = std::move(m);
 }
 
 void Token8Stream::fn_setSingles(CharMap_sp& sp)
@@ -393,7 +388,7 @@ Php::Value Token8Stream::getLine() const
 
 Php::Value Token8Stream::getValue() const
 {
-	return Php::Value(_token._value);
+	return Php::Value(_token._value.data(), _token._value.size());
 }
 
 Php::Value Token8Stream::getId() const

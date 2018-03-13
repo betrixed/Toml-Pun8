@@ -107,3 +107,9 @@ int ValueList::fn_endIndex() {
 	return (int) _store.size() - 1;
 }
 
+Php::Value ValueList::__toString() {
+	std::stringstream ss;
+
+	ss << "ValueList [ tag " << _tag << " size " << _store.size() << "]";
+	return ss.str();
+}

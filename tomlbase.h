@@ -10,6 +10,8 @@ public:
 	bool		_objAOT;  // ValueList for Array of Tables
 	bool		_implicit; // Implicity created by Toml Path, not yet used as KeyTable
 
+	Php::Value __toString();
+	
 	PathTag() : _objAOT(false), _implicit(true) {
 
 	}

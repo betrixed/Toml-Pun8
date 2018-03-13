@@ -111,6 +111,10 @@ public:
 	void clear() { _store.clear(); } 
 	// Return the Array as stored
 	Php::Value toArray();
+
+	Php::Value __toString();
+	
+
 public:
 	void fn_setKV(std::string& key, Php::Value &val);
 	Php::Value fn_getV(std::string& key);

@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <vector>
 #include <memory>
+#include <string_view>
 
 typedef std::vector<std::string> StringList;
 typedef std::vector<int>  IdList;
@@ -16,6 +17,11 @@ public:
     int         _rcode;
     Pcre8_match();
     
+    std::string_view capture(unsigned int i) const {
+        const std::string& cap = _slist[i];
+        return std::string_view(cap.data(), cap.size());
+    }
+
     Pcre8_match(const Pcre8_match &m);
     Pcre8_match &operator=(const Pcre8_match &m);
 

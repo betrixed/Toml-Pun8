@@ -112,10 +112,8 @@ public:
     void     fn_acceptToken(Token8* token);
     void     fn_setSingles(CharMap_sp& sp);
     Token8*  fn_getToken(Token8 &token);
-    std::string& fn_getValue(); 
-    void     fn_restoreValue(std::string&& m);
+    std::string_view fn_getValue(); 
 
-    
 private:
 
 	void			checkLineFeed(Token8* token);

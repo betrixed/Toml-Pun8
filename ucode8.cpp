@@ -8,87 +8,108 @@
 */
 #include "ucode8.h"
 
+#include <sstream>
 
+#include <phpcpp.h> // for the exception
 
-bool ucode8Fore(
+const TestEndian MyEndian;
+
+/**
+ * char const*  cpt      pointer to first character to consume
+ * unsigned int  slen    offset of EOS from cpt
+ * char32_t&     uc      next unicode character number returned, or INVALID_CHAR
+ * @return unsigned int  number of base character units consumed
+ */
+
+unsigned int
+    ucode8Fore(
 	char const* cpt, 
 	unsigned int slen, 
-	unsigned int& ix, 
-	char32_t& d)
+	char32_t& uc)
 {            
-    if (!cpt)
-        return false;
+    if (!cpt || slen == 0) {
+        uc = INVALID_CHAR;
+        return 0;
+    }
     const unsigned char* pa = reinterpret_cast<unsigned char const*>(cpt);
 
-    unsigned int k = ix;
+    unsigned int k = 0;
     if (k >= slen)
-        return false;
+        return 0;
     unsigned char temp = pa[k++];
     char32_t test = temp;
 
 
     if (test < 0x80)
     {
-        ix = k;
-        d = test; //1
-        return true;
+        uc = test; //1
+        return k;
     }
             
     if (test < 0xC2)
-        return false;
+        return k;
                 
     if (test < 0xE0)
     {
-        if (k >= slen)
-            return false;
-        temp = pa[k++];
-        d = ((test & 0x1F) << 6) + (temp & 0x3F);//2
-        ix = k;
+        if (k >= slen) {
+            uc = INVALID_CHAR;
+            return k;
 
-        return true;
+        }
+        temp = pa[k++];
+        uc = ((test & 0x1F) << 6) + (temp & 0x3F);//2
+        return k;
     }
     else if (test < 0xF0)
     {
-        if (k >= slen)
-            return false;
+        if (k >= slen) {
+            uc = INVALID_CHAR;
+            return k;
+        }
         temp = pa[k++];
         test = ((test & 0x0F) << 6) + (temp & 0x3F);//2
         if (k >= slen)
         {
-            return false;
+            uc = INVALID_CHAR;
+            return k;
         }
 
         temp = pa[k++];
-        d = (test << 6) + (temp & 0x3F);//3
-        ix = k;
-        return true;
+        uc = (test << 6) + (temp & 0x3F);//3
+        return k;
     }
     else if (test < 0xF5) // reach to 140000
     {
-        if (k >= slen)
-            return false;
+        if (k >= slen) {
+            uc = INVALID_CHAR;
+            return k;
+        }
         temp = pa[k++];
 
         test = ((test & 0x07) << 6) + (temp & 0x3F);//2
         if (k >= slen) {
-            return false;
+            uc = INVALID_CHAR;
+            return k;
         }
         temp = pa[k++];
         test = (test << 6) + (temp & 0x3F);//3
         if (k >= slen) {
-            return false;
+            uc = INVALID_CHAR;
+            return k;
         }
         temp = pa[k++];
         test = (test << 6) + (temp & 0x3F);//4
         if (test > 0x10FFFF) {
-            return false;
+            uc = INVALID_CHAR;
+            return k;
         }
-        d = test;
-        ix = k;
-        return true;
+        uc = test;
+        return k;
     }
-    else
-        return false;
+    else {
+        uc = INVALID_CHAR;
+        return k;
+    }
 }
 
 
@@ -140,6 +161,7 @@ EncodeUTF8::encode(char32_t d)
         return 4;
     }
 }
+
 
 BOM_CODE getBOMCode(const char* sptr, unsigned int slen)
 {
@@ -225,4 +247,214 @@ const char* getBOMName(BOM_CODE code)
     default:
         return "Unknown BOM";
     }
+}
+
+/**
+ * char16_t const* cp      pointer to first character to consume
+ * unsigned int    slen    offset of EOS from cpt
+ * char32_t&   uc           next unicode character number returned, or INVALID_CHAR
+ * @return unsigned int      number of base character units consumed
+ */
+unsigned int
+ucode16Fore(char16_t const* cp, unsigned int slen, char32_t& uc)
+{
+
+    if (!cp || slen == 0) {
+        uc = INVALID_CHAR;
+        return 0;
+    }
+    unsigned int k = 0;
+    unsigned short const* pa = reinterpret_cast<unsigned short const*>(cp);
+    const char32_t test = pa[k++];
+
+    if (test >= 0xD800)
+    {
+        if (test >= 0xDC00)
+        {
+            if (test < 0xE000) {
+                uc = INVALID_CHAR;
+                return k; // second pair member first
+            }
+        }
+        else {
+            // first character of surrogate
+            if (k >= slen) {
+                uc = INVALID_CHAR;
+                return k; // unpaired first member at end
+            }
+            const char32_t test2 = pa[k++];
+            if (test2 < 0xDC00 || test2 > 0xDFFF) {
+                // second pair member out of range
+                uc = INVALID_CHAR;
+                return k;
+            }
+            uc = ((test - 0xD7C0) << 10) + (test2 - 0xDC00);
+            return k;
+        }
+    }
+    uc = test;
+    return k;
+}
+
+// convert same-endian UTF-16 to UTF8
+// return false if a INVALID_CHAR error happens before buffer consumed
+// All valid characters before INVALID_CHAR or EOS returned in 
+// output
+// 
+bool convertUTF16(char16_t* cp, unsigned int slen, std::string& output)
+{
+    std::stringstream ss;
+
+    char32_t     uc = INVALID_CHAR;
+    char16_t*    pu16 = cp;
+    EncodeUTF8   toUTF8;
+
+    output.clear();
+    bool    result = true;
+
+    while (slen) {
+        auto offset = ucode16Fore(pu16, slen, uc);
+        if (uc != INVALID_CHAR) {
+            toUTF8.encode(uc);
+            ss << toUTF8.result;
+        }
+        else {
+            result = false;
+            break;
+        }
+        pu16 += offset;
+        slen = (slen >= offset) ? slen - offset : 0;
+    }
+    output = std::move(ss.str());
+    return result;
+}
+
+void swap16buffer(char16_t* cp, unsigned int wlen)
+{
+    auto wp = reinterpret_cast<uint16_t*> (cp);
+
+    for(unsigned int i = 0 ; i < wlen; i++, wp++)
+    {
+        *wp = ((*wp & 0xff) << 8) | ((*wp & 0xff00) >> 8);
+    }
+}
+
+
+unsigned int 
+ensureUTF8(std::string& input)
+{
+    char* sptr = (char*)(input.data());
+    auto slen = input.size();
+
+    auto bomCode = getBOMCode(sptr,slen);
+    if (bomCode == BOM_CODE::UTF_8) {
+        return 3;
+    }
+    else if (bomCode == BOM_CODE::UTF_16LE) {
+        auto cp = (char16_t*)(input.data());
+        auto wlen = input.size() / 2;
+        // no check for odd size?
+        cp += 1; // skip BOM
+        wlen -= 1;
+        if (MyEndian.isBigEnd()) {
+            // need to have even number of bytes, swap them 
+            // als
+            swap16buffer(cp, wlen);
+        }
+        std::string inPun8;
+        bool result = convertUTF16(cp, wlen, inPun8);
+        if (!result) {
+            throw Php::Exception("Conversion failed from UTF-16LE to UTF-8");
+        }
+        input.clear();
+        input = std::move(inPun8);
+        return 0;
+    }
+    else if (bomCode == BOM_CODE::UTF_16BE) {
+        auto cp =  (char16_t*)(input.data());
+        auto wlen = input.size() / 2;
+        // no check for odd size?
+        cp += 1; // skip BOM
+        wlen -= 1;
+        if (!MyEndian.isBigEnd()) {
+            // need to have even number of bytes, swap them 
+            // als
+            swap16buffer(cp, wlen);
+        }
+        std::string inPun8;
+        bool result = convertUTF16(cp, wlen, inPun8);
+        if (!result) {
+            throw Php::Exception("Conversion failed from UTF-16BE to UTF-8");
+        }
+        input.clear();
+        input = std::move(inPun8);
+        return 0;
+    }
+    else if (bomCode != BOM_CODE::NO_BOM) {
+        std::stringstream ss;
+        ss << "Unhandled BOM type: " << getBOMName(bomCode);
+        throw Php::Exception(ss.str()); 
+    }
+    return 0;
+}
+
+
+unsigned int 
+EncodeUTF16::encode(const char32_t d)
+{
+    if (d < 0xD800)
+    {
+        result[0] = d;
+        return 1;
+    }
+    if (d >= 0x10000)
+    {
+        // turn into pair ?
+        const unsigned int paired = d - 0x10000;
+        
+        result[0] = (paired >> 10) + 0xD800;
+        result[1] = (paired & 0x3FF) + 0xDC00;
+        return 2;
+    }
+    else if (d >= 0xE000)
+    {
+        result[0] = d;
+        return 1;
+    }
+    return 0; // TODO: exception, not a valid unicode character
+}
+
+
+int 
+toUTF16(const std::string& input, std::string& output)
+{
+    const char* cp = input.data();
+    unsigned int slen = input.size();
+
+    unsigned int clen = 0;
+    unsigned int wlen = 0;
+
+    unsigned int i = 0;
+    unsigned int wix = 0;
+    char32_t    test;
+    std::string result;
+
+    EncodeUTF16 enc16;
+    result.reserve(input.size()*2); // likely to double in size
+
+    while (i < slen) {
+        clen = ucode8Fore(cp + i, slen-i, test);
+        if (test == INVALID_CHAR) {
+            throw Php::Exception("Invalid character in UTF8 string"); 
+        }
+        wlen = enc16.encode(test);
+        wix = 0;
+        while (wix < wlen) {
+            result.append((const char*) &enc16.result[wix], 2);
+            wix++;
+        }
+        i += clen;
+    }
+    output = std::move(result);
+    return output.size();
 }

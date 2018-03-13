@@ -28,6 +28,10 @@ public:
 	//Php::Value getClass() const;
 	Php::Value name() const;
 
+	Php::Value __toString()  {
+		return name();
+	}
+
 	void fn_fromValue(Php::Value& val);
 	
 

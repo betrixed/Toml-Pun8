@@ -10,6 +10,7 @@
 #include <fstream>
 #include <limits>
 #include <algorithm>
+#include <cstdint>
 
 
 const char* TomlReader::PHP_NAME = "Pun\\TomlReader";
@@ -48,6 +49,8 @@ const char* const cFloat_E = "([^\\d]_[^\\d])|_[eE]|[eE]_|(_$)";
 	std::mutex mutexRexGlobal;
 
 #endif
+
+
 
 Rex* Rex::_globalRex;
 
@@ -147,14 +150,16 @@ TomlReader::getTomlVersion()
 
 Php::Value TomlReader::parseFile(Php::Parameters& param)
 {
+
 	pun::check_String(param,0);
 	std::string path = param[0];
-	std::stringstream ss;
-	ss << std::ifstream(path).rdbuf();
 
-	std::string content = ss.str();
+	std::ifstream in(path, std::ios::binary);
+	
+	std::string contents{std::istreambuf_iterator<char>{in}, {}};
+
 	auto parser = new TomlReader();
-	return parser->parseStr(std::move(content));
+	return parser->parseStr(std::move(contents));
 }
 
 TomlReader::TomlReader() : 
@@ -220,20 +225,10 @@ void TomlReader::setExpSet(int id)
 	}
 }
 
+//* try to ensure entire input is UTF-8, convert, rewrite as necessary.
+//* if original UTF-8 with BOM, leave BOM in place, return offset.
 
-unsigned int TomlReader::checkBOM(const char* sptr, unsigned int slen)
-{
-	auto bomCode = getBOMCode(sptr,slen);
-	if (bomCode == BOM_CODE::UTF_8) {
-		return 3;
-	}
-	else if (bomCode != BOM_CODE::NO_BOM) {
-		std::stringstream ss;
-		ss << "Unhandled BOM type: " << getBOMName(bomCode);
-		throw Php::Exception(ss.str()); 
-	}
-	return 0;
-}
+
 
 Php::Value TomlReader::parse(Php::Parameters &param)
 {
@@ -243,10 +238,18 @@ Php::Value TomlReader::parse(Php::Parameters &param)
 	std::string content(sptr, slen);
 	return parseStr(std::move(content));
 }
+
+
 Php::Value TomlReader::parseStr(std::string &&m)
 {
 	try {
-		_ts->setString(std::move(m));
+	// this would be a good place to check input encoding,
+	// and re-encode as UTF-8 if necessary
+		std::string stage_input(std::move(m));
+
+		auto offset = ensureUTF8(stage_input);
+
+		_ts->setString(std::move(stage_input));
 		_root = new KeyTable();
 		_v_root = Php::Object(KeyTable::PHP_NAME, _root);
 		_table  = _root;
@@ -254,17 +257,17 @@ Php::Value TomlReader::parseStr(std::string &&m)
 		// check for UTF-8, UTF-16, UTF-32 start BOM characters
 		
 
-		auto offset = checkBOM(_ts->fn_data(), _ts->fn_size());
+		
 		if (offset > 0) {
 			_ts->fn_addOffset(offset);
 		}
 		
 		auto tokenId = _ts->fn_moveNextId();
-		//unsigned int loopct = 0;
+		unsigned int loopct = 0;
 		while (tokenId != Rex::EOS)
 		{
-			//loopct++;
-			//Php::out << loopct << ": " << _ts->fn_beforeChar(10) << std::endl;
+			loopct++;
+			//Php::out << loopct << ": " << _ts->fn_beforeChar(10) << " ExpSet " << fn_getExpSetId() << std::endl;
 			//Php::out << "id: " << tokenId <<  " pos: " <<  _ts->fn_getOffset() << std::endl;
 			switch(tokenId)
 			{
@@ -284,7 +287,8 @@ Php::Value TomlReader::parseStr(std::string &&m)
 				tokenId = finishLine();
 				break;
 			case Rex::LSquare:
-				tokenId = parseTablePath();
+				parseTablePath();
+				tokenId = finishLine();
 				break;
 			default:
 				syntaxError("Expect Key = , [Path] or # Comment");
@@ -329,11 +333,13 @@ void  TomlReader::parseComment()
 }
 
 int TomlReader::finishLine() {
+	// Php::out << "Finish pos: " <<  _ts->fn_getOffset() << std::endl;
 	_ts->fn_moveRegId(Rex::HashComment);
 	int result = _ts->fn_moveNextId();
 	if (result != Rex::Newline && result != Rex::EOS) {
 		syntaxError("Expected NEWLINE or EOS");
 	}
+	// Php::out << "Line end pos: " <<  _ts->fn_getOffset() << " " << _ts->fn_getValue() << std::endl;
 	return result;
 }
 
@@ -418,7 +424,7 @@ void TomlReader::parseLitString(std::string& val)
 
 void  TomlReader::parseEscChar(std::ostream& os)
 {
-	const std::string& sval = _ts->fn_getValue();
+	std::string_view sval = _ts->fn_getValue();
 
 	//Php::out << "parseEscChar len " << sval.size() << ": " << sval << std::endl;
 	char val = sval.at(1);
@@ -515,6 +521,7 @@ void  TomlReader::parseKeyValue()
 			ValueList* vlist = new ValueList();
 			rhsValue = Php::Object(ValueList::PHP_NAME, vlist);
 			parseArray(vlist);		
+			//Php::out << "End parse Array" << std::endl;
 	}
 	else if (_token._id == Rex::LCurly) {
 		_ts->fn_acceptToken(&_token);
@@ -529,8 +536,9 @@ void  TomlReader::parseKeyValue()
 		pun::Type punt; // anything goes here
 		parseValue(rhsValue, punt);
 	}
-	//Php::out << "Set " << keyName << " value " << rhsValue.debugZval() << std::endl;
+	
 	_table->fn_setKV(keyName, rhsValue);
+	//Php::out << "Set " << keyName << " value " << rhsValue.debugZval() << std::endl;
 }
 
 void TomlReader::arrayMatchError(pun::Type spunt, pun::Type punt)
@@ -594,6 +602,7 @@ void TomlReader::parseArray(ValueList *vlist)
 			vlist->fn_pushBack(subArray);
 			vlist->fn_setTag(Php::Value(pun::ValueList));
 			parseArray(subList);
+
 		}
 		else {
 			Php::Value val;
@@ -643,6 +652,7 @@ void TomlReader::parseArray(ValueList *vlist)
 				_ts->fn_peekToken(&_token);
 				break;
 			case Rex::RSquare:
+				//Php::out << "End of Array" << std::endl;
 				_ts->fn_acceptToken(&_token);
 			default:
 				doLoop = false;
@@ -693,19 +703,6 @@ void TomlReader::fn_checkFullMatch(const std::string& target, const std::string&
 	}
 }
 
-struct RestoreTokenValue {
-	TomlReader* tr;
-	RestoreTokenValue(TomlReader *me) : tr(me) {}
-	~RestoreTokenValue() {
-		tr->restoreTokenValue();
-	}
-};
-
-void 
-TomlReader::restoreTokenValue()
-{
-	_ts->fn_restoreValue(std::move(_valueText.str()));
-}
 // assume peekToken as just occurred, return value in val.
 void TomlReader::parseValue(Php::Value& val, pun::Type& punt)
 {
@@ -747,9 +744,9 @@ void TomlReader::parseValue(Php::Value& val, pun::Type& punt)
 		syntaxError("No value after = ");
 	}
 	else {
-		_valueText.fn_setString(std::move(_ts->fn_getValue()));
+		std::string_view temp = _ts->fn_getValue();
 
-		RestoreTokenValue restorer(this);
+		_valueText.fn_setString(temp.data(), temp.size());
 
 		Pcre8_match matches;
 
@@ -959,7 +956,7 @@ static KeyTable* sfn_pushNewTable(ValueList* vlist) {
 	return result;
 }
 
-void TomlReader::parseObjectPath()
+void TomlReader::parseTablePath()
 {
 	std::string partName;
 	bool isAOT = false;
@@ -1121,11 +1118,6 @@ void TomlReader::parseObjectPath()
 		tag->_implicit = false; // end of path cannot be implicit
 	}
 	_table = pObj;
+	//Php::out << "New table path is " << sfn_makePath(parts, true) << std::endl;
 }
 
-int  TomlReader::parseTablePath()
-{
-	parseObjectPath();
-
-	return finishLine();
-}

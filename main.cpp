@@ -64,7 +64,16 @@ PHPCPP_EXPORT void *get_module()
     punic.method<&Pun8::getOffset> ("getOffset");
     punic.method<&Pun8::setOffset> ("setOffset");
     punic.method<&Pun8::addOffset> ("addOffset");
+    // Can manage the end of range marker
+    punic.method<&Pun8::size> ("size");
+    punic.method<&Pun8::getRangeEnd> ("getRangeEnd");
+    punic.method<&Pun8::setRangeEnd> ("setRangeEnd");
 
+    // conversion to utf16, BOM strings
+    punic.method<&Pun8::bomUTF16> ("bomUTF16");
+    punic.method<&Pun8::bomUTF8> ("bomUTF8");
+    punic.method<&Pun8::asUTF16> ("asUTF16");
+    
     extension.add(std::move(punic));
  
     Php::Class<Pcre8> preg(Pcre8::PHP_NAME);

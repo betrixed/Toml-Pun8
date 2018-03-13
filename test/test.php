@@ -12,6 +12,10 @@ use Pun\Type;
 
 use Pun\TomlReader;
 
+/** A bunch of undisciplined adhoc tests
+    of some things that went wrong sometime.
+ */
+
 class Lexer
 {
 
@@ -263,18 +267,24 @@ function routine() {
 function reader_0() {
     $rdr = new TomlReader();
 }
+
+function testmix()
+{
+    return <<<toml
+    t = true
+    f = false
+    [table]
+    string = "Escape Me \\u03B4"
+toml;
+}
+
 function reader()
 {
     $a = [ 't' => true, 'f' => false];
     echo "Target result " . print_r($a) . PHP_EOL;
     $rdr = new TomlReader();
 
-    $input = <<<toml
-    t = true
-    f = false
-    [table]
-    string = "Escape Me \\u03B4"
-toml;
+    $input = testmix();
 
     $result = $rdr->parse($input);
 
@@ -301,7 +311,6 @@ function parser() {
     try {
         $parser->parse("ints = [1,2,3]");
         $parser->parse(" x = _42");
-
     }
     catch(Exception $ex) {
         echo $ex->getMessage();
@@ -337,6 +346,22 @@ $endMem = memory_get_usage();
 $memInc +=  ($endMem - $startMem);
 echo "*** Memory Inc  = " . $memInc . PHP_EOL;
 
+function utf16() {
+    $pun = new Pun8(testmix());
+    $filename = "TestUTF16-TextToml.toml";
+    $output = $pun->bomUTF16() . $pun->asUTF16();
+    echo "Output " . $filename . PHP_EOL;
+
+    file_put_contents($filename, $output);
+
+    $parser = new TomlReader();
+    $readback = $parser->parse(file_get_contents($filename));
+    foreach($readback as $key => $value) {
+        echo $key . " : " . $value . PHP_EOL;
+    }
+}
+
+utf16();
 keytable();
 valuelist();
 reader_0();

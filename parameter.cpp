@@ -136,7 +136,7 @@ const char* pun::getTypeName(Php::Type ptype)
 }
 
 
-void pun::hexUniStr8(const std::string& hexval, std::ostream& os)
+void pun::hexUniStr8(std::string_view hexval, std::ostream& os)
 {
     char32_t val = (char32_t) strtol(hexval.data(), 0, 16);
     EncodeUTF8 ec8;

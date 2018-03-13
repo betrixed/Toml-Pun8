@@ -4,6 +4,15 @@ const char* PathTag::PHP_NAME = "Pun\\PathTag";
 
 const char* TomlBase::PHP_NAME = "Pun\\TomlBase";
 
+Php::Value PathTag::__toString()
+{
+	std::string txt = "PathTag(" + std::to_string((int) _objAOT) 
+		+ "," + std::to_string((int) _implicit) + ")";
+
+
+	return Php::Value(std::move(txt));
+}
+
 Php::Value TomlBase::getTag() const
 {
 	return _tag;

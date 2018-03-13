@@ -4,6 +4,7 @@
 #include <phpcpp.h>
 #include "pcre8_imp.h"
 
+#include "tomlbase.h"
 // look ahead
 class Pcre8;
 class Re8map;
@@ -11,7 +12,7 @@ class Recap8;
 class Token8;
 
 // this requires at least C++11 , to mandate std::string contiguous storage and data(), c_str() equivalance.
-class Pun8 : public Php::Base {
+class Pun8 : public TomlBase {
 public:
     static const char* PHP_NAME;
 
@@ -59,6 +60,15 @@ public:
     // add increment to the current byte offset
     void addOffset(Php::Parameters& params);
 
+    // size of character buffer
+    Php::Value  size() const { return (int) _mystr.size(); }
+    
+    // Get current artifical end position, within actual end.
+    Php::Value  getRangeEnd() const { return (int) _size; }
+
+    // Set artifical end string position, up to actual size.
+    void setRangeEnd(Php::Parameters& params);
+
     // Fetch next character, update "Code" value and move the byte offset
     Php::Value nextChar();
 
@@ -71,6 +81,33 @@ public:
     // return array of ordered map id's
     Php::Value getIdList(); 
 
+    // return BOM as string for UTF16 on this platform
+    Php::Value bomUTF16();
+
+    // return BOM as string for UTF8 
+    Php::Value bomUTF8();
+
+    // Return PHP string converted to platform UTF16, no BOM
+    Php::Value asUTF16();
+
+    Php::Value getTag() const;
+    void setTag(Php::Parameters& param);
+
+    Php::Value __toString();
+
+    // See if String holds a BOM, return a "BOM-name" or empty string
+    Php::Value getBOMId();
+
+    // convert if none UTF8 contents to UTF8. 
+    // Return false if cannot convert
+    // Regular expression and traversal functions only work with UTF8.
+    // Return an offset to first none BOM, if a UTF8 BOM exists.
+    Php::Value ensureUTF8(); 
+
+    // erase block of characters, given start offset, and length.
+    // packs string, and moves up characters to fill in missing block
+    // Resets offset to 0, and rangeEnd to string size
+    void erase(Php::Parameters& param);
 public:
     int fn_peekChar();
     int fn_firstMatch(Pcre8_match& matches);
