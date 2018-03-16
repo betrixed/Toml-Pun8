@@ -7,6 +7,8 @@
 
 #include <sstream>
 
+using namespace pun;
+
 const char* Re8map::PHP_NAME = "Pun\\Re8map";
 
 Re8map::Re8map()

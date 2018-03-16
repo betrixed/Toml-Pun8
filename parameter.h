@@ -12,13 +12,6 @@
 
 #include <ostream>
 
-class Re8map;
-class Recap8;
-class Pcre8;
-class Token8;
-class KeyTable;
-class ValueList;
-class Token8Stream;
 
 
 struct CPunk {
@@ -29,44 +22,62 @@ struct CPunk {
 
 namespace pun {
 
-     enum Type {
-          Null,
-          Bool,
-          Integer,
-          Float,
-          String,
-          DateTime,
-          ValueList,
-          KeyTable,
-          Array,
-          Object,
-          Resource,
-          Reference,
-          Undefined,
+     class Re8map;
+     class Recap8;
+     class Token8;
+     class Pcre8;
+
+     enum Pype {
+          tNull,
+          tBool,
+          tInteger,
+          tFloat,
+          tString,
+          tDateTime,
+          tValueList,
+          tKeyTable,
+          tArray,
+          tObject,
+          tResource,
+          tReference,
+          tUndefined,
      };
 
-     Type getPunType(Php::Value& val);
+     Pype getPype(Php::Value& val);
 
-     Type getPunType(Php::Type t);
-     const char* getPunTName(Type t);
+     Pype getPype(Php::Type t);
+     const char* getPypeId(Pype t);
 
-     void hexUniStr8(std::string_view hexval, std::ostream& os);
-	 Token8* check_Token8(Php::Parameters& params, unsigned int offset=0);
-	 bool option_Array(Php::Parameters& params, unsigned int offset=0);
+
+     Pcre8* check_Pcre8(Php::Parameters& params,unsigned int offset=0);
+     Token8* check_Token8(Php::Parameters& params, unsigned int offset=0);
      Re8map* check_Re8map(Php::Parameters& params, unsigned int offset=0);
      Recap8* option_Recap8(Php::Parameters& params, unsigned int offset=0);
+
+     void hexUniStr8(std::string_view hexval, std::ostream& os);
+	
+	bool option_Array(Php::Parameters& params, unsigned int offset=0);
+
      const char* getTypeName(Php::Type);
-     Pcre8* check_Pcre8(Php::Parameters& params,unsigned int offset=0);
+
      int check_IntString(Php::Parameters& params);
      void need_Value(Php::Parameters& params,unsigned int offset=0);
 
      bool check_String(Php::Parameters& params,unsigned int offset = 0);
      int check_Int(Php::Parameters& params,unsigned int offset = 0);
      bool option_Int(Php::Parameters& params,unsigned int offset);
+
      std::string missingParameter(const char* shouldBe, unsigned int offset);
      std::string invalidCharacter(char32_t unc8);
 	
+     void serialize_keyTable(Php::Base* base, std::ostream& out);
+     void serialize_valueList(Php::Base* base, std::ostream& out);
 
+     void serialize_str(const char* s, size_t slen, std::ostream& out);
+     void unserialize_str(std::string& cval, std::istream& ins);
+
+     void serialize(Php::Value& val, std::ostream& out);
+     void unserialize(Php::Value& val, std::istream& ins);
 };
 
 

@@ -6,6 +6,8 @@
 
 #include <ostream>
 
+using namespace pun;
+
 const char* Token8Stream::PHP_NAME = "Pun\\Token8Stream";
 
 Token8Stream::Token8Stream()

@@ -8,6 +8,10 @@
 #include "ucode8.h"
 #include <sstream>
 #include <ostream>
+
+
+using namespace pun;
+
 const char* Pun8::PHP_NAME = "Pun\\Pun8";
 
 

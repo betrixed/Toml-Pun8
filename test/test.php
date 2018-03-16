@@ -12,6 +12,9 @@ use Pun\Type;
 
 use Pun\TomlReader;
 
+
+date_default_timezone_set("Australia/Sydney");
+
 /** A bunch of undisciplined adhoc tests
     of some things that went wrong sometime.
  */
@@ -361,7 +364,38 @@ function utf16() {
     }
 }
 
-utf16();
+function serial() {
+    $kt = new KeyTable();
+    $key = "One Key variable";
+    $kt->setKV($key , 1);
+
+    $kt->setKV("Time now", new DateTime());
+
+    $kt2 = new KeyTable();
+
+    $kt2->setKV("Referenced key value", 2);
+    $kt->setKV("Nested", $kt2);
+
+    $valone = new ValueList();
+    
+
+    for($i = 0; $i < 5; $i++) {
+        $valtwo = new ValueList();
+        $valone->pushBack($valtwo);
+        $valtwo->pushBack($i);
+        $valtwo->pushBack($i*2);
+    }
+    $kt2->setKV("Arrays", $valone);
+
+    echo "As Original " . print_r( $kt->toArray(), true) . PHP_EOL;
+    $fname = "serial_test1.dat";
+    file_put_contents($fname, serialize($kt));
+
+    $kt = unserialize(file_get_contents($fname));
+
+    echo "Serial to Array " . print_r( $kt->toArray(), true) . PHP_EOL;
+}
+serial();
 keytable();
 valuelist();
 reader_0();

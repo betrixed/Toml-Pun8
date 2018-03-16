@@ -3,13 +3,15 @@
 
 #include "tomlbase.h"
 #include "parameter.h"
-
+#include <iostream>
 // ValueList should not be crippled by placing "all the same thing" checks
 // on each call to push. Since TomlBase has a "Tag" facility, force the 
 // tag usage and value type matching here, for use by Toml Arrays which must be
 // all of the same type, and the parser code will have to do a check
 // Drawback is there is an extra PHP object tag for every 
 // Array representation. 
+
+namespace pun {
 
 
 class VL_Iterator : public Php::Iterator {
@@ -51,9 +53,12 @@ public:
 };
 
 class ValueList : public TomlBase, public Php::Countable, 
-				public Php::Traversable {
+				public Php::Traversable , public Php::Serializable
+
+{
 public:
 	static const char* PHP_NAME;
+	ValueList() {}
 
 	void pushBack(Php::Parameters& param);
 	void popBack();
@@ -80,6 +85,8 @@ public:
 
 	Php::Value __toString();
 	
+	virtual std::string serialize();
+	virtual void unserialize(const char *input, size_t size);
 
 public:
 	void fn_pushBack(Php::Value& vtype);
@@ -88,6 +95,13 @@ public:
 	//std::string fn_typeConflict(Php::Type odd);
 	//std::string fn_classConflict(Php::Value& val);
 	unsigned int fn_size() { return _store.size(); }
+
+	Php::Value fn_object();
+
+	void fn_unserialize(std::istream& ins);
+	void fn_serialize(std::ostream& out);
+	
+
 private:
 	ValueArray 		_store;
 	// if storing objects, require same class name
@@ -96,4 +110,8 @@ private:
 	// require same value type
 	//Php::Type 	 	_type;
 };
+
+
+}; // end namespace pun
+
 #endif

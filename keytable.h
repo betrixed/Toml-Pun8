@@ -37,9 +37,12 @@
 #include <phpcpp.h>
 
 #include "tomlbase.h"
+#include <iostream>
 
 // Php::Value also has a mapValue() method to return ValueMap
 // string keys are forced by Value.stringValue()
+
+namespace pun {
 
 class KT_Iterator : public Php::Iterator {
 	ValueMap &_ref;
@@ -79,7 +82,7 @@ public:
 };
 
 class KeyTable : public TomlBase, public Php::Countable, 
-				public Php::ArrayAccess, public Php::Traversable
+				public Php::ArrayAccess, public Php::Traversable, public Php::Serializable
 {
 public:
 	static const char* PHP_NAME;
@@ -114,47 +117,25 @@ public:
 
 	Php::Value __toString();
 	
-
+	virtual std::string serialize();
+	virtual void unserialize(const char *input, size_t size);
 public:
 	void fn_setKV(std::string& key, Php::Value &val);
 	Php::Value fn_getV(std::string& key);
 
+	void fn_unserialize(std::istream& ins);
+	void fn_serialize(std::ostream& os);
+
 	bool fn_hasK(std::string& key) const;
+
+	Php::Value fn_object();
+
 private:
 	ValueMap _store;
 
 };
 
 const std::string keytable_classname;
-/*
-class KT_Iterator : public Php::Iterator {
-	Php::Array         _array;
-	// Has to be a pointer, unique_ptr usage.
-	Php::ValueIterator* _iter; 
 
-	
-
-	KT_Iterator(KeyTable* base) : Php::Iterator(base), 
-		_array(base->_store),
-		_iter(nullptr) 
-	{
-
-	}
-	virtual bool valid(){
-	 	return (*_iter) != _array.end();
-	}
-	virtual Php::Value current() {
-		return (*_iter)->second;
-	}
-	virtual Php::Value key() {
-		return (*_iter)->first;
-	}
-	virtual void next() {
-		(*_iter)++;
-	}
-	virtual void rewind() {
-		_iter = & (_array.begin());
-	}
-};
-*/
+}; // end namespace pun
 #endif

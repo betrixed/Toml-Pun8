@@ -4,7 +4,11 @@
 #include "parameter.h"
 #include <ostream>
 
+using namespace pun;
+
+
 const char* Pcre8::PHP_NAME = "Pun\\IdRex8";
+
 
 Pcre8::Pcre8() 
 {

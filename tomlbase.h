@@ -3,6 +3,7 @@
 
 #include <phpcpp.h>
 
+namespace pun {
 
 class PathTag : public Php::Base{
 public:
@@ -16,7 +17,6 @@ public:
 
 	}
 };
-
 
 typedef std::map<std::string, Php::Value> ValueMap;
 typedef std::vector<Php::Value> ValueArray;
@@ -51,5 +51,7 @@ public:
 	{
 	}
 };
+
+}; // end namespace pun
 
 #endif

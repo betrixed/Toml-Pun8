@@ -4,6 +4,8 @@
 #include <ostream>
 #include <sstream>
 
+using namespace pun;
+
 const char* ValueList::PHP_NAME = "Pun\\ValueList";
 
 const std::string CPunk::valuelist_classname(ValueList::PHP_NAME);
@@ -112,4 +114,60 @@ Php::Value ValueList::__toString() {
 
 	ss << "ValueList [ tag " << _tag << " size " << _store.size() << "]";
 	return ss.str();
+}
+
+
+Php::Value
+ValueList::fn_object()
+{
+	return Php::Object(PHP_NAME, this);
+}
+
+void ValueList::fn_unserialize(std::istream& ins)
+{
+	size_t keyct;
+	//char   check;
+	std::string key;
+
+	ins.read( (char*) &keyct, sizeof(keyct));
+
+	//ins >> check;
+	for(size_t i = 0; i < keyct; i++) {
+		Php::Value val;
+		pun::unserialize(val, ins);
+		_store.push_back( val );
+	}
+	//ins >> check;
+}
+
+
+void ValueList::fn_serialize(std::ostream& out)
+{
+	auto keyct = _store.size();
+	out.write((const char*) &keyct,sizeof(keyct));
+	//out << '[';
+	for(auto ait = _store.begin(); ait != _store.end(); ait++) 
+	{
+		pun::serialize(*ait, out);
+	}
+	//out << ']';
+}
+
+std::string 
+ValueList::serialize()
+{
+	std::stringstream out;
+
+	out << 'V';
+	this->fn_serialize(out);
+	return out.str();
+}
+
+void ValueList::unserialize(const char *input, size_t size)
+{
+	std::string buffer(input,size);
+	std::istringstream ins(buffer);
+	char check;
+	ins >> check;
+	fn_unserialize(ins);
 }

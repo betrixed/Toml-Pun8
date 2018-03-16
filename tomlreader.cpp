@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <cstdint>
 
+using namespace pun;
 
 const char* TomlReader::PHP_NAME = "Pun\\TomlReader";
 
@@ -533,7 +534,7 @@ void  TomlReader::parseKeyValue()
 		_table = oldTable;		
 	}
 	else {
-		pun::Type punt; // anything goes here
+		pun::Pype punt; // anything goes here
 		parseValue(rhsValue, punt);
 	}
 	
@@ -541,12 +542,12 @@ void  TomlReader::parseKeyValue()
 	//Php::out << "Set " << keyName << " value " << rhsValue.debugZval() << std::endl;
 }
 
-void TomlReader::arrayMatchError(pun::Type spunt, pun::Type punt)
+void TomlReader::arrayMatchError(pun::Pype spunt, pun::Pype punt)
 {
 	std::stringstream ss;
 
-	ss << "Cannot add value of type " << pun::getPunTName(punt)
-	   << " to ValueList of type " << pun::getPunTName(spunt);
+	ss << "Cannot add value of type " << pun::getPypeId(punt)
+	   << " to ValueList of type " << pun::getPypeId(spunt);
 	throw Php::Exception(ss.str());
 
 }
@@ -588,25 +589,25 @@ void TomlReader::parseArray(ValueList *vlist)
 			_ts->fn_acceptToken(&_token);
 			auto ct = vlist->fn_size();
 			if (ct == 0) {
-				vlist->fn_setTag(Php::Value(pun::Type::ValueList));
+				vlist->fn_setTag(Php::Value(pun::tValueList));
 			}
 			else {
 				Php::Value &spun = vlist->fn_getTag();
-				pun::Type spunt = (pun::Type)((int) spun);
-				if (spunt != pun::Type::ValueList) {
-					arrayMatchError(spunt, pun::Type::ValueList);
+				pun::Pype spunt = (pun::Pype)((int) spun);
+				if (spunt != pun::tValueList) {
+					arrayMatchError(spunt, pun::tValueList);
 				}
 			}
 			ValueList *subList = new ValueList();
 			Php::Value subArray(Php::Object(ValueList::PHP_NAME,subList));
 			vlist->fn_pushBack(subArray);
-			vlist->fn_setTag(Php::Value(pun::ValueList));
+			vlist->fn_setTag(Php::Value(pun::tValueList));
 			parseArray(subList);
 
 		}
 		else {
 			Php::Value val;
-			pun::Type  punt;
+			pun::Pype  punt;
 
 			parseValue(val,punt);
 			auto ct = vlist->fn_size();
@@ -615,7 +616,7 @@ void TomlReader::parseArray(ValueList *vlist)
 			}
 			else {
 				Php::Value &spun = vlist->fn_getTag();
-				pun::Type spunt = (pun::Type)((int) spun);
+				pun::Pype spunt = (pun::Pype)((int) spun);
 				if (punt != spunt) {
 					arrayMatchError(spunt, punt);
 				}
@@ -704,7 +705,7 @@ void TomlReader::fn_checkFullMatch(const std::string& target, const std::string&
 }
 
 // assume peekToken as just occurred, return value in val.
-void TomlReader::parseValue(Php::Value& val, pun::Type& punt)
+void TomlReader::parseValue(Php::Value& val, pun::Pype& punt)
 {
 	std::string sval;
 	//Php::out << "Val id " << _token._id << " = " <<  _token._value << std::endl;
@@ -720,7 +721,7 @@ void TomlReader::parseValue(Php::Value& val, pun::Type& punt)
 			_ts->fn_acceptToken(&_token);
 			parseLitString(sval);
 		}
-		punt = pun::Type::String;
+		punt = pun::tString;
 		val = sval;
 		return;
 	}
@@ -735,7 +736,7 @@ void TomlReader::parseValue(Php::Value& val, pun::Type& punt)
 			
 			parseQString(sval);
 		}
-		punt = pun::Type::String;
+		punt = pun::tString;
 		val = sval;
 		return;
 	}
@@ -753,7 +754,7 @@ void TomlReader::parseValue(Php::Value& val, pun::Type& punt)
 		int ct = _valueText.fn_matchRegId(Rex::Bool, matches);
 		if (ct > 1) {
 			bool bresult =  (matches._slist[1] == "true") ? true : false;
-			punt = pun::Type::Bool;
+			punt = pun::tBool;
 		    val = bresult;
 			return;
 		}
@@ -761,21 +762,21 @@ void TomlReader::parseValue(Php::Value& val, pun::Type& punt)
 		if (ct > 1) {
 			fn_checkFullMatch(_valueText.str(), matches._slist[1]);
 			parseDateTime(val);
-			punt = pun::Type::DateTime;
+			punt = pun::tDateTime;
 			return;
 		}
 		ct = _valueText.fn_matchRegId(Rex::FloatExp, matches);
 		if (ct > 1) {
 			fn_checkFullMatch(_valueText.str(), matches._slist[1]);
 			parseFloatExp(val);
-			punt = pun::Type::Float;
+			punt = pun::tFloat;
 			return;
 		}
 		ct = _valueText.fn_matchRegId(Rex::FloatDot, matches);
 		if (ct > 1) {
 			fn_checkFullMatch(_valueText.str(), matches._slist[1]);
 			parseFloat(val,matches);
-			punt = pun::Type::Float;
+			punt = pun::tFloat;
 			return;
 		}
 		ct = _valueText.fn_matchRegId(Rex::Integer, matches);
@@ -784,7 +785,7 @@ void TomlReader::parseValue(Php::Value& val, pun::Type& punt)
 			fn_checkFullMatch(_valueText.str(), matches._slist[1]);
 			parseInteger(sval);
 			val = std::stol(sval);
-			punt = pun::Type::Integer;
+			punt = pun::tInteger;
 			return;
 		}
 	}

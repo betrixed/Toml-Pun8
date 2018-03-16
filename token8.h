@@ -4,28 +4,31 @@
 #include <phpcpp.h>
 #include <string_view>
 
-class Token8: public Php::Base {
-public:
-    static const char* PHP_NAME;
+namespace pun {
 
-    Token8();
+    class Token8: public Php::Base {
+    public:
+        static const char* PHP_NAME;
 
-	Token8(const Token8 &m);
-    Token8 &operator=(const Token8 &m);
+        Token8();
 
-    Token8(const Token8&& m);
-    Token8 &operator=(const Token8 &&m);
+    	Token8(const Token8 &m);
+        Token8 &operator=(const Token8 &m);
+
+        Token8(const Token8&& m);
+        Token8 &operator=(const Token8 &&m);
 
 
-    Php::Value getValue() const;
-    Php::Value getId() const;
-    Php::Value getLine() const;
-    Php::Value isSingle() const;
+        Php::Value getValue() const;
+        Php::Value getId() const;
+        Php::Value getLine() const;
+        Php::Value isSingle() const;
 
-	std::string_view _value; // view of original source string
-	int				 _id;
-	int    			 _line;
-	bool			 _isSingle;
+    	std::string_view _value; // view of original source string
+    	int				 _id;
+    	int    			 _line;
+    	bool			 _isSingle;
+    };
+
 };
-
 #endif

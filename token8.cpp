@@ -1,5 +1,7 @@
 #include "token8.h"
 
+using namespace pun;
+
 const char* Token8::PHP_NAME = "Pun\\Token8";
 
 

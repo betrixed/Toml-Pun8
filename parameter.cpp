@@ -1,5 +1,7 @@
 #include "parameter.h"
 
+#include "valuelist.h"
+
 #include "pcre8.h"
 #include "recap8.h"
 #include "re8map.h"
@@ -10,6 +12,8 @@
 #include <cstdint>
 
 #include "ucode8.h"
+#include "keytable.h"
+
 
 /*
 Undefined       =   0,  // Variable is not set
@@ -26,81 +30,142 @@ Undefined       =   0,  // Variable is not set
     Constant        =  11,  // A constant value
     ConstantAST     =  12,  // I think an Abstract Syntax tree, not quite sure
 */
+union SerUnion {
+    double dval;
+    int64_t ival;
+};
 
 const std::string CPunk::datetime_classname = "DateTime";
 
-pun::Type 
-pun::getPunType(Php::Value& val) {
-    auto t = pun::getPunType(val.type());
-    if (t == pun::Type::Object) {
+using namespace pun;
+
+void 
+pun::unserialize(Php::Value& val, std::istream& ins)
+{
+    char check;
+    std::string sval;
+    SerUnion cval;
+
+    ins >> check;
+    switch(check) {
+    case 'B':
+        ins >> check;
+        if (check == '1') {
+            val = Php::Value(true);
+        }
+        else {
+            val = Php::Value(false);
+        }
+        break;
+    case 'S':
+        pun::unserialize_str(sval, ins);
+        val = std::move(sval);
+        break;
+    case 'F':
+        ins.read( ( char*) &cval.dval, sizeof(double));
+        val = cval.dval;
+        break;
+    case 'I':
+        ins.read( ( char*) &cval.ival, sizeof(int64_t));
+        val = cval.ival;
+        break;
+    case 'D':
+    case 'A':
+    case 'O':
+        pun::unserialize_str(sval, ins);
+        val = Php::call("unserialize", sval);
+        break;
+    case 'K': {
+            auto ktp = new pun::KeyTable();
+            ktp->fn_unserialize(ins);
+            val = ktp->fn_object();
+        }
+        break;
+    case 'V': {
+            auto vlp = new pun::ValueList();
+            vlp->fn_unserialize(ins);
+            val = vlp->fn_object();
+        }
+        break;
+    case 'N': 
+        val = Php::Value();
+        break;
+    
+    }
+}
+
+Pype 
+pun::getPype(Php::Value& val) {
+    auto t = pun::getPype(val.type());
+    if (t == pun::tObject) {
         if (val.instanceOf(CPunk::keytable_classname)) {
-            return pun::Type::KeyTable;
+            return pun::tKeyTable;
         }
         else if (val.instanceOf(CPunk::valuelist_classname)) {
-            return pun::Type::ValueList;
+            return pun::tValueList;
         }
         else if (val.instanceOf(CPunk::datetime_classname)) {
-            return pun::Type::DateTime;
+            return pun::tDateTime;
         }
     }
     return t;
 }
 
-pun::Type pun::getPunType(Php::Type t) {
+pun::Pype pun::getPype(Php::Type t) {
     switch(t) {
     case Php::Type::String:
-        return pun::Type::String;
+        return pun::tString;
     case Php::Type::Numeric:
-        return pun::Type::Integer;
+        return pun::tInteger;
     case Php::Type::Float:
-        return pun::Type::Float;
+        return pun::tFloat;
     case Php::Type::Array:
-        return pun::Type::Array;
+        return pun::tArray;
     case Php::Type::Object:
-        return pun::Type::Object;
+        return pun::tObject;
     case Php::Type::False:
     case Php::Type::True:
-        return pun::Type::Bool;
+        return pun::tBool;
     case Php::Type::Null:
-        return pun::Type::Null;
+        return pun::tNull;
     case Php::Type::Resource:
-        return pun::Type::Resource;
+        return pun::tResource;
     case Php::Type::Reference:
-        return pun::Type::Reference;
+        return pun::tReference;
     case Php::Type::Undefined:        
     default:
-        return pun::Type::Undefined;
+        return pun::tUndefined;
     }
 }
 
-const char* pun::getPunTName(Type t)
+const char* pun::getPypeId(Pype t)
 {
     switch(t) {
-    case pun::Type::String:
+    case pun::tString:
         return "string";
-    case pun::Type::Integer:
+    case pun::tInteger:
         return "integer";
-    case pun::Type::Float:
+    case pun::tFloat:
         return "float";
-    case pun::Type::KeyTable:
+    case pun::tKeyTable:
         return "table";
-    case pun::Type::ValueList:
+    case pun::tValueList:
         return "list";
-    case pun::Type::DateTime:
+    case pun::tDateTime:
         return "datetime";
-    case pun::Type::Array:
+    case pun::tArray:
         return "array";
-    case pun::Type::Object:
+    case pun::tObject:
         return "object";
-    case pun::Type::Bool:
+    case pun::tBool:
         return "boolean";
-    case pun::Type::Null:
+    case pun::tNull:
         return "null";
-    case pun::Resource:
+    case pun::tResource:
         return "resource";
-    case pun::Type::Reference:
+    case pun::tReference:
         return "reference";
-    case pun::Type::Undefined:        
+    case pun::tUndefined:        
     default:
         return "undefined";
     }
@@ -279,4 +344,107 @@ pun::check_Token8(Php::Parameters& params, unsigned int offset)
         }
     }
     throw Php::Exception(pun::missingParameter("Token8 object", offset));
+}
+
+void pun::serialize_valueList(Php::Base* base, std::ostream& out)
+{
+    pun::ValueList* vlist = ( pun::ValueList* ) base;
+    vlist->fn_serialize(out);
+}
+
+void pun::serialize_keyTable(Php::Base* base, std::ostream& out)
+{
+    pun::KeyTable* ktab = ( pun::KeyTable* ) base;
+    ktab->fn_serialize(out);
+}
+
+void 
+pun::serialize_str(const char* s, size_t slen, std::ostream& out) {
+    out.write((const char*) &slen, sizeof(slen));
+    out.write(s, slen);
+}
+
+
+
+
+void 
+pun::unserialize_str(std::string& cval, std::istream& ins)
+{
+    size_t slen;
+    ins.read(( char*) &slen, sizeof(slen));
+    //Php::out << "unser. str len " << slen << std::endl;
+    cval.assign(slen,'0');
+    ins.read(( char*) cval.data(), slen);
+    //Php::out << "unser. str " << cval << std::endl;
+}
+
+
+
+void 
+pun::serialize(Php::Value& val, std::ostream& out)
+{
+    auto ptype = pun::getPype(val);
+    SerUnion cval;
+
+    std::string sval;
+    Php::Value result;
+
+    switch(ptype) {
+    case pun::tBool:
+        // All our types are distinguishable on capital letter,
+        // so 
+        out << 'B' << (val.boolValue() ? '1' : '0');
+        break;
+    case pun::tString:
+        out << 'S';
+        pun::serialize_str(val, val.size(), out);
+        break;
+
+    case pun::tFloat:
+        out << 'F';
+        cval.dval = val.floatValue();
+        out.write((const char*) &cval.dval, sizeof(double));
+        break;
+
+    case pun::tInteger:
+        out << 'I';
+        cval.ival = val.numericValue();
+        out.write((const char*) &cval.ival, sizeof(cval.ival));
+        //Php::out << "Write tInteger" << std::endl;
+        break;
+
+    case pun::tDateTime:
+        out << 'D';
+        result = Php::call("serialize", val);
+        pun::serialize_str(result, result.size(), out);
+        break;
+
+    case pun::tValueList:
+        out << 'V';
+        pun::serialize_valueList(val.implementation(),out);
+        break;
+
+    case pun::tKeyTable:
+        out << 'K';
+        pun::serialize_keyTable(val.implementation(),out);
+        break;
+
+    case pun::tArray:
+        out << 'A';
+        result = Php::call("serialize", val);
+        pun::serialize_str(result, result.size(), out);
+        break;
+
+    case pun::tNull:
+        out << 'N'; // stands for itself
+        break;
+
+    case pun::tObject:
+    default:
+        out << 'O';
+        result = Php::call("serialize", val);
+        pun::serialize_str(result, result.size(), out);
+        break;
+
+    }
 }

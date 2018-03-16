@@ -2,7 +2,11 @@
 #include "pun8.h"
 #include "parameter.h"
 
+
+using namespace pun;
+
 const char* Recap8::PHP_NAME = "Pun\\Recap8";
+
 
 Php::Value 
 Recap8::count() const

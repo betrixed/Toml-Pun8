@@ -5,6 +5,8 @@
 #include <ostream>
 #include <sstream>
 
+using namespace pun;
+
 const char* KeyTable::PHP_NAME = "Pun\\KeyTable";
 const std::string CPunk::keytable_classname(KeyTable::PHP_NAME);
 
@@ -146,4 +148,71 @@ Php::Value KeyTable::__toString() {
 
 	ss << "KeyTable [ tag " << _tag << " size " << _store.size() << "]";
 	return ss.str();
+}
+
+Php::Value 
+KeyTable::fn_object()
+{
+	return Php::Object(PHP_NAME, this);
+}
+
+void KeyTable::fn_unserialize(std::istream& ins)
+{
+	size_t keyct;
+	char   check;
+	std::string key;
+
+	ins.read( (char*) &keyct, sizeof(keyct));
+	//Php::out << "fn_unserialize keyct is " << keyct << std::endl;
+	ins >> check;
+	//Php::out << "fn_unserialize check " << check << std::endl;
+	for(size_t i = 0; i < keyct; i++) {
+		pun::unserialize_str(key, ins);
+		//Php::out << "fn_unserialize key  " << key << std::endl;
+		Php::Value val;
+		pun::unserialize(val, ins);
+		_store[key] = val;
+	}
+	ins >> check;
+	//Php::out << "fn_unserialize check2 " << check << std::endl;
+}
+
+void KeyTable::fn_serialize(std::ostream& out)
+{
+	auto keyct = _store.size();
+	out.write((const char*) &keyct,sizeof(keyct));
+	//Php::out << "KT fn_serialize " << std::endl;
+	out << '{';
+	for(auto ait = _store.begin(); ait != _store.end(); ait++) 
+	{
+		const std::string& key = ait->first;
+		//Php::out << "fn_serialize key" << key << std::endl;
+		pun::serialize_str(key.data(), key.size(), out);
+		pun::serialize(ait->second, out);
+
+	}
+	out << '}';
+}
+
+std::string 
+KeyTable::serialize()
+{
+	std::stringstream out;
+	//Php::out << "KT serialize " << std::endl;
+	out << 'K';
+	fn_serialize(out);
+
+	return out.str();
+}
+
+void KeyTable::unserialize(const char *input, size_t size)
+{
+	std::string buffer(input,size);
+	//Php::out << "KT unserialize " << std::endl;
+	
+	std::istringstream ins(buffer);
+	char check;
+	ins >> check;
+	//Php::out << "Check " << check << std::endl;
+	fn_unserialize(ins);
 }

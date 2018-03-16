@@ -1,5 +1,7 @@
 #include "tomlbase.h"
 
+using namespace pun;
+
 const char* PathTag::PHP_NAME = "Pun\\PathTag";
 
 const char* TomlBase::PHP_NAME = "Pun\\TomlBase";

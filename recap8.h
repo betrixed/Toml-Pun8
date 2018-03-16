@@ -6,6 +6,8 @@
 
 // Php object wrap a single PCRE2
 
+namespace pun {  
+
 class Recap8 : public Php::Base {
 public:
     static const char* PHP_NAME;
@@ -15,6 +17,8 @@ private:
 	friend class Pun8;
 	friend class Pcre8;
     Pcre8_match	_match;
+};
+
 };
 
 #endif

@@ -10,6 +10,8 @@
 #include "tomlreader.h"
 #include "puntype.h"
 
+using namespace pun;
+
 /**
 * Iterate through a UTF-8 string,
 * Keep an internal array index to beginning of
