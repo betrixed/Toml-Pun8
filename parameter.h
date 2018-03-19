@@ -5,10 +5,22 @@
 #include <phpcpp.h>
 #endif
 
-#ifndef _H_PCRE8_IMP
-#include "pcre8_imp.h"
+
+#ifdef __has_include
+# if __has_include(<string_view>)
+#  include <string_view>
+#  if __cplusplus >= 201703L || defined(_LIBCPP_STRING_VIEW)
+#   define ABSL_HAVE_STD_STRING_VIEW 1
+#  endif
+# endif
 #endif
 
+#ifndef ABSL_HAVE_STD_STRING_VIEW 
+#    include <experimental/string_view>
+          namespace svx = std::experimental;
+#else
+     namespace svx = std;
+#endif
 
 #include <ostream>
 
@@ -54,7 +66,7 @@ namespace pun {
      Re8map* check_Re8map(Php::Parameters& params, unsigned int offset=0);
      Recap8* option_Recap8(Php::Parameters& params, unsigned int offset=0);
 
-     void hexUniStr8(std::string_view hexval, std::ostream& os);
+     void hexUniStr8(svx::string_view hexval, std::ostream& os);
 	
 	bool option_Array(Php::Parameters& params, unsigned int offset=0);
 

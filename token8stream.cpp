@@ -35,7 +35,7 @@ void Token8Stream::checkLineFeed(Token8* token)
 	if (_input._myChar == 10) {
 		_flagLF = true;
 		token->_id = _eolId;
-		token->_value = std::string_view();
+		token->_value = svx::string_view();
 		token->_line = _tokenLine;
 		token->_isSingle = true;
 		return;
@@ -82,7 +82,7 @@ void Token8Stream::fn_peekToken(Token8* token) {
 	auto nextCt = _input.fn_peekChar();
 	if (nextCt==0) {
 		token->_id = _eosId;
-		token->_value = std::string_view();
+		token->_value = svx::string_view();
 		token->_line = _tokenLine;
 		token->_isSingle = true;
 	}
@@ -92,7 +92,7 @@ void Token8Stream::fn_peekToken(Token8* token) {
 	else {
 		token->_line = _tokenLine;
 		const char* ccptr = _input._mystr.data();
-		token->_value = std::string_view(ccptr + _input._index, nextCt);
+		token->_value = svx::string_view(ccptr + _input._index, nextCt);
 		token->_isSingle = false;
 		if (nextCt == 1) {
 			auto cmap = _singles.get();
@@ -152,7 +152,7 @@ int  Token8Stream::fn_moveNextId() {
 	//Php::out << "peekChar " << nextCt << std::endl;
 	if (nextCt==0) {
 		_token._id = _eosId;
-		_token._value = std::string_view();
+		_token._value = svx::string_view();
 		_token._isSingle = true;
 	}
 	else if (_input._myChar < 20) {
@@ -179,7 +179,7 @@ int  Token8Stream::fn_moveNextId() {
 				throw Php::Exception("Match Id without 2 captures");
 			}
 			const char* ccptr = _input._mystr.data();
-			_token._value = std::string_view(ccptr + _input._index, nextCt);
+			_token._value = svx::string_view(ccptr + _input._index, nextCt);
 			_input._index += nextCt;
 
 			_token._isSingle = false;
@@ -353,7 +353,7 @@ Php::Value Token8Stream::hasPendingTokens() const
 }
 
 
-std::string_view
+svx::string_view
 Token8Stream::fn_getValue()
 {
 	return _token._value;

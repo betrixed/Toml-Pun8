@@ -425,7 +425,7 @@ void TomlReader::parseLitString(std::string& val)
 
 void  TomlReader::parseEscChar(std::ostream& os)
 {
-	std::string_view sval = _ts->fn_getValue();
+	svx::string_view sval = _ts->fn_getValue();
 
 	//Php::out << "parseEscChar len " << sval.size() << ": " << sval << std::endl;
 	char val = sval.at(1);
@@ -745,7 +745,7 @@ void TomlReader::parseValue(Php::Value& val, pun::Pype& punt)
 		syntaxError("No value after = ");
 	}
 	else {
-		std::string_view temp = _ts->fn_getValue();
+		svx::string_view temp = _ts->fn_getValue();
 
 		_valueText.fn_setString(temp.data(), temp.size());
 

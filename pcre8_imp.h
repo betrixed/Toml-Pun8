@@ -1,12 +1,15 @@
 #ifndef _H_PCRE8_IMP
 #define _H_PCRE8_IMP
 
+#ifndef  _H_PARAMETER
+#include "parameter.h"
+#endif
+
 #define PCRE2_CODE_UNIT_WIDTH 8
 #include <pcre2.h>
 #include <unordered_map>
 #include <vector>
 #include <memory>
-#include <string_view>
 
 typedef std::vector<std::string> StringList;
 typedef std::vector<int>  IdList;
@@ -17,9 +20,9 @@ public:
     int         _rcode;
     Pcre8_match();
     
-    std::string_view capture(unsigned int i) const {
+    svx::string_view capture(unsigned int i) const {
         const std::string& cap = _slist[i];
-        return std::string_view(cap.data(), cap.size());
+        return svx::string_view(cap.data(), cap.size());
     }
 
     Pcre8_match(const Pcre8_match &m);

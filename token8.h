@@ -2,7 +2,8 @@
 #define _H_TOKEN
 
 #include <phpcpp.h>
-#include <string_view>
+#include "parameter.h"
+
 
 namespace pun {
 
@@ -24,7 +25,7 @@ namespace pun {
         Php::Value getLine() const;
         Php::Value isSingle() const;
 
-    	std::string_view _value; // view of original source string
+    	svx::string_view _value; // view of original source string
     	int				 _id;
     	int    			 _line;
     	bool			 _isSingle;
