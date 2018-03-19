@@ -119,6 +119,12 @@ public:
 	
 	virtual std::string serialize();
 	virtual void unserialize(const char *input, size_t size);
+
+	Php::Value __get(const Php::Value &name) const;
+	void __set(const Php::Value &name, const Php::Value &value);
+	bool __isset(const Php::Value &name) const;
+	void __unset(const Php::Value &name);
+
 public:
 	void fn_setKV(std::string& key, Php::Value &val);
 	Php::Value fn_getV(std::string& key);

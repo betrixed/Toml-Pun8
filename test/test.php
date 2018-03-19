@@ -216,12 +216,35 @@ function keytable() {
 
     $kt->setKV("key1", "value1");
     $kt->setKV("2.1", "value2");
+
+    // dynamic properties
+    $kt->MyProperty1 = "Set Property";
+    if (isset($kt->MyProperty1)) {
+        echo "MyProperty set to " . $kt->MyProperty1 . PHP_EOL;
+    }
+    else {
+        echo "MyProperty not set " . PHP_EOL;
+    }
+     unset($kt->MyProperty1);
+
+     if (isset($kt->MyProperty1)) {
+        echo "MyProperty set to " . $kt->MyProperty1 . PHP_EOL;
+    }
+    else {
+        echo "MyProperty not set " . PHP_EOL;
+    }
+        $kt->MyProperty1 = "Another Value";
+
     $kt["100.1"] = 1000;
     $kt[100] = 1111;
     
     $a = $kt->toArray();
 
     echo "KeyTable " . print_r($a,true) . PHP_EOL;
+
+   
+
+
 }
 
 function valuelist() {

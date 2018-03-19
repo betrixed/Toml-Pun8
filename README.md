@@ -9,11 +9,6 @@ This was the main goal of creating all the other bitty classes, whose interfaces
   PHP-CPP      2.0.0  for compilation, and shared library installed.
   libpcre2-8   The latest version of the PCRE2 as shared library.
 
-  libpre2-8    Is compiled for UTF-8 support.
-
-  PHP uses PCRE2 as well, for preg_xxxx functions.
-
-  Other configurations are possible. A UTF-16 version would be possible, and dependent classes named with "16" instead of "8"
 
 ## Install Issues
   The Makefile is very simplistic. 
@@ -22,7 +17,10 @@ This was the main goal of creating all the other bitty classes, whose interfaces
 
   On debian stretch it might need to be 
   /etc/php/7.0/mods-available
-  plus a symbolic link set in /etc/php7.0/fpm/conf.d
+  plus a symbolic link set in /etc/php/7.0/fpm/conf.d
+  and also /etc/php/7.0/cli/conf.d
+
+  If the Makefile configuration is correct then the steps ought to be:-
 
   make
   sudo make install

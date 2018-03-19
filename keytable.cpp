@@ -216,3 +216,30 @@ void KeyTable::unserialize(const char *input, size_t size)
 	//Php::out << "Check " << check << std::endl;
 	fn_unserialize(ins);
 }
+
+
+Php::Value KeyTable::__get(const Php::Value &name) const
+{
+	auto fit = _store.find(name.stringValue());
+
+	if (fit != _store.end()) {
+		return fit->second;
+	}
+	else 
+		return Php::Value();
+}
+
+void KeyTable::__set(const Php::Value &name, const Php::Value &value)
+{
+	_store[name.stringValue()] = value;
+}
+
+bool KeyTable::__isset(const Php::Value &name) const
+{
+	return _store.find(name.stringValue()) != _store.end();
+}
+
+void KeyTable::__unset(const Php::Value &name)
+{
+	_store.erase(name.stringValue());
+}
