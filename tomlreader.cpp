@@ -413,9 +413,7 @@ void TomlReader::parseLitString(std::string& val)
 			syntaxError("String value missing closing quote ( ' )");
 		}
 		if (_ts->fn_moveRegId(Rex::LitString)) {
-			val = _ts->fn_getValue();
-
-			result << val;
+			result << _ts->fn_getValue();
 		}
 		else {
 			syntaxError("Bad literal string value");
