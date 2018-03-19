@@ -349,7 +349,8 @@ void TomlReader::parseKeyName(std::string& name)
 	auto id = _ts->fn_getId();
 	switch(id) {
 	case Rex::BareKey:
-		 _ts->fn_moveValue(name);
+		 name = _ts->fn_getValue();
+		 //_ts->fn_moveValue(name);
 		 break;
 	case Rex::Quote1:
 		this->parseQString(name);
@@ -383,7 +384,7 @@ void TomlReader::parseQString(std::string& val)
 			this->parseEscChar(result);
 		}
 		else {
-			result << _ts->fn_moveValue(val);
+			result << _ts->fn_getValue();
 		}
 		id = _ts->fn_moveNextId();
 	}
@@ -410,7 +411,7 @@ void TomlReader::parseLitString(std::string& val)
 			syntaxError("String value missing closing quote ( ' )");
 		}
 		if (_ts->fn_moveRegId(Rex::LitString)) {
-			_ts->fn_moveValue(val);
+			val = _ts->fn_getValue();
 
 			result << val;
 		}
@@ -488,7 +489,7 @@ void  TomlReader::parseMLString(std::string& val)
 			syntaxError("Missing ''' at end");
 			break;
 		default:
-			result << _ts->fn_moveValue(val);
+			result << _ts->fn_getValue();
 			id = _ts->fn_moveNextId();
 			break;
 		}

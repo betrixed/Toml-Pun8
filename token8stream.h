@@ -105,7 +105,7 @@ namespace pun {
 
         std::string fn_beforeChar(char32_t c) const;
 
-        std::string& fn_moveValue(std::string& val) { val = std::move(_token._value); return val;}
+        //std::string& fn_moveValue(std::string& val) { val = std::move(_token._value); return val;}
         
         void     fn_peekToken(Token8* token);
 
