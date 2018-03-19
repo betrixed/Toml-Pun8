@@ -18,7 +18,7 @@
 #	are automatically generated
 #
 
-NAME				=	punicode
+NAME				=	pun8
 
 
 #

@@ -15,6 +15,18 @@ This was the main goal of creating all the other bitty classes, whose interfaces
 
   Other configurations are possible. A UTF-16 version would be possible, and dependent classes named with "16" instead of "8"
 
+## Install Issues
+  The Makefile is very simplistic. 
+  The configucation folder for PHP is set in the Makefile as
+  INI_DIR       = /etc/php/conf.d
+
+  On debian stretch it might need to be 
+  /etc/php/7.0/mods-available
+  plus a symbolic link set in /etc/php7.0/fpm/conf.d
+
+  make
+  sudo make install
+
 ## Pun\\TomlReader
 
 ```php
@@ -101,15 +113,15 @@ This class checks that everything that is set inside is of the same type, and fo
 ```
 The parser does utf-8 examples.  It will check and handle file Byte Order Marks - BOM
 
-# Punicode - PHP extension for foreward iteration of unicode string with new PCRE2 interface.
-This PHP extension, tentatively named "Punicode8", with namespace "Pun" for short, is created using the PHP-CPP toolkit.
+# Pun8 - PHP extension for foreward iteration of unicode string with new PCRE2 interface.
+This PHP extension, tentatively named "Pun8", with namespace "Pun" for short, is created using the PHP-CPP toolkit.
 The motivation arises from frustrations experienced in engineering the TOML parser projects, toml and toml-zephir, which centred around the interface limitations of preg_match, and the regretful need to use substr all the time.
 
-Punicode is compiled with a shared link directly to the latest version of the libpcre2-8 library.
+Pun8 is compiled with a shared link directly to the latest version of the libpcre2-8 library.
 
 Of course utf-16 versions of this could be done but utf-8 was first priority.
 
-Punicode currently being developed on a linux system, using the PHP-CPP source code.
+Pun8 currently being developed on a linux system, using the PHP-CPP source code.
 This project is not likely to be modified, or even tried, on PHP versions earlier than 7.0
 
 PHP-CPP does have a compatible "legacy version" for PHP 5.3+
