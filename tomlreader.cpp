@@ -348,8 +348,10 @@ void TomlReader::parseKeyName(std::string& name)
 {
 	auto id = _ts->fn_getId();
 	switch(id) {
-	case Rex::BareKey:
-		 name = _ts->fn_getValue();
+	case Rex::BareKey: {
+		 	auto sv = _ts->fn_getValue();
+		 	name.assign(sv.data(), sv.size());
+		 }
 		 //_ts->fn_moveValue(name);
 		 break;
 	case Rex::Quote1:
