@@ -41,6 +41,17 @@ PHPCPP_EXPORT void *get_module()
     // for the entire duration of the process (that's why it's static)
     static Php::Extension extension("pun8", "1.0");
     
+
+    Php::Interface mergeable("Mergeable");
+
+        // define an interface method
+    mergeable.method("merge", { 
+        Php::ByVal("store", KeyTable::PHP_NAME) 
+    });
+    mergeable.method("toArray");
+
+    extension.add(std::move(mergeable));
+
     // @todo    add your own functions, classes, namespaces to the extension
     Php::Class<Pun8> punic(Pun8::PHP_NAME);
 
@@ -152,6 +163,7 @@ PHPCPP_EXPORT void *get_module()
     valList.method<&ValueList::pushBack> ("pushBack");
     valList.method<&ValueList::popBack> ("popBack");
     valList.method<&ValueList::getV> ("getV");
+
     valList.method<&ValueList::setV> ("setV");
     valList.method<&ValueList::back> ("back");
     valList.method<&ValueList::size> ("size");
@@ -165,21 +177,32 @@ PHPCPP_EXPORT void *get_module()
 
 
     Php::Class<KeyTable> keytab(KeyTable::PHP_NAME);
+    keytab.implements(mergeable);
     keytab.extends(tbase);
     
     keytab.method<&KeyTable::setKV> ("setKV");
     keytab.method<&KeyTable::getV> ("getV");
+    keytab.method<&KeyTable::get> ("get");
     keytab.method<&KeyTable::unsetK> ("unsetK");
     keytab.method<&KeyTable::hasK> ("hasK");
     keytab.method<&KeyTable::clear> ("clear");
-    //keytab.method<&KeyTable::count> ("count");
+    keytab.method<&KeyTable::merge> ("merge", {
+        Php::ByVal("store", KeyTable::PHP_NAME) 
+    });
+    //keytab.method<&KeyTable::merge> ("merge");
+    keytab.method<&KeyTable::size> ("size");
+
     keytab.method<&KeyTable::toArray> ("toArray");
     keytab.method<&KeyTable::setTag> ("setTag");
     keytab.method<&KeyTable::getTag> ("getTag");
+
+    
+
     extension.add(std::move(keytab));
 
     Php::Class<TomlReader> rdr(TomlReader::PHP_NAME);
-        rdr.method<&TomlReader::parse> ("parse");
+        
+    rdr.method<&TomlReader::parse> ("parse");
     rdr.method<&TomlReader::parseFile>("parseFile");
     rdr.method<&TomlReader::getUseVersion>("getUseVersion");
     rdr.method<&TomlReader::getTomlVersion>("getTomlVersion");

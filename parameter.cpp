@@ -39,6 +39,7 @@ const std::string CPunk::datetime_classname = "DateTime";
 
 using namespace pun;
 
+
 void 
 pun::unserialize(Php::Value& val, std::istream& ins)
 {
@@ -200,6 +201,12 @@ const char* pun::getTypeName(Php::Type ptype)
     }
 }
 
+KeyTable* pun::castKeyTable(Php::Value& val) {
+    if  (!val.isObject())
+        return nullptr;
+    Php::Base* base = val.implementation();
+    return  dynamic_cast<KeyTable*>(base);
+}
 
 void pun::hexUniStr8(svx::string_view hexval, std::ostream& os)
 {
@@ -345,6 +352,21 @@ pun::check_Token8(Php::Parameters& params, unsigned int offset)
     }
     throw Php::Exception(pun::missingParameter("Token8 object", offset));
 }
+
+KeyTable* 
+pun::check_KeyTable(Php::Parameters& params, unsigned int offset)
+{
+    auto ct = params.size();
+
+    if (offset < ct) {
+        KeyTable *obj = castKeyTable(params[offset]);
+            if (obj)
+                return obj;  
+    }
+    throw Php::Exception(pun::missingParameter("KeyTable object", offset));
+
+}
+
 
 void pun::serialize_valueList(Php::Base* base, std::ostream& out)
 {

@@ -37,7 +37,7 @@ const char* const cCommentStuff = "^(\\V*)";
 const char* const cHashComment = "^(\\h*#\\V*|\\h*)";
 
 const char* const cDig_Dig = "^([^\\d]_[^\\d])|(_$)";
-const char* const cNo_0Digit = "^(0\\d+)";
+//const char* const cNo_0Digit = "^(0\\d+)";
 const char* const cFloat_E = "([^\\d]_[^\\d])|_[eE]|[eE]_|(_$)";
 
 #ifdef ZTS
@@ -94,7 +94,7 @@ Rex::Rex()
 	mptr->setRex(pun::makeSharedRe(Rex::HashComment, cHashComment, strlen(cHashComment) ));
 
 	mptr->setRex(pun::makeSharedRe(Rex::Dig_Dig, cDig_Dig, strlen(cDig_Dig) ));
-	mptr->setRex(pun::makeSharedRe(Rex::No_0Digit, cNo_0Digit, strlen(cNo_0Digit) ));
+	//mptr->setRex(pun::makeSharedRe(Rex::No_0Digit, cNo_0Digit, strlen(cNo_0Digit) ));
 	mptr->setRex(pun::makeSharedRe(Rex::Float_E, cFloat_E, strlen(cFloat_E) ));
 
 	_singles = std::make_shared<CharMap>();
@@ -318,10 +318,10 @@ void TomlReader::syntaxError(const std::string& s) {
 	syntaxError(s.data());
 }
 
-void TomlReader::valueError(const char* msg, const std::string& value) {
-	std::stringstream ss;
-	ss << msg << ". Value { " << value << " }.";
-	throw Php::Exception(ss.str());
+void TomlReader::valueError(const char* emsg, const std::string& value) {
+	std::string msg = emsg;
+	msg += ". Value { " + value + " }";
+	throw Php::Exception(msg);
 }
 void TomlReader::syntaxError(const char* msg)
 {
@@ -401,20 +401,59 @@ void TomlReader::invalidEscChar(char eChar) {
 	ss << "Invalid escaped character chr(" << int(eChar) << ")";
 	syntaxError(ss.str());	
 }
-
-
+/*
+bool TomlReader::fn_moveLiteralStr(svx::string_view& view) {
+	Token8 token;
+	bool loop = true;
+	auto before = _ts->fn_getOffset();
+	while(loop) {
+		// only detects singles, EOS, Newline
+		_ts->fn_peekToken(&token); 
+		switch(token._id) {
+		case Rex::Apost1:
+		case Rex::Newline:
+		case Rex::EOS:
+			loop = false;
+			break;
+		case Rex::AnyChar:
+		default:
+			char32_t check = _ts->fn_getChar32();
+			if (check < 0x20) {
+				loop = false;
+			}
+			else {
+				_ts->fn_acceptToken(&token);
+			}
+			break;
+		}
+		
+	}
+	auto after =  _ts->fn_getOffset();
+	if (after > before) {
+		view = _ts->fn_substr(before, after - before);
+		return true;
+	}
+	return false;
+}
+*/
 void TomlReader::parseLitString(std::string& val)
 {
 	std::stringstream result;
+	svx::string_view  value;
 
 	_ts->fn_peekToken(&_token);
 	while (_token._id != Rex::Apost1) {
 		if (_token._id == Rex::Newline || _token._id == Rex::EOS) {
 			syntaxError("String value missing closing quote ( ' )");
 		}
+		// a literal string is just no control characters,
+		// and no / (x27)
 		if (_ts->fn_moveRegId(Rex::LitString)) {
 			result << _ts->fn_getValue();
 		}
+		//if (this->fn_moveLiteralStr(value)) {
+		//	result << value;
+		//}
 		else {
 			syntaxError("Bad literal string value");
 		}
@@ -695,13 +734,16 @@ void TomlReader::parseInlineTable()
 
 }
 
-
+void TomlReader::throw_notFullMatch(const std::string& target, const std::string& cap)
+{
+	std::string msg = "Value { ";
+	msg += cap + " } is not full match for { " + target + " }";
+	syntaxError(msg);
+}
 void TomlReader::fn_checkFullMatch(const std::string& target, const std::string& cap) 
 {
 	if (target.size() > cap.size()) {
-		std::stringstream ss;
-		ss << "Value { " << cap << " } is not full match for { " << target <<  " }";
-		syntaxError(ss.str());
+		throw_notFullMatch(target, cap);
 	}
 }
 
@@ -751,68 +793,105 @@ void TomlReader::parseValue(Php::Value& val, pun::Pype& punt)
 		_valueText.fn_setString(temp.data(), temp.size());
 
 		Pcre8_match matches;
-
-		int ct = _valueText.fn_matchRegId(Rex::Bool, matches);
+		int ct = _valueText.fn_matchRegId(Rex::Integer, matches);
+		auto valueLen = _valueText.fn_size();
 		if (ct > 1) {
-			bool bresult =  (matches._slist[1] == "true") ? true : false;
-			punt = pun::tBool;
-		    val = bresult;
-			return;
-		}
-		ct = _valueText.fn_matchRegId(Rex::DateTime, matches);
-		if (ct > 1) {
-			fn_checkFullMatch(_valueText.str(), matches._slist[1]);
-			parseDateTime(val);
-			punt = pun::tDateTime;
-			return;
+			const std::string& match = matches._slist[1];
+			if (match.size() == valueLen) {
+				parseInteger(sval);
+				val = std::stol(sval);
+				punt = pun::tInteger;
+				return;
+			}
 		}
 		ct = _valueText.fn_matchRegId(Rex::FloatExp, matches);
 		if (ct > 1) {
-			fn_checkFullMatch(_valueText.str(), matches._slist[1]);
-			parseFloatExp(val);
-			punt = pun::tFloat;
+			const std::string& match = matches._slist[1];
+			if (match.size() == valueLen) {
+				parseFloatExp(val);
+				punt = pun::tFloat;
+			}
 			return;
 		}
 		ct = _valueText.fn_matchRegId(Rex::FloatDot, matches);
 		if (ct > 1) {
-			fn_checkFullMatch(_valueText.str(), matches._slist[1]);
-			parseFloat(val,matches);
-			punt = pun::tFloat;
-			return;
+			const std::string& match = matches._slist[1];
+			if (match.size() == valueLen)
+			{
+				parseFloat(val,matches);
+				punt = pun::tFloat;
+				return;
+			}
 		}
-		ct = _valueText.fn_matchRegId(Rex::Integer, matches);
-
+		ct = _valueText.fn_matchRegId(Rex::Bool, matches);
 		if (ct > 1) {
-			fn_checkFullMatch(_valueText.str(), matches._slist[1]);
-			parseInteger(sval);
-			val = std::stol(sval);
-			punt = pun::tInteger;
-			return;
+			const std::string& match = matches._slist[1];
+			if (match.size() == valueLen)
+			{
+				bool bresult =  (match == "true") ? true : false;
+				punt = pun::tBool;
+		    	val = bresult;
+				return;
+			}
 		}
+		ct = _valueText.fn_matchRegId(Rex::DateTime, matches);
+		if (ct > 1) {
+			const std::string& match = matches._slist[1];
+			if (match.size() == valueLen)
+			{
+				parseDateTime(val);
+				punt = pun::tDateTime;
+				return;
+			}
+			else {
+				throw_notFullMatch(_valueText.str(), match);
+			}
+		}		
 	}
-	std::stringstream ss;
-	ss << "No value type match found for " << _ts->fn_getValue();
+	auto sview = _ts->fn_getValue();
+	std::string errMsg = "No value type match found for " + std::string(sview.data(), sview.size());
 	// Undo (_ts->fn_getValue()) before throwing.
 	//Php::out << "Restored = " << _ts->fn_getValue() << std::endl;
-	syntaxError(ss.str());
+	syntaxError(errMsg);
 }
 
 void TomlReader::parseInteger(std::string& val)
 {
 	Pcre8_match matches;
-	if (_valueText.fn_matchRegId(Rex::Dig_Dig, matches)) {
-		valueError("Invalid integer: Underscore must be between digits", _valueText.str());
+	// don't need expression check if no underscores in string
+	// reference to full underlying string
+	auto str = _valueText.str();
+	// skip the sign
+	svx::string_view int_str(str.data(), str.size());
+	auto firstChar = int_str[0];
+
+	if (firstChar == '-' || firstChar == '+') {
+		int_str.remove_prefix(1);
+		_valueText.fn_setOffset(1);
 	}
-	std::string copy = _valueText.str();
 
-	std::string& extract = _valueText.str();
-
-	extract.erase(std::remove(extract.begin(), extract.end(), '_'), extract.end());
-
-	if (_valueText.fn_matchRegId(Rex::No_0Digit, matches)) {
-		valueError("Invalid integer: Leading zeros not allowed", copy);
+	auto fpos = int_str.find_first_of('_');
+	
+	if (fpos != svx::string_view::npos) {
+		bool valid = true;
+		if (fpos == 0) {
+			valid = false;
+		}
+		else {
+			fpos = int_str.find_last_of('_');
+			if (fpos == int_str.size()-1) {
+				valid = false;
+			}
+		}
+		if (!valid) {
+			valueError("Invalid integer: Underscore must be between digits", _valueText.str());
+		}
+		str.erase(std::remove(str.begin(), str.end(), '_'), str.end());
 	}
-	val = _valueText.str();
+	if (int_str[0] == '0' && int_str.size() > 1){
+		valueError("Invalid integer: Leading zeros not allowed", str);
+	}
+	val = str;
 }
 
 void TomlReader::parseFloatExp(Php::Value& val)

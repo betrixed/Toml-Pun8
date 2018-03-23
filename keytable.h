@@ -92,6 +92,9 @@ public:
 	// Get value accessed by key
 	Php::Value getV(Php::Parameters& params);
 
+	// Get value or return supplied default
+	Php::Value get(Php::Parameters& params);
+
 	Php::Value hasK(Php::Parameters& params);
 	// Remove value accessed by key
 	void unsetK(Php::Parameters& params);
@@ -100,20 +103,33 @@ public:
 
 	Php::Value getTag() const;
 	void setTag(Php::Parameters& param);
-	// Countable and ArrayAccess
+	// Countable and ArrayAccess, as done by PHP-CPP
 	virtual long count() override;
 	virtual bool offsetExists(const Php::Value &key) override;
 	virtual void offsetSet(const Php::Value &key, const Php::Value &value) override;
 	virtual Php::Value offsetGet(const Php::Value &key) override;
 	virtual void offsetUnset(const Php::Value &key) override;
 	
+	// For Traversable
 	virtual Php::Iterator *getIterator() override 
 	{
 		return new KT_Iterator( this, _store);
 	}
+
+	Php::Value  size() const { return (long) _store.size(); }
 	void clear() { _store.clear(); } 
 	// Return the Array as stored
 	Php::Value toArray();
+	// recursive merge
+	
+	// Recursive add keys from KeyTable argument
+	// values are not copied, references are copied.
+	Php::Value merge(Php::Parameters& param);
+
+	Php::Value intf_merge(Php::Value& obj);
+	
+	auto begin() { return _store.begin(); }
+	auto end() { return _store.end(); }
 
 	Php::Value __toString();
 	
@@ -125,10 +141,14 @@ public:
 	bool __isset(const Php::Value &name) const;
 	void __unset(const Php::Value &name);
 
+
 public:
 	void fn_setKV(std::string& key, Php::Value &val);
 	Php::Value fn_getV(std::string& key);
 
+	void fn_merge(KeyTable* other);
+	void throw_mergeFail(const std::string& key) ;
+	
 	void fn_unserialize(std::istream& ins);
 	void fn_serialize(std::ostream& os);
 
@@ -136,7 +156,7 @@ public:
 
 	Php::Value fn_object();
 
-private:
+protected:
 	ValueMap _store;
 
 };

@@ -112,6 +112,7 @@ namespace pun {
         void erase(Php::Parameters& param);
     public:
         int fn_peekChar();
+
         int fn_firstMatch(Pcre8_match& matches);
         int fn_matchRegId(int id, Pcre8_match& matches);
         void fn_copyIdList(Php::Value& v);
@@ -121,6 +122,10 @@ namespace pun {
         std::string fn_beforeChar(char32_t c) const;
         const std::string& fn_getValue() const;
 
+        void fn_setOffset(size_t val) { _index = val; }
+        size_t fn_getOffset() { return _index; }
+        size_t fn_size() { return _size - _index; }
+        
         void fn_setRe8map(Re8map_share& smap);
         std::string& str();
 
@@ -131,11 +136,11 @@ namespace pun {
         /* get byte size and code value of next character */
 
         std::string      _mystr;
-        unsigned int    _index;
-        unsigned int    _size;
-        char32_t        _myChar;
-        Re8map_share    _remap;
-        IdList          _idlist;  // current id list for first match
+        size_t           _index;
+        size_t           _size;
+        char32_t         _myChar;
+        Re8map_share     _remap;
+        IdList           _idlist;  // current id list for first match
 
         // This returns the id in Pcre8_share and result, or 0
         int matchSP(Pcre8_share& sp, Pcre8_match& result);

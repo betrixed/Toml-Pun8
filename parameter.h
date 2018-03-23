@@ -34,6 +34,7 @@ struct CPunk {
 
 namespace pun {
 
+     class KeyTable;
      class Re8map;
      class Recap8;
      class Token8;
@@ -64,6 +65,10 @@ namespace pun {
      Pcre8* check_Pcre8(Php::Parameters& params,unsigned int offset=0);
      Token8* check_Token8(Php::Parameters& params, unsigned int offset=0);
      Re8map* check_Re8map(Php::Parameters& params, unsigned int offset=0);
+     KeyTable* check_KeyTable(Php::Parameters& params, unsigned int offset=0);
+
+     KeyTable* castKeyTable(Php::Value& val);
+     
      Recap8* option_Recap8(Php::Parameters& params, unsigned int offset=0);
 
      void hexUniStr8(svx::string_view hexval, std::ostream& os);

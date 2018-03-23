@@ -96,7 +96,8 @@ namespace pun {
         void fn_setRe8map(Re8map* map) { _input._remap = map->_remap; }
         char32_t fn_getChar32() const { return _input._myChar; }
         unsigned int fn_getOffset() const;
-
+        svx::string_view fn_substr(size_t start, size_t len);
+        
         unsigned char    fn_peekByte() const;
         unsigned char    fn_movePeekByte();
         unsigned int     fn_size() const;

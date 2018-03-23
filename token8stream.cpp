@@ -77,7 +77,10 @@ Token8Stream::fn_movePeekByte()
 }
 
 
-
+svx::string_view Token8Stream::fn_substr(size_t start, size_t slen)
+{
+	return svx::string_view(_input._mystr.data() + start, slen);
+}
 void Token8Stream::fn_peekToken(Token8* token) {
 	auto nextCt = _input.fn_peekChar();
 	if (nextCt==0) {
@@ -230,6 +233,8 @@ Php::Value Token8Stream::moveRegex(Php::Parameters& params)
     }
     return Php::Value(result);
 }
+
+
 
 bool Token8Stream::fn_moveRegId(int id)
 {

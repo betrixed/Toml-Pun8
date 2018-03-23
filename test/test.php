@@ -240,10 +240,14 @@ function keytable() {
     
     $a = $kt->toArray();
 
-    echo "KeyTable " . print_r($a,true) . PHP_EOL;
 
+    // merge something
+    $m = new KeyTable();
+    $m->setKV("modules", ["a" => ['name' => 'a'], "b" => ['name' => 'b']]);
+    $kt->merge($m);
    
-
+   
+    echo "merge " . print_r($kt->toArray(),r) . PHP_EOL;
 
 }
 

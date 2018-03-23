@@ -125,6 +125,8 @@ namespace pun {
 		
 		void invalidEscChar(char eChar);
 		void fn_checkFullMatch(const std::string& target, const std::string& cap);
+		void throw_notFullMatch(const std::string& target, const std::string& cap);
+		//bool fn_moveLiteralStr(svx::string_view& view);
 
 		void parseDateTime(Php::Value& val);
 		void parseFloat(Php::Value& val, Pcre8_match& matches);
