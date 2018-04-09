@@ -112,7 +112,8 @@ This class checks that everything that is set inside is of the same type, and fo
 The parser does utf-8 examples.  It will check and handle file Byte Order Marks - BOM
 
 # Pun8 - PHP extension for foreward iteration of unicode string with new PCRE2 interface.
-This PHP extension, tentatively named "Pun8", with namespace "Pun" for short, is created using the PHP-CPP toolkit.
+This PHP extension, tentatively named "Pun8", with namespace "Pun", is developed using the PHP-CPP toolkit.
+
 The motivation arises from frustrations experienced in engineering the TOML parser projects, toml and toml-zephir, which centred around the interface limitations of preg_match, and the regretful need to use substr all the time.
 
 Pun8 is compiled with a shared link directly to the latest version of the libpcre2-8 library.
@@ -133,9 +134,11 @@ A toml-PHP and toml-zephir versions have already been created and have set execu
    Pun8, IdRex8, Re8map, Token8, Token8Stream, useful in trying out PHP versions of the TOML parser. 
 
 The interface methods are close to the the minimum needed for a Toml parser, because of the time investment required. 
-### Pun\\Pun8 
-This was created first. It holds a reference to a PHP string, and maintains an absolute offset property. All regular expression matches start at the offset property.
-It also has an internal shared IdRex8 map, and a list of key Ids to direct the firstMatch order, because the map is itself unordered.
+### Pun\\UStr8 
+
+A simpler version of the Pun8 class, which is now deprecated, as most of the match and parse functions are in Token8Stream.  UStr8 holds a reference to shared string buffer. It has substring view of the string buffer. It can share the buffer by calling share to create an object clone, allowing multiple views of shared buffer.
+The UStr8 is iterable.  Use of "foreach" generates the start byte offset, and unicode string segments which are a single or multibyte UTF8 characters.
+The string can also be stepped through using nextChar.
 
 ```php
   class Pun8 {
@@ -147,18 +150,19 @@ It also has an internal shared IdRex8 map, and a list of key Ids to direct the f
     setString(string $input);
 
   // Get next character as one or more byte characters, advance the offset
-    nextChar() : string
+  // optional reference to unicode code number
+    nextChar([int& code]) : string
 
   // Get next character as one or more byte characters, no change in offset
-    peekChar() : string
+  // optional reference to unicode code number
+    peekChar([int& code]) : string
 
-  // After nextChar() , or peekChar() retrive unicode code point
-    getCode() : int;
+  // The offset properties, a byte position from 0
+    getBegin() : int;
+    getEnd() : int;
 
-  // The offset property, a byte position from 0
-    getOffset() : int;
-    setOffset(int $offset);
-    addOffset(int $offset); 
+    setRange(int $offset, int $endOffset);
+    setEnd(int $endOffset); 
 
   // Return the real buffer size
   size() : int;
@@ -181,74 +185,6 @@ It also has an internal shared IdRex8 map, and a list of key Ids to direct the f
      */ 
     ensureUTF8() : int;  
 
-    /*
-     * Delete a block of characters within the string buffer, collapse the hole.
-     * This resets the offset and rangeEnd properties, even if blockSize is zero.
-     */
-    erase(int $startPos, int $blockSize)
-
-  /** 
-   * Use the subset of key ids assigned by setIdList, return map index id of first matching PCRE2
-   */
-
-
-          firstMatch(Recap8 $captures) : int;
-
-  /** Internal map of compiled regular expressions. 
-   *  IdRex8 object can wrap 1 PCRE2, Re8map has an unordered_map of PCRE2 by integer key.
-   *  std::shared_ptr is used to shared an object containing the integer key.
-   * The regular expression, and its compiled version, and the Id are stuck together 
-   *  and can't be seperated anyhow.
-   */
-
-  /**
-   * Set map Id and Regular expression to be compiled
-   */
-          setIdRex(int $keyId, string $regex);
-
-  /**
-   * Get IdRex8 object to hold Id and shared compiled regular expression
-   */
-          getIdRex(int $keyId) : IdRex8;
-
- /**
-  * Get a normal PHP array all of tthe integer keys (unordered) as a list
-  */ 
-          getIds() : array;
-
- /**
-  * Assign a subset (ordered list of integer keys) selector 
-  * for regular expression match (firstMatch())
-  */
-          setIdList(array $keyIdList);
-
-  // Get the subset of keys
-          getIdList() array;
-
-  /* Using the internal map, try a match using a single Id key.
-   * Return captures string list in $cap
-   * Return value is number of captures
-   */
-          matchIdRex(int $key, Recap8 $cap) : int;
-  
-  /**
-   * Try a single PCRE2 match from IdRex8 object.
-   * Captures copied into $cap. 
-   * Return value is number of captures.
-   */
-          matchIdRex8(IdRex8 $idrex, Recap8 $cap) : int;
-
-  // Set the current internal map, from a sharing Map object
-          setRe8map(Re8map $map);
-/* 
- * This is such a big investment class, the Tag association property is now thrown in.
- */
-
-  // Set a general use "Tag" property
-        setTag($tag);
-  // Get the "Tag" property
-        getTag() : mixed;
- 
 ```
 ### Pun\\IdRex8
 This holds a single shareable IdRex8 internal object

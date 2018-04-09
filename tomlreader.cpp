@@ -3,6 +3,7 @@
 #include "valuelist.h"
 #include "re8map.h"
 #include "ucode8.h"
+#include "ustr8.h"
 #include "token8stream.h"
 
 #include <ostream>
@@ -98,12 +99,12 @@ Rex::Rex()
 	mptr->setRex(pun::makeSharedRe(Rex::Float_E, cFloat_E, strlen(cFloat_E) ));
 
 	_singles = std::make_shared<CharMap>();
-	
+
 	auto cmap = _singles.get();
 	cmap->_map.reserve(31);
 
-	cmap->_map.insert( { 
-		{'=', Rex::Equal}, 
+	cmap->_map.insert( {
+		{'=', Rex::Equal},
 		{'[', Rex::LSquare},
 		{']', Rex::RSquare},
 		{'.', Rex::Dot},
@@ -143,47 +144,55 @@ TomlReader::getUseVersion()
 	return "Pun\\TomlReader 0.4 PHP-CPP 2.0.0";
 }
 
-Php::Value 
+Php::Value
 TomlReader::getTomlVersion()
 {
 	return "0.4 Toml Specification";
 }
 
-Php::Value TomlReader::parseFile(Php::Parameters& param)
+Php::Value
+TomlReader::parseFile(Php::Parameters& param)
 {
-
 	pun::check_String(param,0);
 	std::string path = param[0];
 
 	std::ifstream in(path, std::ios::binary);
-	
+
 	std::string contents{std::istreambuf_iterator<char>{in}, {}};
 
+    auto sp = std::make_shared<UStrData>();
+    sp.get()->assign(std::move(contents));
+    sp.get()->ensureUTF8();
+
 	auto parser = new TomlReader();
-	return parser->parseStr(std::move(contents));
+	parser->setData(sp);
+	return parser->doParse();
 }
 
-TomlReader::TomlReader() : 
+TomlReader::TomlReader() :
 	_myrex(nullptr),
 	_table(nullptr),
-	_root(nullptr), 
-	_stackTop(0), 
+	_root(nullptr),
+	_stackTop(0),
 	_expSetId(0)
 {
 	_myrex = Rex::getGlobalRex();
+    _src = std::make_shared<UStrData>();
 
 	// Reference counted objects ??
-	
+
 	_ts = new Token8Stream();
 	_v_ts = Php::Object(Token8Stream::PHP_NAME, _ts);
 
-	// 
+	//
 	_ts->fn_setEOS(Rex::EOS);
 	_ts->fn_setEOL(Rex::Newline);
 	_ts->fn_setUnknown(Rex::AnyChar);
-	_ts->fn_setRe8map(_myrex->_re8);
+
+	_remap = _myrex->_re8->_remap;
+
+	_ts->fn_setMap(_remap);
 	_ts->fn_setSingles(_myrex->_singles);
-	_valueText.fn_setRe8map(_myrex->_re8->_remap);
 
 	this->setExpSet(eKey);
 }
@@ -192,7 +201,7 @@ void TomlReader::popExpSet()
 {
 	int temp = _expStack.back();
 	_expStack.pop_back();
-	setExpSet(temp);	
+	setExpSet(temp);
 }
 
 void TomlReader::pushExpSet(int id)
@@ -233,36 +242,34 @@ void TomlReader::setExpSet(int id)
 
 Php::Value TomlReader::parse(Php::Parameters &param)
 {
-	pun::check_String(param,0);
-	const char* sptr = (const char*) param[0];
-	auto slen = param[0].size();
-	std::string content(sptr, slen);
-	return parseStr(std::move(content));
+    if (param.size() < 1) {
+        throw Php::Exception("Expected string or UStr8 object");
+    }
+    Php::Value& val = param[0];
+    if (val.isString()) {
+        _src.get()->assign(val, val.size());
+    }
+    else if (val.isObject()) {
+        if (val.instanceOf(UStr8::PHP_NAME)) {
+            auto u8 = (UStr8*) val.implementation();
+            _src = u8->_str;
+        }
+    }
+
+	return doParse();
 }
 
 
-Php::Value TomlReader::parseStr(std::string &&m)
+Php::Value TomlReader::doParse()
 {
 	try {
-	// this would be a good place to check input encoding,
-	// and re-encode as UTF-8 if necessary
-		std::string stage_input(std::move(m));
 
-		auto offset = ensureUTF8(stage_input);
-
-		_ts->setString(std::move(stage_input));
+		_ts->fn_setString(_src);
+		//Php::out << "Source length " << _src.get()->_view.size() << std::endl;
 		_root = new KeyTable();
 		_v_root = Php::Object(KeyTable::PHP_NAME, _root);
 		_table  = _root;
-		
-		// check for UTF-8, UTF-16, UTF-32 start BOM characters
-		
 
-		
-		if (offset > 0) {
-			_ts->fn_addOffset(offset);
-		}
-		
 		auto tokenId = _ts->fn_moveNextId();
 		unsigned int loopct = 0;
 		while (tokenId != Rex::EOS)
@@ -399,7 +406,7 @@ void TomlReader::parseQString(std::string& val)
 void TomlReader::invalidEscChar(char eChar) {
 	std::stringstream ss;
 	ss << "Invalid escaped character chr(" << int(eChar) << ")";
-	syntaxError(ss.str());	
+	syntaxError(ss.str());
 }
 /*
 bool TomlReader::fn_moveLiteralStr(svx::string_view& view) {
@@ -408,7 +415,7 @@ bool TomlReader::fn_moveLiteralStr(svx::string_view& view) {
 	auto before = _ts->fn_getOffset();
 	while(loop) {
 		// only detects singles, EOS, Newline
-		_ts->fn_peekToken(&token); 
+		_ts->fn_peekToken(&token);
 		switch(token._id) {
 		case Rex::Apost1:
 		case Rex::Newline:
@@ -426,7 +433,7 @@ bool TomlReader::fn_moveLiteralStr(svx::string_view& view) {
 			}
 			break;
 		}
-		
+
 	}
 	auto after =  _ts->fn_getOffset();
 	if (after > before) {
@@ -556,12 +563,12 @@ void  TomlReader::parseKeyValue()
 	Php::Value rhsValue;
 	//Php::out << "KeyVal id " << _token._id << " = " <<  _token._value << std::endl;
 	if (_token._id == Rex::LSquare) {
-		_ts->fn_acceptToken(&_token);	
+		_ts->fn_acceptToken(&_token);
 		// ValueList throws exceptions without line context
 
 			ValueList* vlist = new ValueList();
 			rhsValue = Php::Object(ValueList::PHP_NAME, vlist);
-			parseArray(vlist);		
+			parseArray(vlist);
 			//Php::out << "End parse Array" << std::endl;
 	}
 	else if (_token._id == Rex::LCurly) {
@@ -571,13 +578,13 @@ void  TomlReader::parseKeyValue()
 		auto oldTable = _table;
 		_table = ktab;
 		parseInlineTable();
-		_table = oldTable;		
+		_table = oldTable;
 	}
 	else {
 		pun::Pype punt; // anything goes here
 		parseValue(rhsValue, punt);
 	}
-	
+
 	_table->fn_setKV(keyName, rhsValue);
 	//Php::out << "Set " << keyName << " value " << rhsValue.debugZval() << std::endl;
 }
@@ -622,8 +629,8 @@ void TomlReader::parseArray(ValueList *vlist)
 			break;
 		}
 	}
-	
-	while(_token._id != Rex::RSquare) 
+
+	while(_token._id != Rex::RSquare)
 	{
 		if (_token._id == Rex::LSquare) {
 			_ts->fn_acceptToken(&_token);
@@ -699,7 +706,7 @@ void TomlReader::parseArray(ValueList *vlist)
 				doLoop = false;
 				break;
 			}
-		}	
+		}
 	}
 }
 
@@ -740,7 +747,7 @@ void TomlReader::throw_notFullMatch(const std::string& target, const std::string
 	msg += cap + " } is not full match for { " + target + " }";
 	syntaxError(msg);
 }
-void TomlReader::fn_checkFullMatch(const std::string& target, const std::string& cap) 
+void TomlReader::fn_checkFullMatch(const std::string& target, const std::string& cap)
 {
 	if (target.size() > cap.size()) {
 		throw_notFullMatch(target, cap);
@@ -754,11 +761,11 @@ void TomlReader::parseValue(Php::Value& val, pun::Pype& punt)
 	//Php::out << "Val id " << _token._id << " = " <<  _token._value << std::endl;
 	if (_token._id == Rex::Apost1 )
 	{
-		
+
 		if (_ts->fn_moveRegId(Rex::Apost3)) {
-			
+
 			parseMLString(sval);
-			
+
 		}
 		else {
 			_ts->fn_acceptToken(&_token);
@@ -776,7 +783,7 @@ void TomlReader::parseValue(Php::Value& val, pun::Pype& punt)
 		}
 		else {
 			_ts->fn_acceptToken(&_token);
-			
+
 			parseQString(sval);
 		}
 		punt = pun::tString;
@@ -788,13 +795,10 @@ void TomlReader::parseValue(Php::Value& val, pun::Pype& punt)
 		syntaxError("No value after = ");
 	}
 	else {
-		svx::string_view temp = _ts->fn_getValue();
-
-		_valueText.fn_setString(temp.data(), temp.size());
-
+		_valueText = _ts->fn_getValue();
 		Pcre8_match matches;
-		int ct = _valueText.fn_matchRegId(Rex::Integer, matches);
-		auto valueLen = _valueText.fn_size();
+        auto ct = _remap.get()->match(_valueText, Rex::Integer, matches);
+		auto valueLen = _valueText.size();
 		if (ct > 1) {
 			const std::string& match = matches._slist[1];
 			if (match.size() == valueLen) {
@@ -804,7 +808,7 @@ void TomlReader::parseValue(Php::Value& val, pun::Pype& punt)
 				return;
 			}
 		}
-		ct = _valueText.fn_matchRegId(Rex::FloatExp, matches);
+		ct = _remap.get()->match(_valueText, Rex::FloatExp, matches);
 		if (ct > 1) {
 			const std::string& match = matches._slist[1];
 			if (match.size() == valueLen) {
@@ -813,7 +817,7 @@ void TomlReader::parseValue(Php::Value& val, pun::Pype& punt)
 			}
 			return;
 		}
-		ct = _valueText.fn_matchRegId(Rex::FloatDot, matches);
+		ct = _remap.get()->match(_valueText, Rex::FloatDot, matches);
 		if (ct > 1) {
 			const std::string& match = matches._slist[1];
 			if (match.size() == valueLen)
@@ -823,7 +827,7 @@ void TomlReader::parseValue(Php::Value& val, pun::Pype& punt)
 				return;
 			}
 		}
-		ct = _valueText.fn_matchRegId(Rex::Bool, matches);
+		ct = _remap.get()->match(_valueText, Rex::Bool, matches);
 		if (ct > 1) {
 			const std::string& match = matches._slist[1];
 			if (match.size() == valueLen)
@@ -834,7 +838,7 @@ void TomlReader::parseValue(Php::Value& val, pun::Pype& punt)
 				return;
 			}
 		}
-		ct = _valueText.fn_matchRegId(Rex::DateTime, matches);
+		ct = _remap.get()->match(_valueText, Rex::DateTime, matches);
 		if (ct > 1) {
 			const std::string& match = matches._slist[1];
 			if (match.size() == valueLen)
@@ -844,9 +848,9 @@ void TomlReader::parseValue(Php::Value& val, pun::Pype& punt)
 				return;
 			}
 			else {
-				throw_notFullMatch(_valueText.str(), match);
+				throw_notFullMatch(std::string(_valueText.data(), _valueText.size()), match);
 			}
-		}		
+		}
 	}
 	auto sview = _ts->fn_getValue();
 	std::string errMsg = "No value type match found for " + std::string(sview.data(), sview.size());
@@ -860,18 +864,17 @@ void TomlReader::parseInteger(std::string& val)
 	Pcre8_match matches;
 	// don't need expression check if no underscores in string
 	// reference to full underlying string
-	auto str = _valueText.str();
 	// skip the sign
-	svx::string_view int_str(str.data(), str.size());
+	svx::string_view int_str(_valueText);
 	auto firstChar = int_str[0];
-
+    uint64_t prefix = 0;
 	if (firstChar == '-' || firstChar == '+') {
 		int_str.remove_prefix(1);
-		_valueText.fn_setOffset(1);
+		prefix = 1;
 	}
 
 	auto fpos = int_str.find_first_of('_');
-	
+
 	if (fpos != svx::string_view::npos) {
 		bool valid = true;
 		if (fpos == 0) {
@@ -883,64 +886,76 @@ void TomlReader::parseInteger(std::string& val)
 				valid = false;
 			}
 		}
+		val = _valueText;
 		if (!valid) {
-			valueError("Invalid integer: Underscore must be between digits", _valueText.str());
+			valueError("Invalid integer: Underscore must be between digits", val);
 		}
-		str.erase(std::remove(str.begin(), str.end(), '_'), str.end());
+
+		val.erase(std::remove(val.begin(), val.end(), '_'), val.end());
+        int_str = svx::string_view(val.data() + prefix, val.size() - prefix);
+	}
+	else {
+        val = _valueText;
 	}
 	if (int_str[0] == '0' && int_str.size() > 1){
-		valueError("Invalid integer: Leading zeros not allowed", str);
+		valueError("Invalid integer: Leading zeros not allowed", val);
 	}
-	val = str;
 }
 
 void TomlReader::parseFloatExp(Php::Value& val)
 {
 	Pcre8_match matches;
-	if (_valueText.fn_matchRegId(Rex::Float_E, matches)) {
-		valueError("Invalid float with exponent: Underscore must be between digits", _valueText.str());
-	}
-	std::string copy =  _valueText.str();
-	std::string& extract =  _valueText.str();
-	extract.erase(std::remove(extract.begin(), extract.end(), '_'), extract.end());
+	auto ct = _remap.get()->match(_valueText, Rex::Float_E, matches);
+    std::string copy(_valueText.data(), _valueText.size());
 
-	if (_valueText.fn_matchRegId(Rex::No_0Digit, matches)) {
+	if (ct > 0) {
+		valueError("Invalid float with exponent: Underscore must be between digits", copy);
+	}
+	copy.erase(std::remove(copy.begin(), copy.end(), '_'), copy.end());
+
+	_valueText = svx::string_view(copy.data(), copy.size());
+	ct = _remap.get()->match(_valueText, Rex::No_0Digit, matches);
+	if (ct > 0) {
 		valueError("Invalid float with exponent: Underscore must be between digits", copy);
 	}
 	//Php::Value sval = _valueText.str();
-	//val = sval.floatValue(); 
-	val = std::stod(_valueText.str());
+	//val = sval.floatValue();
+	val = std::stod(copy);
 }
 
 
 void TomlReader::parseFloat(Php::Value& val, Pcre8_match& matches)
 {
+    std::string copy(_valueText.data(), _valueText.size());
 	if (matches._slist.size() < 5) {
-		valueError("Wierd Float Capture",_valueText.str());
+		valueError("Wierd Float Capture",copy);
 	}
 
 	if (matches._slist[4].size() <= 1) {
-		valueError("Float needs at least one digit after decimal point", _valueText.str());
+		valueError("Float needs at least one digit after decimal point", copy);
 	}
 
-	if (_valueText.fn_matchRegId(Rex::Dig_Dig, matches)) {
-		valueError("Invalid float: Underscore must be between digits", _valueText.str());
+    auto ct = _remap.get()->match(_valueText, Rex::Dig_Dig, matches);
+    if (ct > 0) {
+		valueError("Invalid float: Underscore must be between digits", copy);
 	}
-	std::string copy =  _valueText.str();
-	std::string& extract = _valueText.str();
-	extract.erase(std::remove(extract.begin(), extract.end(), '_'), extract.end());
+	copy.erase(std::remove(copy.begin(), copy.end(), '_'), copy.end());
 
-	if (_valueText.fn_matchRegId(Rex::No_0Digit, matches)) {
+	_valueText = svx::string_view(copy.data(), copy.size());
+	ct = _remap.get()->match(_valueText, Rex::No_0Digit, matches);
+	if (ct > 0) {
 		valueError("Invalid float: Leading zeros not allowed",copy);
 	}
 	//Php::Value sval = _valueText.str();
-	//val = sval.floatValue(); 
-	val = std::stod(_valueText.str());
+	//val = sval.floatValue();
+	val = std::stod(copy);
 
 }
 void TomlReader::parseDateTime(Php::Value& val)
 {
-	val = Php::Object("DateTime", _valueText.str());
+    std::string copy(_valueText.data(), _valueText.size());
+
+	val = Php::Object("DateTime", copy);
 }
 
 void TomlReader::parseMLQString(std::string& sval) {
@@ -951,7 +966,7 @@ void TomlReader::parseMLQString(std::string& sval) {
 	auto id = _ts->fn_moveNextId();
 	// Newline straight after opening quotes is ignored
 	if (id == Rex::Newline) {
-		id = _ts->fn_moveNextId(); 
+		id = _ts->fn_moveNextId();
 	}
 	bool doLoop = true;
 	while(doLoop) {
@@ -965,7 +980,7 @@ void TomlReader::parseMLQString(std::string& sval) {
 		case Rex::Escape:
 			do {
 				id = _ts->fn_moveNextId();
-			} 
+			}
 			while(id == Rex::Space || id == Rex::Newline || id == Rex::Escape);
 			break;
 		case Rex::Space:
@@ -1051,8 +1066,8 @@ void TomlReader::parseTablePath()
 	Php::Value val;
 
 	auto id = _ts->fn_moveNextId();
-	bool doLoop = true;	
-	
+	bool doLoop = true;
+
 	while(doLoop) {
 		switch(id) {
 		case Rex::Hash:

@@ -19,13 +19,25 @@ void Pcre8_map::setRex(const Pcre8_share& reg)
     else {
 
         _map.insert(std::pair<int, Pcre8_share>(index,reg));
-    }   
+    }
 }
 
 bool Pcre8_map::hasKey(int index) const
 {
   auto pit = _map.find(index);
   return (pit != _map.end());
+}
+
+int Pcre8_map::match(const svx::string_view& sv,
+                int mapId,
+                Pcre8_match& matches)
+{
+    Pcre8_share reg;
+
+    if (getRex(mapId, reg)) {
+        return reg.get()->match(sv, matches);
+    }
+    return 0;
 }
 
 bool Pcre8_map::getRex(int index, Pcre8_share& reg) const
@@ -48,7 +60,7 @@ int Pcre8_map::eraseRex(int index)
 Pcre8_imp::Pcre8_imp() : _re(nullptr), _id(0)
 {
 }
-    
+
 Pcre8_imp::~Pcre8_imp()
 {
 	(*this).setRex(nullptr);
@@ -71,33 +83,56 @@ bool Pcre8_imp::compile(std::string& _error)
  	PCRE2_SIZE erroroffset;
 
  	_re = pcre2_compile(
-  		pattern,                
-  		psize,  
+  		pattern,
+  		psize,
   		0,                     /* default options */
   		&errornumber,          /* for error number */
   		&erroroffset,          /* for error offset */
   		0
-  		);      
+  		);
 
   	if (_re == nullptr) {
   		std::stringstream ss;
   		PCRE2_UCHAR buffer[256];
 
   		pcre2_get_error_message(errornumber, buffer, sizeof(buffer));
-  		ss << "PCRE2 compilation failed at offset " 
+  		ss << "PCRE2 compilation failed at offset "
   				<< (int)erroroffset << std::endl;
   		ss << buffer << std::endl;
-  		
+
   		_error = ss.str();
   		return false;
-  	} 
+  	}
   	else {
   		_error.clear();
   		return true;
-  	}         
+  	}
 }
 
-int 
+int
+Pcre8_imp::match(const svx::string_view& sv, Pcre8_match& matches)
+{
+    int rct;
+    auto slen = sv.size();
+    if (slen > 0) {
+        //Php::out << "target: " << buf << " with " << pimp->_eStr << std::endl;
+        rct = doMatch(
+                reinterpret_cast<const unsigned char*>(sv.data()),
+                slen,
+                matches);
+        if (rct > 0) {
+            // _rcode to hold match mapId
+            //Php::out << "Matched " << pimp->_id << std::endl;
+            matches._rcode = this->_id;
+            return matches._rcode;
+        }
+    }
+    matches._rcode = 0;
+    return 0;
+}
+
+
+int
 Pcre8_imp::doMatch(const unsigned char* start, unsigned int slen, Pcre8_match& matches)
 {
   auto match_data = pcre2_match_data_create_from_pattern(_re, nullptr);
@@ -166,7 +201,7 @@ Pcre8_match::operator=(const Pcre8_match &&m)
 }
 
 
-Pcre8_share 
+Pcre8_share
 pun::makeSharedRe(int mapId, const char* estr, unsigned int slen)
 {
     Pcre8_share sp = std::make_shared<Pcre8_imp>();
@@ -186,7 +221,7 @@ pun::makeSharedRe(int mapId, const char* estr, unsigned int slen)
 bool CharMap::hasKey(char32_t ix) const
 {
   auto pit = _map.find(ix);
-  return (pit != _map.end());  
+  return (pit != _map.end());
 }
 
 void CharMap::setKV(char32_t ix,  int tokenId)
@@ -198,7 +233,7 @@ void CharMap::setKV(char32_t ix,  int tokenId)
     }
     else {
         _map.insert(std::pair<char32_t, int>(ix,tokenId));
-    }     
+    }
 }
 
 int  CharMap::getV(char32_t ix) const

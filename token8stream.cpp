@@ -3,7 +3,8 @@
 #include "token8.h"
 #include "parameter.h"
 #include "pcre8.h"
-
+#include "ucode8.h"
+#include "ustr8.h"
 #include <ostream>
 
 using namespace pun;
@@ -14,7 +15,7 @@ Token8Stream::Token8Stream()
 {
 	_flagLF = false;
 	_tokenLine = 0;
-
+    _str = std::make_shared<UStrData>();
 	_eolId = 0;
 	_eosId = 0;
 	_unknownId = 0;
@@ -26,13 +27,13 @@ Token8Stream::~Token8Stream()
 
 void Token8Stream::checkLineFeed(Token8* token)
 {
-	if (_input._myChar == 13)
+	if (token->_unicode == 13)
 	{
 		// skip and expect a line feed
-		_input._index += 1;
-		_input.fn_peekChar();
+		_index += 1;
+		fn_peekChar(token);
 	}
-	if (_input._myChar == 10) {
+	if (token->_unicode == 10) {
 		_flagLF = true;
 		token->_id = _eolId;
 		token->_value = svx::string_view();
@@ -40,66 +41,124 @@ void Token8Stream::checkLineFeed(Token8* token)
 		token->_isSingle = true;
 		return;
 	}
-	throw Php::Exception(pun::invalidCharacter(_input._myChar));
+	throw Php::Exception(pun::invalidCharacter(token->_unicode));
 }
 
-unsigned char    
+uint64_t
+Token8Stream::fn_peekChar(Token8* token)
+{
+    if (_index < _size) {
+        auto unc8 = _str.get()->fetch(_index, token->_value);
+        if (unc8 != INVALID_CHAR) {
+            token->_unicode = unc8;
+            return token->_value.size();
+        }
+    }
+    token->_id = _eosId;
+    token->_unicode = INVALID_CHAR;
+    token->_value = svx::string_view();
+    token->_isSingle = true;
+
+    return 0;
+}
+
+unsigned char
 Token8Stream::fn_peekByte() const
 {
-	if (_input._size > _input._index)
+	if (_size > _index)
 	{
-		return (unsigned char) _input._mystr[_input._index];
+		return (unsigned char) _str.get()->_view[_index];
 	}
 	throw Php::Exception("PeekByte past end of string");
 }
 
-unsigned int  Token8Stream::fn_size() const
+uint64_t
+Token8Stream::fn_size() const
 {
-	return _input._size;
+	return _str.get()->_view.size();
 }
 
-const char*      
+Php::Value
+Token8Stream::getIdList() {
+    Php::Value result;
+    this->fn_copyIdList(result);
+    return result;
+}
+
+
+void Token8Stream::fn_copyIdList(Php::Value& v)
+{
+    auto idle = _idlist.begin();
+    auto idend = _idlist.end();
+    int idx = 0;
+    while (idle != idend) {
+        v[idx] = *idle;
+        idle++;
+        idx++;
+    }
+}
+
+
+void
+Token8Stream::setIdList(Php::Parameters& params)
+{
+    auto isArray = pun::option_Array(params, 0);
+    if (!isArray) {
+        throw Php::Exception("Need (Array of integer)");
+    }
+    const Php::Value& v = params[0];
+    auto ct = v.size();
+    _idlist.clear();
+    _idlist.reserve(ct);
+    for(int i = 0; i < v.size(); i++)
+    {
+        _idlist.push_back(v[i]);
+    }
+}
+
+void Token8Stream::setRe8map(Php::Parameters& params)
+{
+    Re8map* obj = pun::check_Re8map(params);
+    _remap = obj->getImp();
+}
+
+const char*
 Token8Stream::fn_data() const
 {
-	return _input._mystr.data();
+	return _str.get()->_view.data();
 }
 
 void Token8Stream::fn_addOffset(unsigned int offset)
 {
-	_input._index += offset;
+	_index += offset;
 }
 
-unsigned char   
+unsigned char
 Token8Stream::fn_movePeekByte()
 {
-	_input._index++;
+	_index++;
 	return fn_peekByte();
 }
 
 
 svx::string_view Token8Stream::fn_substr(size_t start, size_t slen)
 {
-	return svx::string_view(_input._mystr.data() + start, slen);
+	return svx::string_view(_str.get()->_view.data() + start, slen);
 }
 void Token8Stream::fn_peekToken(Token8* token) {
-	auto nextCt = _input.fn_peekChar();
+	auto nextCt = fn_peekChar(token);
 	if (nextCt==0) {
-		token->_id = _eosId;
-		token->_value = svx::string_view();
 		token->_line = _tokenLine;
-		token->_isSingle = true;
 	}
-	else if (_input._myChar < 20) {
+	else if (token->_unicode < 20) {
 		this->checkLineFeed(token);
 	}
 	else {
 		token->_line = _tokenLine;
-		const char* ccptr = _input._mystr.data();
-		token->_value = svx::string_view(ccptr + _input._index, nextCt);
 		token->_isSingle = false;
 		if (nextCt == 1) {
 			auto cmap = _singles.get();
-			auto fit = cmap->getV(_input._myChar);
+			auto fit = cmap->getV(token->_unicode);
 			if (fit) {
 				token->_id = fit;
 				token->_isSingle = true;
@@ -133,10 +192,10 @@ void Token8Stream::fn_acceptToken(Token8* token)
 		return;
 	}
 	else if (_token._id == _eolId) {
-		_input._index++;
+		_index++;
 		return;
 	}
-	_input._index += _token._value.size();
+	_index += _token._value.size();
 }
 
 void Token8Stream::acceptToken(Php::Parameters& params)
@@ -151,20 +210,18 @@ int  Token8Stream::fn_moveNextId() {
 		_tokenLine += 1;
 		_token._line = _tokenLine;
 	}
-	auto nextCt = _input.fn_peekChar();
+	auto nextCt = fn_peekChar(&_token);
 	//Php::out << "peekChar " << nextCt << std::endl;
 	if (nextCt==0) {
 		_token._id = _eosId;
-		_token._value = svx::string_view();
-		_token._isSingle = true;
 	}
-	else if (_input._myChar < 20) {
+	else if (_token._unicode < 20) {
 		this->checkLineFeed(&_token);
-		_input._index++;
+		_index++;
 	}
 	else {
-		//Php::out << std::endl << "Peek: " << _input._myChar <<  " size " << nextCt << std::endl;
-		auto matchId = _input.fn_firstMatch(_caps);
+		//Php::out << std::endl << "Peek: " << _token._unicode <<  " size " << nextCt << std::endl;
+		auto matchId = fn_firstMatch(_caps);
 		if (_caps._slist.size() > 1) {
 			_token._id = _caps._rcode;
 			_token._value = _caps.capture(1);
@@ -174,22 +231,18 @@ int  Token8Stream::fn_moveNextId() {
 			//Php::out << std::endl << "0: " << _caps._slist[0] << std::endl;
 			//Php::out << "1: " << _caps._slist[1] << std::endl;
 			//Php::out << "size " << advance << std::endl;
-			//Php::out.flush(); 
-			_input._index += advance;
+			//Php::out.flush();
+			_index += advance;
 		}
-		else {			// no capture, 
+		else {			// no capture,
 			if (matchId != 0) {
 				throw Php::Exception("Match Id without 2 captures");
 			}
-			const char* ccptr = _input._mystr.data();
-			_token._value = svx::string_view(ccptr + _input._index, nextCt);
-			_input._index += nextCt;
-
+			_index += nextCt;
 			_token._isSingle = false;
 			if (nextCt == 1) {
 				auto cmap = _singles.get();
-
-				auto fit = cmap->getV(_input._myChar);
+				auto fit = cmap->getV(_token._unicode);
 				if (fit) {
 					_token._id = fit;
 					_token._isSingle = true;
@@ -204,17 +257,72 @@ int  Token8Stream::fn_moveNextId() {
 		}
 	}
 	_token._line = _tokenLine;
-	return _token._id;	
+	return _token._id;
 }
 
-Php::Value 
+
+int
+Token8Stream::fn_firstMatch(Pcre8_match& matches)
+{
+    auto pimp = _remap.get();
+    //Php::out << "Number of expressions = " << pimp->_map.size() << std::endl;
+    auto mapend = pimp->_map.end();
+
+    auto mid = _idlist.begin();
+    auto idend = _idlist.end();
+
+    while (mid != idend) {
+        int index = (*mid);
+        mid++;
+        auto pit = pimp->_map.find(index);
+        if (pit != mapend)
+        {
+            if (this->matchSP(pit->second, matches))
+            {
+                return index;
+            }
+        }
+    }
+    matches._slist.clear();
+    matches._rcode = 0;
+    return 0;
+}
+
+Php::Value
 Token8Stream::moveNextId()
 {
 	return Php::Value(fn_moveNextId());
 }
 
 
-Php::Value Token8Stream::moveRegex(Php::Parameters& params)
+int
+Token8Stream::matchSP(Pcre8_share& sp, Pcre8_match& matches)
+{
+    char const* buf;
+    int rct;
+    auto pimp = sp.get();
+
+    if (_index < _size) {
+
+        buf = _str.get()->_view.data();
+        buf += _index;
+        //Php::out << "target: " << buf << " with " << pimp->_eStr << std::endl;
+        rct = pimp->doMatch(
+                 reinterpret_cast<const unsigned char*>(buf),
+                 _size - _index,
+                  matches);
+        if (rct > 0) {
+            // _rcode to hold match mapId
+            //Php::out << "Matched " << pimp->_id << std::endl;
+            matches._rcode = pimp->_id;
+            return matches._rcode;
+        }
+    }
+    matches._rcode = 0;
+    return 0;
+}
+Php::Value
+Token8Stream::moveRegex(Php::Parameters& params)
 {
 	Pcre8* p8 = pun::check_Pcre8(params,0);
     if (p8 == nullptr) {
@@ -222,11 +330,11 @@ Php::Value Token8Stream::moveRegex(Php::Parameters& params)
     }
     auto  sp = p8->getImp();
     bool result = false;
-    auto code = _input.matchSP(sp, _caps);
+    auto code = matchSP(sp, _caps);
     if (code != 0 && _caps._slist.size() > 1) {
     	_token._value = _caps.capture(1);
     	auto advance = _caps._slist[0].size();
-    	_input._index += advance;
+    	_index += advance;
     	_token._id = _unknownId;
     	_token._isSingle = false;
     	result = true;
@@ -238,21 +346,21 @@ Php::Value Token8Stream::moveRegex(Php::Parameters& params)
 
 bool Token8Stream::fn_moveRegId(int id)
 {
-	auto map = _input._remap.get();
+	auto map = _remap.get();
     Pcre8_share sp;
     if (!map->getRex(id, sp)) {
         throw Php::Exception("No PCRE2 expression found at index");
     }
     bool result = false;
-    auto code = _input.matchSP(sp, _caps);
+    auto code = matchSP(sp, _caps);
     if (code != 0 && _caps._slist.size() > 1) {
     	_token._value = _caps.capture(1);
     	auto advance = _caps._slist[0].size();
-    	_input._index += advance;
+    	_index += advance;
     	_token._id = _unknownId;
     	_token._isSingle = false;
     	result = true;
-    }	
+    }
     return result;
 }
 
@@ -271,24 +379,24 @@ void Token8Stream::setEOSId(Php::Parameters& params)
 void Token8Stream::setEOLId(Php::Parameters& params)
 {
 	int id = pun::check_Int(params,0);
-	_eolId = id;	
+	_eolId = id;
 }
 
 void Token8Stream::setUnknownId(Php::Parameters& params)
 {
 	int id = pun::check_Int(params,0);
-	_unknownId = id;	
+	_unknownId = id;
 }
 
 void Token8Stream::setExpSet(Php::Parameters& params)
 {
-	_input.setIdList(params);
+	setIdList(params);
 }
 
 Php::Value Token8Stream::getExpSet()
 {
 	Php::Value result;
-	_input.fn_copyIdList(result);
+	fn_copyIdList(result);
 	return result;
 }
 // argument is associative array, of string => id
@@ -320,35 +428,58 @@ void Token8Stream::setSingles(Php::Parameters& params)
 	}
 }
 
-Php::Value 
+Php::Value
 Token8Stream::getOffset() const {
-    return Php::Value(int(_input._index));
+    return Php::Value(int(_index));
 }
 
-Php::Value  Token8Stream::beforeEOL()  {
+
+Php::Value
+Token8Stream::beforeEOL()  {
 	return Php::Value(fn_beforeChar(10));
 }
 
-void Token8Stream::setRe8map(Php::Parameters& params)
+void
+Token8Stream::fn_setString(const char* ptr, uint64_t len)
 {
-	_input.setRe8map(params);
+    // if _str is shared, need to copy - on - write
+    if (_str.use_count() > 1) {
+        _str = std::make_shared<UStrData>();
+    }
+    _str.get()->assign(ptr,len);
+    _index = 0;
+    _size = len;
+    _flagLF = true;
 }
 
-void Token8Stream::setString(std::string &&m)
-{
-	_input.fn_setString(m);
-	_flagLF = true;
-}
 void Token8Stream::setString(const char* ptr, unsigned int len)
 {
-	_input.fn_setString(ptr,len);
-	_flagLF = true;
+	fn_setString(ptr,len);
 }
 
-void Token8Stream::setInput(Php::Parameters& params)
+void Token8Stream::fn_setString(Str_ptr& sp)
 {
-	_input.setString(params);
-	_flagLF = true;
+    _str = sp;
+    _size = _str.get()->_view.size();
+    _index = 0;
+    _flagLF = true;
+}
+
+void Token8Stream::setInput(Php::Parameters& param)
+{
+    if (param.size() > 0) {
+        Php::Value& val = param[0];
+        if (val.isString()) {
+            fn_setString(val, val.size());
+        }
+        else if (val.isObject()) {
+            if (val.instanceOf(UStr8::PHP_NAME)) {
+                UStr8* obj = (UStr8*) val.implementation();
+                fn_setString(obj->_str);
+
+            }
+        }
+    }
 }
 
 Php::Value Token8Stream::hasPendingTokens() const
@@ -369,12 +500,13 @@ void Token8Stream::fn_setSingles(CharMap_sp& sp)
 	_singles = sp;
 }
 
-unsigned int Token8Stream::fn_getOffset() const
+uint64_t
+Token8Stream::fn_getOffset() const
 {
-	return _input._index;
+	return _index;
 }
 
-Token8*  
+Token8*
 Token8Stream::fn_getToken(Token8 &token)
 {
 	token = _token;
@@ -404,10 +536,30 @@ Php::Value Token8Stream::getId() const
 }
 
 void Token8Stream::setExpSet(const IdList& list) {
-	_input._idlist = list;
+	_idlist = list;
 }
 
-std::string  Token8Stream::fn_beforeChar(char32_t c) const
+std::string
+Token8Stream::fn_beforeChar(char32_t c) const
 {
-	return _input.fn_beforeChar(c);
+    auto offset = _index;
+    //auto prev = offset;
+    auto bptr  = _str.get()->_view.data();
+    auto test = INVALID_CHAR;
+    unsigned int clen = 0;
+    while(test != c) {
+        //prev = offset;
+        if (offset >= _size) {
+            clen = 0;
+            break;
+        }
+        clen = ucode8Fore(bptr+offset, _size-offset, test );
+        if (test == INVALID_CHAR)
+        {
+            break;
+        }
+        offset += clen;
+    }
+
+    return std::string(bptr+_index, offset-_index - clen);
 }

@@ -229,10 +229,12 @@ void pun::need_Value(Php::Parameters& param, unsigned int offset)
 std::string 
 pun::missingParameter(const char* shouldBe, unsigned int offset)
 {
-    std::stringstream ss;
+    std::string result;
 
-    ss << "Parameter " << offset << " should be " << shouldBe;
-    return ss.str();
+    result += "Parameter ";
+    result += std::to_string(offset+1) + " must be " + shouldBe;
+
+    return result;
 }
 
 std::string 
@@ -469,4 +471,17 @@ pun::serialize(Php::Value& val, std::ostream& out)
         break;
 
     }
+}
+
+Php::Array 
+pun::to_array(const ValueMap &vmap)
+{
+    Php::Array result;
+
+    auto zit = vmap.end();
+    for( auto ait = vmap.begin(); ait != zit; ait++ ) {
+        result[ait->first] = ait->second;
+    }
+
+    return result;
 }

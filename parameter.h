@@ -5,26 +5,14 @@
 #include <phpcpp.h>
 #endif
 
-
-#ifdef __has_include
-# if __has_include(<string_view>)
-#  include <string_view>
-#  if __cplusplus >= 201703L || defined(_LIBCPP_STRING_VIEW)
-#   define ABSL_HAVE_STD_STRING_VIEW 1
-#  endif
-# endif
-#endif
-
-#ifndef ABSL_HAVE_STD_STRING_VIEW 
-#    include <experimental/string_view>
-          namespace svx = std::experimental;
-#else
-     namespace svx = std;
+#ifndef _H_TEXT
+#include "text.h"
 #endif
 
 #include <ostream>
+#include <map>
 
-
+typedef std::map<std::string, Php::Value> ValueMap;
 
 struct CPunk {
      static const std::string keytable_classname;
@@ -61,7 +49,7 @@ namespace pun {
      Pype getPype(Php::Type t);
      const char* getPypeId(Pype t);
 
-
+     
      Pcre8* check_Pcre8(Php::Parameters& params,unsigned int offset=0);
      Token8* check_Token8(Php::Parameters& params, unsigned int offset=0);
      Re8map* check_Re8map(Php::Parameters& params, unsigned int offset=0);
@@ -95,6 +83,8 @@ namespace pun {
 
      void serialize(Php::Value& val, std::ostream& out);
      void unserialize(Php::Value& val, std::istream& ins);
+
+     Php::Array to_array(const ValueMap &vmap);
 };
 
 

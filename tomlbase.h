@@ -3,6 +3,8 @@
 
 #include <phpcpp.h>
 
+#include "pcre8_imp.h"
+
 namespace pun {
 
 class PathTag : public Php::Base{
@@ -18,8 +20,6 @@ public:
 	}
 };
 
-typedef std::map<std::string, Php::Value> ValueMap;
-typedef std::vector<Php::Value> ValueArray;
 
 class TomlBase : public Php::Base {
 protected:

@@ -9,6 +9,7 @@
 #include "pun8.h"
 
 #include <vector>
+#include "ustr_data.h"
 
 // globals for TomlReader, shareable, for a static class member.
 
@@ -17,7 +18,7 @@ namespace pun {
 	class KeyTable;
 	class Token8Stream;
 	class ValueList;
-	
+
 	class Rex : public Php::Base {
 	public:
 		// enums ids, for mixture of regular expressions
@@ -58,7 +59,7 @@ namespace pun {
 			Float_E,
 			AnyChar,
 		};
-		
+
 		Re8map*	_re8;
 		IdList	_keyRe;
 		IdList  _valueRe;
@@ -70,10 +71,10 @@ namespace pun {
 		Rex();
 		~Rex();
 
-		
+
 		static Rex* getGlobalRex();
 
-		private: 
+		private:
 			static Rex* _globalRex;
 
 	};
@@ -88,10 +89,10 @@ namespace pun {
 		TomlReader();
 		~TomlReader();
 
-		Php::Value parseStr(std::string &&m);
 		Php::Value parse(Php::Parameters &param);
-
+        void setData(Str_ptr& data) { _src = data; }
 	protected:
+        Php::Value doParse();
 		void popExpSet();
 		void pushExpSet(int id);
 		void setExpSet(int id);
@@ -107,13 +108,13 @@ namespace pun {
 		void  parseTablePath();
 
 		int  finishLine();
-		
+
 		void parseKeyName(std::string& name);
-		
+
 		void parseArray(ValueList* vlist);
-		
+
 		void parseInlineTable();
-		
+
 		void parseValue(Php::Value& val, pun::Pype& punt);
 
 		void parseQString(std::string& val);
@@ -122,7 +123,7 @@ namespace pun {
 		void parseMLString(std::string& val);
 
 		void parseEscChar(std::ostream& os);
-		
+
 		void invalidEscChar(char eChar);
 		void fn_checkFullMatch(const std::string& target, const std::string& cap);
 		void throw_notFullMatch(const std::string& target, const std::string& cap);
@@ -135,7 +136,7 @@ namespace pun {
 
 		int fn_getExpSetId() const { return _expSetId; }
 	private:
-		
+
 		unsigned int checkBOM(const char* sptr, unsigned int slen);
 		enum {
 			eKey,
@@ -146,8 +147,8 @@ namespace pun {
 		};
 
 		Rex*	_myrex;
-		
-		
+        Str_ptr _src;
+
 		KeyTable* _table;
 		Token8	  _token;
 
@@ -156,12 +157,17 @@ namespace pun {
 
 		Token8Stream* _ts;
 		Php::Value    _v_ts;
-		
+
 		int     _stackTop;
 		int     _expSetId;
 		IdList	_expStack;
-		Pun8	_valueText;
-		
+
+		std::string  _valueBuf;
+		svx::string_view  _valueText;
+		Re8map_share    _remap;
+
+
+
 
 	};
 

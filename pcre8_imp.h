@@ -11,7 +11,10 @@
 #include <vector>
 #include <memory>
 
-typedef std::vector<std::string> StringList;
+#ifndef _H_TEXT
+#include "text.h"
+#endif
+
 typedef std::vector<int>  IdList;
 
 class Pcre8_match {
@@ -19,7 +22,7 @@ public:
     StringList  _slist;
     int         _rcode;
     Pcre8_match();
-    
+
     svx::string_view capture(unsigned int i) const {
         const std::string& cap = _slist[i];
         return svx::string_view(cap.data(), cap.size());
@@ -41,11 +44,12 @@ public:
 
     Pcre8_imp();
     ~Pcre8_imp();
+
     pcre2_code* getRex() { return _re; }
     void setRex(pcre2_code* re);
     // return number of matches, or negative error code
     int doMatch(const unsigned char* start, unsigned int slen, Pcre8_match& matches);
-
+    int match(const svx::string_view& sv, Pcre8_match& matches);
     bool compile(std::string& _error);
     bool isCompiled() { return _re != nullptr; }
 };
@@ -56,10 +60,18 @@ typedef std::unordered_map<int, Pcre8_share> RexMap;
 
 typedef std::unordered_map<char32_t, int> RexSingles;
 
+
+
+typedef std::vector<Php::Value> ValueArray;
+
+
 class Pcre8_map {
 public:
 	RexMap	_map;
 
+	int match(const svx::string_view& sv,
+                int mapId,
+                Pcre8_match& matches);
     bool hasKey(int index) const;
 	void setRex(const Pcre8_share& re);
 	bool getRex(int index, Pcre8_share& re) const;
@@ -78,7 +90,7 @@ public:
 typedef std::shared_ptr<Pcre8_map> Re8map_share;
 typedef std::shared_ptr<CharMap> CharMap_sp;
 
-namespace pun { 
+namespace pun {
     Pcre8_share makeSharedRe(int mapId, const char* estr, unsigned int slen);
 };
 

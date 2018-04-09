@@ -9,6 +9,7 @@ use Pun\Token8Stream;
 use Pun\KeyTable;
 use Pun\ValueList;
 use Pun\Type;
+use Pun\UStr8;
 
 use Pun\TomlReader;
 
@@ -246,8 +247,7 @@ function keytable() {
     $m->setKV("modules", ["a" => ['name' => 'a'], "b" => ['name' => 'b']]);
     $kt->merge($m);
    
-   
-    echo "merge " . print_r($kt->toArray(),r) . PHP_EOL;
+    echo "merge " . print_r($kt->toArray(),true) . PHP_EOL;
 
 }
 
@@ -422,6 +422,28 @@ function serial() {
 
     echo "Serial to Array " . print_r( $kt->toArray(), true) . PHP_EOL;
 }
+
+function ustr()
+{
+    $test = new UStr8("Tester");
+    $test->setRange(4,6);
+    echo "UStr8 : " . $test->value() . PHP_EOL;
+
+
+    $u8 = new UStr8(testmix());
+    $filename = "TestUTF16-TextToml.toml";
+    $output = $u8->bomUTF16() . $u8->asUTF16();
+    echo "Output " . $filename . PHP_EOL;
+
+    file_put_contents($filename, $output);
+
+    $parser = new TomlReader();
+    $readback = $parser->parse(file_get_contents($filename));
+    foreach($readback as $key => $value) {
+        echo $key . " : " . $value . PHP_EOL;
+    }
+}
+ustr();
 serial();
 keytable();
 valuelist();

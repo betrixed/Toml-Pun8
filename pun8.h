@@ -84,10 +84,10 @@ namespace pun {
         Php::Value getIdList(); 
 
         // return BOM as string for UTF16 on this platform
-        Php::Value bomUTF16();
+        static Php::Value bomUTF16();
 
         // return BOM as string for UTF8 
-        Php::Value bomUTF8();
+        static Php::Value bomUTF8();
 
         // Return PHP string converted to platform UTF16, no BOM
         Php::Value asUTF16();

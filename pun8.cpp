@@ -1,4 +1,4 @@
- 
+
 #include "pun8.h"
 #include "pcre8.h"
 #include "re8map.h"
@@ -8,13 +8,12 @@
 #include "ucode8.h"
 #include <sstream>
 #include <ostream>
-
+#include "ustr_data.h"
+#include "ucode8.h"
 
 using namespace pun;
 
 const char* Pun8::PHP_NAME = "Pun\\Pun8";
-
-
 
 Pun8::Pun8() : _index(0), _size(0), _myChar(0)
 {
@@ -37,20 +36,20 @@ void Pun8::setString(Php::Parameters& params)
     if (!params.empty()) {
         const char* cptr = params[0];
         this->fn_setString(cptr, params[0].size());
-    } 
+    }
 }
 
-Php::Value Pun8::getValue() const 
+Php::Value Pun8::getValue() const
 {
     return _mystr;
 }
 
-Php::Value 
+Php::Value
 Pun8::getCode() const {
     return Php::Value(int(_myChar));
 }
 
-Php::Value 
+Php::Value
 Pun8::getOffset() const {
     return Php::Value(int(_index));
 }
@@ -83,7 +82,7 @@ Php::Value Pun8::peekChar() {
 Php::Value Pun8::nextChar() {
     if (_index < _size) {
         char const* buf = _mystr.data();
-        auto clen = ucode8Fore(buf + _index, _size - _index, _myChar); 
+        auto clen = ucode8Fore(buf + _index, _size - _index, _myChar);
         if (_myChar != INVALID_CHAR) {
             return Php::Value(&buf[_index], clen);
         }
@@ -91,7 +90,7 @@ Php::Value Pun8::nextChar() {
     return Php::Value(false);
 }
 
-Php::Value 
+Php::Value
 Pun8::matchIdRex8(Php::Parameters& params)
 {
     Pcre8* p8 = pun::check_Pcre8(params,0);
@@ -100,7 +99,7 @@ Pun8::matchIdRex8(Php::Parameters& params)
         throw Php::Exception("Need Arguments of (IdRex8, Recap8)");
     }
     auto  sp = p8->getImp();
-    
+
     Pcre8_match result;
 
     int count = this->matchSP(sp, result);
@@ -108,7 +107,7 @@ Pun8::matchIdRex8(Php::Parameters& params)
     return Php::Value(count);
 }
 
-int 
+int
 Pun8::fn_matchRegId(int id, Pcre8_match& matches)
 {
     auto map = _remap.get();
@@ -116,16 +115,16 @@ Pun8::fn_matchRegId(int id, Pcre8_match& matches)
     if (!map->getRex(id, sp)) {
         throw Php::Exception("No PCRE2 expression found at index");
     }
-    return this->matchSP(sp, matches); 
+    return this->matchSP(sp, matches);
 }
 
-int 
+int
 Pun8::matchSP(Pcre8_share& sp, Pcre8_match& matches)
 {
     char const* buf;
     int rct;
     auto pimp = sp.get();
-    
+
     if (_index < _size) {
 
         buf = _mystr.data();
@@ -133,7 +132,7 @@ Pun8::matchSP(Pcre8_share& sp, Pcre8_match& matches)
         //Php::out << "target: " << buf << " with " << pimp->_eStr << std::endl;
         rct = pimp->doMatch(
                  reinterpret_cast<const unsigned char*>(buf),
-                 _size - _index, 
+                 _size - _index,
                   matches);
         if (rct > 0) {
             // _rcode to hold match mapId
@@ -157,7 +156,7 @@ void Pun8::setRe8map(Php::Parameters& params)
     _remap = obj->getImp();
 }
 
-Php::Value 
+Php::Value
 Pun8::matchMapId(Php::Parameters& params)
 {
     int id = pun::check_Int(params,0);
@@ -172,7 +171,7 @@ Pun8::matchMapId(Php::Parameters& params)
     }
     Pcre8_match matches;
 
-    int count = this->matchSP(sp, matches); 
+    int count = this->matchSP(sp, matches);
 
     cap->_match = std::move(matches);
 
@@ -184,9 +183,10 @@ Php::Value Pun8::getIdList() {
     this->fn_copyIdList(result);
     return result;
 }
+
 void Pun8::setIdList(Php::Parameters& params)
 {
-    auto isArray = pun::option_Array(params, 0); 
+    auto isArray = pun::option_Array(params, 0);
     if (!isArray) {
         throw Php::Exception("Need (Array of integer)");
     }
@@ -200,7 +200,7 @@ void Pun8::setIdList(Php::Parameters& params)
     }
 }
 
-Php::Value 
+Php::Value
 Pun8::firstMatch(Php::Parameters& params)
 {
     Recap8* cap = pun::option_Recap8(params,0);
@@ -212,7 +212,7 @@ Pun8::firstMatch(Php::Parameters& params)
     return Php::Value(result);
 }
 
-Php::Value 
+Php::Value
 Pun8::setIdRex(Php::Parameters& params)
 {
     auto sp = Pcre8::fromParameters(params);
@@ -221,7 +221,7 @@ Pun8::setIdRex(Php::Parameters& params)
     return Php::Value(params[0]);
 }
 
-Php::Value 
+Php::Value
 Pun8::getIds() const
 {
     Php::Value result;
@@ -237,8 +237,8 @@ Pun8::getIds() const
     return result;
 }
 
-Php::Value 
-Pun8::getIdRex(Php::Parameters& params) 
+Php::Value
+Pun8::getIdRex(Php::Parameters& params)
 {
     int index = pun::check_Int(params,0);
 
@@ -316,7 +316,7 @@ const std::string& Pun8::fn_getValue() const
 }
 // return string from current , to just before char c
 // this doesn't check for INVALID_CHAR
-std::string 
+std::string
 Pun8::fn_beforeChar(char32_t c) const
 {
     auto offset = _index;
@@ -378,27 +378,25 @@ void  Pun8::setTag(Php::Parameters& param)
     if ((param.size()< 1)) {
         throw Php::Exception("setTag: Php Value expected");
     }
-    _tag = param[0];    
+    _tag = param[0];
 }
 
 // return BOM for UTF16 as string on this platform
-Php::Value 
+Php::Value
 Pun8::bomUTF16()
 {
-    uint16_t bom = 0xFEFF;
-    std::string bomstr( (const char* )&bom, 2);
-    return  Php::Value(std::move(bomstr));
+    return Php::Value(std::move(UStrData::bomUTF16()));
 }
 
-// return BOM for UTF8  as string 
-Php::Value 
+// return BOM for UTF8  as string
+Php::Value
 Pun8::bomUTF8()
 {
-    return ("\xEF\xBB\xBF");
+    return Php::Value(std::move(UStrData::bomUTF8()));
 }
 
 // Return PHP string converted to platform UTF16
-Php::Value 
+Php::Value
 Pun8::asUTF16()
 {
     std::string result;
@@ -432,14 +430,14 @@ void Pun8::erase(Php::Parameters& param)
     _size = _mystr.size();
 }
 
-Php::Value 
+Php::Value
 Pun8::getBOMId()
 {
     auto code = getBOMCode(_mystr.data(), _mystr.size());
     return getBOMName(code);
 }
 
-Php::Value 
+Php::Value
 Pun8::ensureUTF8()
 {
     auto offset = ::ensureUTF8(_mystr);

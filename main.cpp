@@ -9,6 +9,7 @@
 #include "valuelist.h"
 #include "tomlreader.h"
 #include "puntype.h"
+#include "ustr8.h"
 
 using namespace pun;
 
@@ -35,33 +36,35 @@ using namespace pun;
 
 extern "C" {
 
-PHPCPP_EXPORT void *get_module() 
+PHPCPP_EXPORT void *get_module()
 {
     // static(!) Php::Extension object that should stay in memory
     // for the entire duration of the process (that's why it's static)
     static Php::Extension extension("pun8", "1.0");
-    
+
 
     Php::Interface mergeable("Mergeable");
 
-        // define an interface method
-    mergeable.method("merge", { 
-        Php::ByVal("store", KeyTable::PHP_NAME) 
+// define an interface method
+    mergeable.method("merge", {
+        Php::ByVal("store", KeyTable::PHP_NAME)
     });
     mergeable.method("toArray");
 
     extension.add(std::move(mergeable));
+// Class UStr8
+    UStr8::setup_ext(extension);
 
     // @todo    add your own functions, classes, namespaces to the extension
     Php::Class<Pun8> punic(Pun8::PHP_NAME);
 
     punic.method<&Pun8::__construct>("__construct");
-    
+
     // using regular expression id map.
     punic.method<&Pun8::matchMapId> ("matchMapId");
     punic.method<&Pun8::matchIdRex8> ("matchIdRex8");
     punic.method<&Pun8::firstMatch> ("firstMatch");
-    
+
     punic.method<&Pun8::setIdRex> ("setIdRex");
     punic.method<&Pun8::getIdRex> ("getIdRex");
     punic.method<&Pun8::getIds> ("getIds");
@@ -86,9 +89,9 @@ PHPCPP_EXPORT void *get_module()
     punic.method<&Pun8::bomUTF16> ("bomUTF16");
     punic.method<&Pun8::bomUTF8> ("bomUTF8");
     punic.method<&Pun8::asUTF16> ("asUTF16");
-    
+
     extension.add(std::move(punic));
- 
+
     Php::Class<Pcre8> preg(Pcre8::PHP_NAME);
     preg.method<&Pcre8::__construct>("__construct");
     preg.method<&Pcre8::setIdString> ("setIdString");
@@ -96,7 +99,7 @@ PHPCPP_EXPORT void *get_module()
     preg.method<&Pcre8::getId> ("getId");
     preg.method<&Pcre8::isCompiled> ("isCompiled");
     preg.method<&Pcre8::match> ("match");
-    
+
     extension.add(std::move(preg));
 
     Php::Class<Re8map> re8(Re8map::PHP_NAME);
@@ -179,7 +182,7 @@ PHPCPP_EXPORT void *get_module()
     Php::Class<KeyTable> keytab(KeyTable::PHP_NAME);
     keytab.implements(mergeable);
     keytab.extends(tbase);
-    
+
     keytab.method<&KeyTable::setKV> ("setKV");
     keytab.method<&KeyTable::getV> ("getV");
     keytab.method<&KeyTable::get> ("get");
@@ -187,7 +190,7 @@ PHPCPP_EXPORT void *get_module()
     keytab.method<&KeyTable::hasK> ("hasK");
     keytab.method<&KeyTable::clear> ("clear");
     keytab.method<&KeyTable::merge> ("merge", {
-        Php::ByVal("store", KeyTable::PHP_NAME) 
+        Php::ByVal("store", KeyTable::PHP_NAME)
     });
     //keytab.method<&KeyTable::merge> ("merge");
     keytab.method<&KeyTable::size> ("size");
@@ -196,12 +199,12 @@ PHPCPP_EXPORT void *get_module()
     keytab.method<&KeyTable::setTag> ("setTag");
     keytab.method<&KeyTable::getTag> ("getTag");
 
-    
+
 
     extension.add(std::move(keytab));
 
     Php::Class<TomlReader> rdr(TomlReader::PHP_NAME);
-        
+
     rdr.method<&TomlReader::parse> ("parse");
     rdr.method<&TomlReader::parseFile>("parseFile");
     rdr.method<&TomlReader::getUseVersion>("getUseVersion");

@@ -2,7 +2,7 @@
 #	Makefile template
 #
 #	This is an example Makefile that can be used by anyone who is building
-#	his or her own PHP extensions using the PHP-CPP library. 
+#	his or her own PHP extensions using the PHP-CPP library.
 #
 #	In the top part of this file we have included variables that can be
 #	altered to fit your configuration, near the bottom the instructions and
@@ -35,8 +35,8 @@ INI_DIR				=	/etc/php/conf.d
 #
 #	The extension dirs
 #
-#	This is normally a directory like /usr/lib/php5/20121221 (based on the 
-#	PHP version that you use. We make use of the command line 'php-config' 
+#	This is normally a directory like /usr/lib/php5/20121221 (based on the
+#	PHP version that you use. We make use of the command line 'php-config'
 #	instruction to find out what the extension directory is, you can override
 #	this with a different fixed directory
 #
@@ -51,7 +51,7 @@ EXTENSION_DIR		=	$(shell php-config --extension-dir)
 #	a certain extension to them (.so or .ini)
 #
 
-EXTENSION 			=	${NAME}.so
+EXTENSION 			=	lib${NAME}.so
 INI 				=	${NAME}.ini
 
 
@@ -59,7 +59,7 @@ INI 				=	${NAME}.ini
 #	Compiler
 #
 #	By default, the GNU C++ compiler is used. If you want to use a different
-#	compiler, you can change that here. You can change this for both the 
+#	compiler, you can change that here. You can change this for both the
 #	compiler (the program that turns the c++ files into object files) and for
 #	the linker (the program that links all object files into the single .so
 #	library file. By default, g++ (the GNU C++ compiler) is used for both.
@@ -72,10 +72,10 @@ LINKER				=	g++
 #
 #	Compiler and linker flags
 #
-#	This variable holds the flags that are passed to the compiler. By default, 
-# 	we include the -O2 flag. This flag tells the compiler to optimize the code, 
-#	but it makes debugging more difficult. So if you're debugging your application, 
-#	you probably want to remove this -O2 flag. At the same time, you can then 
+#	This variable holds the flags that are passed to the compiler. By default,
+# 	we include the -O2 flag. This flag tells the compiler to optimize the code,
+#	but it makes debugging more difficult. So if you're debugging your application,
+#	you probably want to remove this -O2 flag. At the same time, you can then
 #	add the -g flag to instruct the compiler to include debug information in
 #	the library (but this will make the final libphpcpp.so file much bigger, so
 #	you want to leave that flag out on production servers).
@@ -93,7 +93,7 @@ LINKER_DEPENDENCIES	=	-lphpcpp -lpcre2-8
 #
 #	Command to remove files, copy files and create directories.
 #
-#	I've never encountered a *nix environment in which these commands do not work. 
+#	I've never encountered a *nix environment in which these commands do not work.
 #	So you can probably leave this as it is
 #
 
@@ -105,7 +105,7 @@ MKDIR				=	mkdir -p
 #
 #	All source files are simply all *.cpp files found in the current directory
 #
-#	A builtin Makefile macro is used to scan the current directory and find 
+#	A builtin Makefile macro is used to scan the current directory and find
 #	all source files. The object files are all compiled versions of the source
 #	file, with the .cpp extension being replaced by .o.
 #
@@ -126,10 +126,10 @@ ${EXTENSION}:			${OBJECTS}
 ${OBJECTS}:
 						${COMPILER} ${COMPILER_FLAGS} $@ ${@:%.o=%.cpp}
 
-install:		
+install:
 						${CP} ${EXTENSION} ${EXTENSION_DIR}
 						${CP} ${INI} ${INI_DIR}
-				
+
 clean:
 						${RM} ${EXTENSION} ${OBJECTS}
 

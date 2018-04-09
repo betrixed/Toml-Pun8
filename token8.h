@@ -29,6 +29,7 @@ namespace pun {
     	int				 _id;
     	int    			 _line;
     	bool			 _isSingle;
+    	char32_t         _unicode;
     };
 
 };
