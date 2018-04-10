@@ -377,11 +377,10 @@ void TomlReader::parseKeyName(std::string& name)
 
 }
 
-void TomlReader::parseQString(std::string& val)
+void TomlReader::parseQString(std::string& sval)
 {
 	this->pushExpSet(eBString);
 	auto id = _ts->fn_moveNextId();
-	std::stringstream result;
 
 	while(id != Rex::Quote1) {
 		if (id == Rex::Newline || id == Rex::EOS || id == Rex::Escape)
@@ -389,17 +388,14 @@ void TomlReader::parseQString(std::string& val)
 			this->syntaxError("parseEscString: Unfinished string value");
 		}
 		else if (id == Rex::EscapedChar) {
-
-			this->parseEscChar(result);
+			sval += escString(_ts->fn_getValue());
 		}
 		else {
-			result << _ts->fn_getValue();
+			sval += _ts->fn_getValue();
 		}
 		id = _ts->fn_moveNextId();
 	}
 	this->popExpSet();
-
-	val = std::move(result.str());
 	return;
 }
 
@@ -443,10 +439,10 @@ bool TomlReader::fn_moveLiteralStr(svx::string_view& view) {
 	return false;
 }
 */
-void TomlReader::parseLitString(std::string& val)
+void TomlReader::parseLitString(std::string& sval)
 {
-	std::stringstream result;
-	svx::string_view  value;
+	//std::stringstream result;
+	//svx::string_view  value;
 
 	_ts->fn_peekToken(&_token);
 	while (_token._id != Rex::Apost1) {
@@ -456,7 +452,7 @@ void TomlReader::parseLitString(std::string& val)
 		// a literal string is just no control characters,
 		// and no / (x27)
 		if (_ts->fn_moveRegId(Rex::LitString)) {
-			result << _ts->fn_getValue();
+			sval += _ts->fn_getValue();
 		}
 		//if (this->fn_moveLiteralStr(value)) {
 		//	result << value;
@@ -467,53 +463,53 @@ void TomlReader::parseLitString(std::string& val)
 		_ts->fn_peekToken(&_token);
 	}
 	_ts->fn_acceptToken(&_token);
-	val = result.str();
 }
 
-void  TomlReader::parseEscChar(std::ostream& os)
-{
-	svx::string_view sval = _ts->fn_getValue();
+std::string
+TomlReader::escString(svx::string_view sval) {
+    std::string result;
 
 	//Php::out << "parseEscChar len " << sval.size() << ": " << sval << std::endl;
 	char val = sval.at(1);
 	switch(val) {
 	case 'n':
-		os << '\n';
+		result += "\n";
 		break;
 	case 't':
-		os << '\t';
+		result += '\t';
 		break;
 	case 'r':
-		os << '\r';
+		result += '\r';
 		break;
 	case 'b':
-		os << '\b';
+		result += '\b';
 		break;
 	case 'f':
-		os << '\f';
+		result += '\f';
 		break;
 	case '\"':
-		os << '\"';
+		result += '\"';
 		break;
 	case '\\':
-		os << '\\';
+		result += '\\';
 		break;
 	case 'u':
-		pun::hexUniStr8(sval.substr(2,4),os);
+		result = pun::hexUniStr8(sval.substr(2,4));
 		break;
 	case 'U':
-		pun::hexUniStr8(sval.substr(2,8),os);
+		result = pun::hexUniStr8(sval.substr(2,8));
 		break;
 	default:
 		invalidEscChar(val);
 		break;
 	}
-	return;
+	return result;
 }
 
-void  TomlReader::parseMLString(std::string& val)
+void
+TomlReader::parseMLString(std::string& sval)
 {
-	std::stringstream result;
+//	std::stringstream result;
 
 	pushExpSet(eMLString);
 
@@ -525,7 +521,8 @@ void  TomlReader::parseMLString(std::string& val)
 	while(doLoop) {
 		switch(id) {
 		case Rex::Newline:
-			result << std::endl;
+            //TODO:  platform newline?
+			sval += "\n";
 			id = _ts->fn_moveNextId();
 			break;
 		case Rex::Apost3:
@@ -535,12 +532,11 @@ void  TomlReader::parseMLString(std::string& val)
 			syntaxError("Missing ''' at end");
 			break;
 		default:
-			result << _ts->fn_getValue();
+			sval += _ts->fn_getValue();
 			id = _ts->fn_moveNextId();
 			break;
 		}
 	}
-	val = std::move(result.str());
 	popExpSet();
 }
 
@@ -961,8 +957,6 @@ void TomlReader::parseDateTime(Php::Value& val)
 void TomlReader::parseMLQString(std::string& sval) {
 	pushExpSet(eBString);
 
-	std::stringstream result;
-
 	auto id = _ts->fn_moveNextId();
 	// Newline straight after opening quotes is ignored
 	if (id == Rex::Newline) {
@@ -984,24 +978,23 @@ void TomlReader::parseMLQString(std::string& sval) {
 			while(id == Rex::Space || id == Rex::Newline || id == Rex::Escape);
 			break;
 		case Rex::Space:
-			result << " ";
+			sval +=  ' ';
 			id = _ts->fn_moveNextId();
 			break;
 		case Rex::Newline:
-			result << std::endl;
+			sval += "\n";
 			id = _ts->fn_moveNextId();
 			break;
 		case Rex::EscapedChar:
-			parseEscChar(result);
+            sval += escString(_ts->fn_getValue());
 			id = _ts->fn_moveNextId();
 			break;
 		default:
-			result << _ts->fn_getValue();
+			sval += _ts->fn_getValue();
 			id = _ts->fn_moveNextId();
 			break;
 		}
 	}
-	sval = std::move(result.str());
 	popExpSet();
 }
 

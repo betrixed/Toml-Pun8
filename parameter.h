@@ -49,18 +49,19 @@ namespace pun {
      Pype getPype(Php::Type t);
      const char* getPypeId(Pype t);
 
-     
+
      Pcre8* check_Pcre8(Php::Parameters& params,unsigned int offset=0);
      Token8* check_Token8(Php::Parameters& params, unsigned int offset=0);
      Re8map* check_Re8map(Php::Parameters& params, unsigned int offset=0);
      KeyTable* check_KeyTable(Php::Parameters& params, unsigned int offset=0);
 
      KeyTable* castKeyTable(Php::Value& val);
-     
+
      Recap8* option_Recap8(Php::Parameters& params, unsigned int offset=0);
 
-     void hexUniStr8(svx::string_view hexval, std::ostream& os);
-	
+     std::string hexUniStr8(const svx::string_view& hexval);
+     void hexUniStr8(const svx::string_view& hexval, std::ostream& os);
+
 	bool option_Array(Php::Parameters& params, unsigned int offset=0);
 
      const char* getTypeName(Php::Type);
@@ -74,7 +75,7 @@ namespace pun {
 
      std::string missingParameter(const char* shouldBe, unsigned int offset);
      std::string invalidCharacter(char32_t unc8);
-	
+
      void serialize_keyTable(Php::Base* base, std::ostream& out);
      void serialize_valueList(Php::Base* base, std::ostream& out);
 

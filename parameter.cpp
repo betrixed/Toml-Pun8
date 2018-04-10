@@ -40,7 +40,7 @@ const std::string CPunk::datetime_classname = "DateTime";
 using namespace pun;
 
 
-void 
+void
 pun::unserialize(Php::Value& val, std::istream& ins)
 {
     char check;
@@ -88,14 +88,14 @@ pun::unserialize(Php::Value& val, std::istream& ins)
             val = vlp->fn_object();
         }
         break;
-    case 'N': 
+    case 'N':
         val = Php::Value();
         break;
-    
+
     }
 }
 
-Pype 
+Pype
 pun::getPype(Php::Value& val) {
     auto t = pun::getPype(val.type());
     if (t == pun::tObject) {
@@ -133,7 +133,7 @@ pun::Pype pun::getPype(Php::Type t) {
         return pun::tResource;
     case Php::Type::Reference:
         return pun::tReference;
-    case Php::Type::Undefined:        
+    case Php::Type::Undefined:
     default:
         return pun::tUndefined;
     }
@@ -166,7 +166,7 @@ const char* pun::getPypeId(Pype t)
         return "resource";
     case pun::tReference:
         return "reference";
-    case pun::tUndefined:        
+    case pun::tUndefined:
     default:
         return "undefined";
     }
@@ -195,7 +195,7 @@ const char* pun::getTypeName(Php::Type ptype)
         return "resource";
     case Php::Type::Reference:
         return "reference";
-    case Php::Type::Undefined:        
+    case Php::Type::Undefined:
     default:
         return "undefined";
     }
@@ -208,14 +208,28 @@ KeyTable* pun::castKeyTable(Php::Value& val) {
     return  dynamic_cast<KeyTable*>(base);
 }
 
-void pun::hexUniStr8(svx::string_view hexval, std::ostream& os)
+std::string
+pun::hexUniStr8(const svx::string_view& hexval)
 {
-    char32_t val = (char32_t) strtol(hexval.data(), 0, 16);
-    EncodeUTF8 ec8;
+    char buf[24];
+    const char* data = hexval.data();
+    size_t      slen = hexval.size();
+    for(size_t i = 0; i < slen; i++) {
+        buf[i] = *(data+i);
+    }
+    buf[slen] = '\0';
 
-    ec8.encode(val);
+    char32_t val = (char32_t) strtol(buf, 0, 16);
+    EncodeUTF8 ec8;
     //Php::out << val << " is " << ec8.result << std::endl;
-    os << ec8.result;
+    return std::string(ec8.result, ec8.encode(val));
+}
+
+void pun::hexUniStr8(
+    const svx::string_view& hexval,
+    std::ostream& os)
+{
+    os << hexUniStr8(hexval);
 }
 
 
@@ -226,7 +240,7 @@ void pun::need_Value(Php::Parameters& param, unsigned int offset)
     }
 }
 
-std::string 
+std::string
 pun::missingParameter(const char* shouldBe, unsigned int offset)
 {
     std::string result;
@@ -237,55 +251,55 @@ pun::missingParameter(const char* shouldBe, unsigned int offset)
     return result;
 }
 
-std::string 
+std::string
 pun::invalidCharacter(char32_t unc8)
 {
 	std::stringstream ss;
 
     ss << "Control code in stream: chr(" << (std::uint_least32_t ) unc8 << ")";
-    return ss.str();	
+    return ss.str();
 }
 
-Recap8* 
+Recap8*
 pun::option_Recap8(Php::Parameters& params, unsigned int offset)
 {
     auto ct = params.size();
     if (offset >= ct) {
         return nullptr;
     }
-    const Php::Value& object = params[offset];   
+    const Php::Value& object = params[offset];
     if (!object.instanceOf(Recap8::PHP_NAME)) {
         throw Php::Exception("Parameter 1 should be Recap8 object");
-    } 
+    }
 
     Recap8 *obj = (Recap8 *)object.implementation();
-    return obj;    
+    return obj;
 }
 
-Re8map* 
+Re8map*
 pun::check_Re8map(Php::Parameters& params, unsigned int offset)
 {
     auto ct = params.size();
 
     if (offset < ct) {
-        const Php::Value& object = params[offset];   
+        const Php::Value& object = params[offset];
         if (object.isObject() && object.instanceOf(Re8map::PHP_NAME)) {
             Re8map *obj = (Re8map *)object.implementation();
-            return obj;  
+            return obj;
         }
     }
     throw Php::Exception(pun::missingParameter("Re8map object",offset));
-  
+
 }
 
 
-Pcre8* 
+Pcre8*
 pun::check_Pcre8(Php::Parameters& params, unsigned int offset)
 {
     auto ct = params.size();
 
     if (offset < ct) {
-        const Php::Value& object = params[offset];   
+        const Php::Value& object = params[offset];
         if (object.isObject() && object.instanceOf(Pcre8::PHP_NAME)) {
             Pcre8 *obj = (Pcre8 *)object.implementation();
             return obj;
@@ -294,13 +308,13 @@ pun::check_Pcre8(Php::Parameters& params, unsigned int offset)
     throw Php::Exception(pun::missingParameter("Pcre8 object", offset));
 }
 
- 
+
 bool pun::check_String(Php::Parameters& params,unsigned int offset)
 {
     auto ct = params.size();
     if (offset >= ct) {
         throw Php::Exception(pun::missingParameter("String", offset));
-    }    
+    }
     return params[offset].isString();
 }
 
@@ -319,7 +333,7 @@ bool pun::option_Int(Php::Parameters& params,unsigned int offset)
     return (offset < ct);
 }
 
-int 
+int
 pun::check_Int(Php::Parameters& params,unsigned int offset)
 {
     auto ct = params.size();
@@ -329,10 +343,10 @@ pun::check_Int(Php::Parameters& params,unsigned int offset)
     return params[0];
 }
 
-int 
+int
 pun::check_IntString(Php::Parameters& params)
 {
-    
+
     auto ct = params.size();
     if (ct < 2) {
         throw Php::Exception(pun::missingParameter("String",2));
@@ -340,13 +354,13 @@ pun::check_IntString(Php::Parameters& params)
     return params[0];
 }
 
-Token8* 
+Token8*
 pun::check_Token8(Php::Parameters& params, unsigned int offset)
 {
     auto ct = params.size();
 
     if (offset < ct) {
-        const Php::Value& object = params[offset];   
+        const Php::Value& object = params[offset];
         if (object.isObject() && object.instanceOf(Token8::PHP_NAME)) {
             Token8 *obj = (Token8 *)object.implementation();
             return obj;
@@ -355,7 +369,7 @@ pun::check_Token8(Php::Parameters& params, unsigned int offset)
     throw Php::Exception(pun::missingParameter("Token8 object", offset));
 }
 
-KeyTable* 
+KeyTable*
 pun::check_KeyTable(Php::Parameters& params, unsigned int offset)
 {
     auto ct = params.size();
@@ -363,7 +377,7 @@ pun::check_KeyTable(Php::Parameters& params, unsigned int offset)
     if (offset < ct) {
         KeyTable *obj = castKeyTable(params[offset]);
             if (obj)
-                return obj;  
+                return obj;
     }
     throw Php::Exception(pun::missingParameter("KeyTable object", offset));
 
@@ -382,7 +396,7 @@ void pun::serialize_keyTable(Php::Base* base, std::ostream& out)
     ktab->fn_serialize(out);
 }
 
-void 
+void
 pun::serialize_str(const char* s, size_t slen, std::ostream& out) {
     out.write((const char*) &slen, sizeof(slen));
     out.write(s, slen);
@@ -391,7 +405,7 @@ pun::serialize_str(const char* s, size_t slen, std::ostream& out) {
 
 
 
-void 
+void
 pun::unserialize_str(std::string& cval, std::istream& ins)
 {
     size_t slen;
@@ -404,7 +418,7 @@ pun::unserialize_str(std::string& cval, std::istream& ins)
 
 
 
-void 
+void
 pun::serialize(Php::Value& val, std::ostream& out)
 {
     auto ptype = pun::getPype(val);
@@ -416,7 +430,7 @@ pun::serialize(Php::Value& val, std::ostream& out)
     switch(ptype) {
     case pun::tBool:
         // All our types are distinguishable on capital letter,
-        // so 
+        // so
         out << 'B' << (val.boolValue() ? '1' : '0');
         break;
     case pun::tString:
@@ -473,7 +487,7 @@ pun::serialize(Php::Value& val, std::ostream& out)
     }
 }
 
-Php::Array 
+Php::Array
 pun::to_array(const ValueMap &vmap)
 {
     Php::Array result;

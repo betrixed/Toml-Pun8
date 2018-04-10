@@ -117,12 +117,12 @@ namespace pun {
 
 		void parseValue(Php::Value& val, pun::Pype& punt);
 
-		void parseQString(std::string& val);
-		void parseMLQString(std::string& val);
-		void parseLitString(std::string& val);
-		void parseMLString(std::string& val);
+		void parseQString(std::string& sval);
+		void parseMLQString(std::string& sval);
+		void parseLitString(std::string& sval);
+		void parseMLString(std::string& sval);
 
-		void parseEscChar(std::ostream& os);
+        std::string escString(svx::string_view sv);
 
 		void invalidEscChar(char eChar);
 		void fn_checkFullMatch(const std::string& target, const std::string& cap);
