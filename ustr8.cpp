@@ -95,32 +95,34 @@ void UStr8::fn_setEnd(Php::Value& val)
 
 Php::Value
 UStr8::peekChar(Php::Parameters& param) {
-	char32_t code;
     if (_index < _size) {
-        char const* buf = _str.get()->_view.data();
-        auto clen = ucode8Fore(buf + _index, _size - _index, code);
+        auto ustr = _str.get();
+        svx::string_view seq;
+        char32_t code = ustr->fetch(_index,seq);
+
         if (code != INVALID_CHAR) {
         	if (param.size() > 0 && param[0].type() == Php::Type::Reference) {
         		param[0] = (int) code;
         	}
-            return Php::Value(&buf[_index], clen);
+            Php::Value(seq.data(), seq.size());
         }
     }
     return Php::Value(false);
 }
 
-
-
-Php::Value UStr8::nextChar(Php::Parameters& param) {
+Php::Value
+UStr8::nextChar(Php::Parameters& param) {
     if (_index < _size) {
-        char32_t code;
-        char const* buf = _str.get()->_view.data();
-        auto clen = ucode8Fore(buf + _index, _size - _index, code);
+        auto ustr = _str.get();
+        svx::string_view seq;
+
+        char32_t code = ustr->fetch(_index,seq);
         if (code != INVALID_CHAR) {
         	if (param.size() > 0 && param[0].type() == Php::Type::Reference) {
         		param[0] = (int) code;
         	}
-            return Php::Value(&buf[_index], clen);
+        	_index += seq.size();
+            return Php::Value(seq.data(), seq.size());
         }
     }
     return Php::Value(false);

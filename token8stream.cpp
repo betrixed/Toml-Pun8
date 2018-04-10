@@ -544,22 +544,21 @@ Token8Stream::fn_beforeChar(char32_t c) const
 {
     auto offset = _index;
     //auto prev = offset;
-    auto bptr  = _str.get()->_view.data();
     auto test = INVALID_CHAR;
-    unsigned int clen = 0;
+    svx::string_view seq;
+    auto ustr = _str.get();
+    size_t clen = 0;
     while(test != c) {
-        //prev = offset;
-        if (offset >= _size) {
-            clen = 0;
-            break;
-        }
-        clen = ucode8Fore(bptr+offset, _size-offset, test );
+        test = ustr->fetch(offset, seq);
+
+        //clen = ucode8Fore(bptr+offset, _size-offset, test );
         if (test == INVALID_CHAR)
         {
             break;
         }
+        clen = seq.size();
         offset += clen;
     }
 
-    return std::string(bptr+_index, offset-_index - clen);
+    return std::string(ustr->_view.data() + _index, offset - _index - clen);
 }

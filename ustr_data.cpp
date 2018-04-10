@@ -54,18 +54,76 @@ UStrData::bomUTF8()
 char32_t
 UStrData::fetch(uint64_t offset, svx::string_view& v)
 {
-	auto size = _view.size();
-	if (offset < size) {
-		char32_t result;
-		auto ptr = _view.data() + offset;
+	auto cptr = _view.data();
+	auto endp = cptr + _view.size();
+	cptr += offset;
+    char32_t result;
+
+	if (cptr < endp) {
+		result = *((unsigned char*)cptr);
+		if (result < 0x80) { // before 0100 0000
+            v = svx::string_view(cptr, 1);
+            return result;
+		}
+        else if (result < 0xC2) {
+            // character 0x81 is
+            // 1100 0010, 1000 0001, ie 0xC2 0x81
+            // 0x81 to 0xBF are continuations, 0xC0, 0xC1 are illegal
+            // This is a continuation byte if it was UTF-8
+            // and should not be first byte of UTF-8 character.
+            // but if it is some form of 8-bit ASCII
+            // This is too lenient?
+
+            v = svx::string_view(cptr, 1);
+            return result;
+        }
+        else if (result < 0xE0) {
+            result  &= 0x1F;
+            if (++cptr >= endp) {
+                return INVALID_CHAR;
+            }
+            v = svx::string_view(cptr,2);
+            return (result << 6) + (*((unsigned char*)cptr) & 0x3F);
+        }
+        else if (result < 0xF0) {
+            if (cptr + 2 >= endp) {
+                v = svx::string_view(cptr, endp - cptr);
+                return INVALID_CHAR;
+            }
+            v = svx::string_view(cptr, 3);
+            result &= 0x0F;
+            ++cptr;
+            result = (result << 6) + (*((unsigned char*)cptr) & 0x3F);
+            ++cptr;
+            return (result << 6) + (*((unsigned char*)cptr) & 0x3F);
+        }
+        else if (result < 0xF5) {
+            if (cptr + 3 >= endp) {
+                v = svx::string_view(cptr, endp - cptr);
+                return INVALID_CHAR;
+            }
+            v = svx::string_view(cptr, 4);
+            result &= 0x07;
+            ++cptr;
+            result = (result << 6) + (*((unsigned char*)cptr) & 0x3F);
+            ++cptr;
+            result = (result << 6) + (*((unsigned char*)cptr) & 0x3F);
+            ++cptr;
+            return (result << 6) + (*((unsigned char*)cptr) & 0x3F);
+        }
+        else {
+            return INVALID_CHAR;
+        }
+		/*
 		auto charSize = ucode8Fore(
 			ptr,
 			size - offset,
 			result);
+
 		if (charSize) {
 			v = svx::string_view(ptr, charSize);
 			return result;
-		}
+		}*/
 	}
 	return INVALID_CHAR;
 }
