@@ -1,6 +1,6 @@
 #include <phpcpp.h>
 #include "ucode8.h"
-#include "pun8.h"
+//#include "pun8.h"
 #include "pcre8.h"
 #include "re8map.h"
 #include "recap8.h"
@@ -10,6 +10,7 @@
 #include "tomlreader.h"
 #include "puntype.h"
 #include "ustr8.h"
+#include "idlist.h"
 
 using namespace pun;
 
@@ -52,45 +53,12 @@ PHPCPP_EXPORT void *get_module()
     mergeable.method("toArray");
 
     extension.add(std::move(mergeable));
-// Class UStr8
+// registration methods
     UStr8::setup_ext(extension);
+    ValueList::setup_ext(extension);
+    IntList::setup_ext(extension);
+    Re8map::setup_ext(extension);
 
-    // @todo    add your own functions, classes, namespaces to the extension
-    Php::Class<Pun8> punic(Pun8::PHP_NAME);
-
-    punic.method<&Pun8::__construct>("__construct");
-
-    // using regular expression id map.
-    punic.method<&Pun8::matchMapId> ("matchMapId");
-    punic.method<&Pun8::matchIdRex8> ("matchIdRex8");
-    punic.method<&Pun8::firstMatch> ("firstMatch");
-
-    punic.method<&Pun8::setIdRex> ("setIdRex");
-    punic.method<&Pun8::getIdRex> ("getIdRex");
-    punic.method<&Pun8::getIds> ("getIds");
-    punic.method<&Pun8::setRe8map> ("setRe8map");
-    punic.method<&Pun8::setIdList> ("setIdList");
-    punic.method<&Pun8::getIdList> ("getIdList");
-
-    // iteration of managed utf-8 string
-    punic.method<&Pun8::setString> ("setString");
-    punic.method<&Pun8::nextChar> ("nextChar");
-    punic.method<&Pun8::peekChar> ("peekChar");
-    punic.method<&Pun8::getCode> ("getCode");
-    punic.method<&Pun8::getOffset> ("getOffset");
-    punic.method<&Pun8::setOffset> ("setOffset");
-    punic.method<&Pun8::addOffset> ("addOffset");
-    // Can manage the end of range marker
-    punic.method<&Pun8::size> ("size");
-    punic.method<&Pun8::getRangeEnd> ("getRangeEnd");
-    punic.method<&Pun8::setRangeEnd> ("setRangeEnd");
-
-    // conversion to utf16, BOM strings
-    punic.method<&Pun8::bomUTF16> ("bomUTF16");
-    punic.method<&Pun8::bomUTF8> ("bomUTF8");
-    punic.method<&Pun8::asUTF16> ("asUTF16");
-
-    extension.add(std::move(punic));
 
     Php::Class<Pcre8> preg(Pcre8::PHP_NAME);
     preg.method<&Pcre8::__construct>("__construct");
@@ -102,15 +70,6 @@ PHPCPP_EXPORT void *get_module()
 
     extension.add(std::move(preg));
 
-    Php::Class<Re8map> re8(Re8map::PHP_NAME);
-    re8.method<&Re8map::setIdRex> ("setIdRex");
-    re8.method<&Re8map::hasIdRex> ("hasIdRex");
-    re8.method<&Re8map::unsetIdRex> ("unsetIdRex");
-    re8.method<&Re8map::getIdRex> ("getIdRex");
-    re8.method<&Re8map::addMapIds> ("addMapIds");
-    re8.method<&Re8map::getIds> ("getIds");
-    re8.method<&Re8map::count> ("count");
-    extension.add(std::move(re8));
 
     Php::Class<Recap8> cap8(Recap8::PHP_NAME);
     cap8.method<&Recap8::count> ("count");
@@ -160,23 +119,7 @@ PHPCPP_EXPORT void *get_module()
     tbase.method<&TomlBase::getTag> ("getTag");
     extension.add(std::move(tbase));
 
-    Php::Class<ValueList> valList(ValueList::PHP_NAME);
-    valList.extends(tbase);
 
-    valList.method<&ValueList::pushBack> ("pushBack");
-    valList.method<&ValueList::popBack> ("popBack");
-    valList.method<&ValueList::getV> ("getV");
-
-    valList.method<&ValueList::setV> ("setV");
-    valList.method<&ValueList::back> ("back");
-    valList.method<&ValueList::size> ("size");
-    valList.method<&ValueList::clear> ("clear");
-    valList.method<&ValueList::toArray> ("toArray");
-
-    valList.method<&ValueList::setTag> ("setTag");
-    valList.method<&ValueList::getTag> ("getTag");
-
-    extension.add(std::move(valList));
 
 
     Php::Class<KeyTable> keytab(KeyTable::PHP_NAME);

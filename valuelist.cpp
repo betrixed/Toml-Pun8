@@ -8,6 +8,27 @@ using namespace pun;
 
 const char* ValueList::PHP_NAME = "Pun\\ValueList";
 
+void
+ValueList::setup_ext(Php::Extension& ext)
+{
+    Php::Class<ValueList> valList(ValueList::PHP_NAME);
+
+    valList.method<&ValueList::pushBack> ("pushBack");
+    valList.method<&ValueList::popBack> ("popBack");
+    valList.method<&ValueList::getV> ("getV");
+
+    valList.method<&ValueList::setV> ("setV");
+    valList.method<&ValueList::back> ("back");
+    valList.method<&ValueList::size> ("size");
+    valList.method<&ValueList::clear> ("clear");
+    valList.method<&ValueList::toArray> ("toArray");
+
+    valList.method<&ValueList::setTag> ("setTag");
+    valList.method<&ValueList::getTag> ("getTag");
+
+    ext.add(std::move(valList));
+}
+
 const std::string CPunk::valuelist_classname(ValueList::PHP_NAME);
 
 Php::Value ValueList::getTag() const
@@ -50,7 +71,7 @@ void ValueList::popBack()
 static void checkIndex(int index, unsigned int vlen) {
 	if (index < 0 || index >= (int) vlen) {
 		throw Php::Exception("ValueList index out of range");
-	}	
+	}
 }
 void ValueList::setV(Php::Parameters& param)
 {
@@ -58,7 +79,7 @@ void ValueList::setV(Php::Parameters& param)
 	checkIndex(index, _store.size());
 	pun::need_Value(param,1);
 	_store[index] = param[1];
-	
+
 }
 Php::Value ValueList::getV(Php::Parameters& params) const
 {
@@ -146,14 +167,14 @@ void ValueList::fn_serialize(std::ostream& out)
 	auto keyct = _store.size();
 	out.write((const char*) &keyct,sizeof(keyct));
 	//out << '[';
-	for(auto ait = _store.begin(); ait != _store.end(); ait++) 
+	for(auto ait = _store.begin(); ait != _store.end(); ait++)
 	{
 		pun::serialize(*ait, out);
 	}
 	//out << ']';
 }
 
-std::string 
+std::string
 ValueList::serialize()
 {
 	std::stringstream out;

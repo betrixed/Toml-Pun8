@@ -30,6 +30,8 @@
 		<Unit filename="Makefile">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
+		<Unit filename="idlist.cpp" />
+		<Unit filename="idlist.h" />
 		<Unit filename="keytable.cpp" />
 		<Unit filename="keytable.h" />
 		<Unit filename="main.cpp" />
@@ -39,8 +41,6 @@
 		<Unit filename="pcre8.h" />
 		<Unit filename="pcre8_imp.cpp" />
 		<Unit filename="pcre8_imp.h" />
-		<Unit filename="pun8.cpp" />
-		<Unit filename="pun8.h" />
 		<Unit filename="pun8.ini" />
 		<Unit filename="puntype.cpp" />
 		<Unit filename="puntype.h" />

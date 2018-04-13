@@ -1,5 +1,4 @@
 #include "recap8.h"
-#include "pun8.h"
 #include "parameter.h"
 
 
@@ -7,15 +6,25 @@ using namespace pun;
 
 const char* Recap8::PHP_NAME = "Pun\\Recap8";
 
+Recap8*
+Recap8::get_Recap8(Php::Value& val)
+{
+    if (val.isObject()) {
+        if (val.instanceOf(Recap8::PHP_NAME)) {
+            return (Recap8*) val.implementation();
+        }
+    }
+    return nullptr;
+}
 
-Php::Value 
+Php::Value
 Recap8::count() const
 {
 	int result =  _match._slist.size();
 	return Php::Value(result);
 }
 
-Php::Value 
+Php::Value
 Recap8::getCap(Php::Parameters& params) const
 {
 	int offset = pun::check_Int(params,0);

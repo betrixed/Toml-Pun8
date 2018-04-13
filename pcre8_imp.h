@@ -16,6 +16,7 @@
 #endif
 
 typedef std::vector<int>  IdList;
+IdList toIdList(const Php::Value& v);
 
 class Pcre8_match {
 public:
@@ -60,8 +61,6 @@ typedef std::unordered_map<int, Pcre8_share> RexMap;
 
 typedef std::unordered_map<char32_t, int> RexSingles;
 
-
-
 typedef std::vector<Php::Value> ValueArray;
 
 
@@ -72,6 +71,11 @@ public:
 	int match(const svx::string_view& sv,
                 int mapId,
                 Pcre8_match& matches);
+    int firstMatch(
+        const svx::string_view& sv,
+        const IdList& ids,
+        Pcre8_match& matches);
+
     bool hasKey(int index) const;
 	void setRex(const Pcre8_share& re);
 	bool getRex(int index, Pcre8_share& re) const;

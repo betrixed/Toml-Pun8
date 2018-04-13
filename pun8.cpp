@@ -66,6 +66,46 @@ void Pun8::addOffset(Php::Parameters& params) {
     }
 }
 
+void
+Pun8::setup_ext(Php::Extension& ext)
+{
+    Php::Class<Pun8> punic(Pun8::PHP_NAME);
+
+    punic.method<&Pun8::__construct>("__construct");
+
+    // using regular expression id map.
+    punic.method<&Pun8::matchMapId> ("matchMapId");
+    punic.method<&Pun8::matchIdRex8> ("matchIdRex8");
+    punic.method<&Pun8::firstMatch> ("firstMatch");
+
+    punic.method<&Pun8::setIdRex> ("setIdRex");
+    punic.method<&Pun8::getIdRex> ("getIdRex");
+    punic.method<&Pun8::getIds> ("getIds");
+    punic.method<&Pun8::setRe8map> ("setRe8map");
+    punic.method<&Pun8::setIdList> ("setIdList");
+    punic.method<&Pun8::getIdList> ("getIdList");
+
+    // iteration of managed utf-8 string
+    punic.method<&Pun8::setString> ("setString");
+    punic.method<&Pun8::nextChar> ("nextChar");
+    punic.method<&Pun8::peekChar> ("peekChar");
+    punic.method<&Pun8::getCode> ("getCode");
+    punic.method<&Pun8::getOffset> ("getOffset");
+    punic.method<&Pun8::setOffset> ("setOffset");
+    punic.method<&Pun8::addOffset> ("addOffset");
+    // Can manage the end of range marker
+    punic.method<&Pun8::size> ("size");
+    punic.method<&Pun8::getRangeEnd> ("getRangeEnd");
+    punic.method<&Pun8::setRangeEnd> ("setRangeEnd");
+
+    // conversion to utf16, BOM strings
+    punic.method<&Pun8::bomUTF16> ("bomUTF16");
+    punic.method<&Pun8::bomUTF8> ("bomUTF8");
+    punic.method<&Pun8::asUTF16> ("asUTF16");
+
+    ext.add(std::move(punic));
+}
+
 Php::Value Pun8::peekChar() {
     if (_index < _size) {
         char const* buf = _mystr.data();

@@ -38,6 +38,16 @@ UStr8::UStr8(UStr8& p)
 {
 }
 
+UStr8* UStr8::get_UStr8(Php::Value& val)
+{
+    if (val.isObject()) {
+        if (val.instanceOf(UStr8::PHP_NAME)) {
+            return (UStr8*) val.implementation();
+        }
+    }
+    return nullptr;
+}
+
 void UStr8::__construct(Php::Parameters& param)
 {
     (*this).setString(param);
@@ -205,3 +215,11 @@ Php::Value UStr8::value() const
 	auto view = sp->substr(_index, _size - _index);
 	return Php::Value(view.data(), view.size());
 }
+
+svx::string_view
+UStr8::fn_getView()
+{
+    auto sp = _str.get();
+	return sp->substr(_index, _size - _index);
+}
+

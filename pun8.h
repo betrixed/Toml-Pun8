@@ -17,7 +17,7 @@ namespace pun {
     class Pun8 : public TomlBase {
     public:
         static const char* PHP_NAME;
-
+        static void setup_ext(Php::Extension& ext);
     	Pun8();
     	~Pun8();
 
@@ -56,7 +56,7 @@ namespace pun {
         // Get current byte offset into string
         Php::Value getOffset() const;
 
-        // set the current byte offset. 
+        // set the current byte offset.
         void setOffset(Php::Parameters& params);
 
         // add increment to the current byte offset
@@ -64,7 +64,7 @@ namespace pun {
 
         // size of character buffer
         Php::Value  size() const { return (int) _mystr.size(); }
-        
+
         // Get current artifical end position, within actual end.
         Php::Value  getRangeEnd() const { return (int) _size; }
 
@@ -81,12 +81,12 @@ namespace pun {
         void setIdList(Php::Parameters& params);
 
         // return array of ordered map id's
-        Php::Value getIdList(); 
+        Php::Value getIdList();
 
         // return BOM as string for UTF16 on this platform
         static Php::Value bomUTF16();
 
-        // return BOM as string for UTF8 
+        // return BOM as string for UTF8
         static Php::Value bomUTF8();
 
         // Return PHP string converted to platform UTF16, no BOM
@@ -100,11 +100,11 @@ namespace pun {
         // See if String holds a BOM, return a "BOM-name" or empty string
         Php::Value getBOMId();
 
-        // convert if none UTF8 contents to UTF8. 
+        // convert if none UTF8 contents to UTF8.
         // Return false if cannot convert
         // Regular expression and traversal functions only work with UTF8.
         // Return an offset to first none BOM, if a UTF8 BOM exists.
-        Php::Value ensureUTF8(); 
+        Php::Value ensureUTF8();
 
         // erase block of characters, given start offset, and length.
         // packs string, and moves up characters to fill in missing block
@@ -125,7 +125,7 @@ namespace pun {
         void fn_setOffset(size_t val) { _index = val; }
         size_t fn_getOffset() { return _index; }
         size_t fn_size() { return _size - _index; }
-        
+
         void fn_setRe8map(Re8map_share& smap);
         std::string& str();
 

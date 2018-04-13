@@ -5,7 +5,6 @@
 #include <unordered_map>
 #include <vector>
 
-#include "pun8.h"
 #include "re8map.h"
 
 // integrated functions of Pun8 class

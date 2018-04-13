@@ -8,6 +8,18 @@
 #include <utility>
 //#include <ostream>
 
+IdList toIdList(const Php::Value& v) {
+
+    IdList result;
+    auto ct = v.size();
+    result.reserve(ct);
+    for(int i = 0; i < v.size(); i++)
+    {
+        result.push_back(v[i]);
+    }
+    return result;
+}
+
 void Pcre8_map::setRex(const Pcre8_share& reg)
 {
     auto index = reg.get()->_id;
@@ -26,6 +38,22 @@ bool Pcre8_map::hasKey(int index) const
 {
   auto pit = _map.find(index);
   return (pit != _map.end());
+}
+
+int
+Pcre8_map::firstMatch(
+    const svx::string_view& sv,
+    const IdList& ids,
+    Pcre8_match& matches)
+{
+    int result = 0;
+    auto idend = ids.end();
+    for (auto mid = ids.begin(); mid != idend; mid++) {
+        result = this->match(sv,(*mid), matches);
+        if (result > 0)
+           break;
+    }
+    return result;
 }
 
 int Pcre8_map::match(const svx::string_view& sv,

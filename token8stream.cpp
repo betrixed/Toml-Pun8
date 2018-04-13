@@ -547,7 +547,6 @@ Token8Stream::fn_beforeChar(char32_t c) const
     auto test = INVALID_CHAR;
     svx::string_view seq;
     auto ustr = _str.get();
-    size_t clen = 0;
     while(test != c) {
         test = ustr->fetch(offset, seq);
 
@@ -556,9 +555,8 @@ Token8Stream::fn_beforeChar(char32_t c) const
         {
             break;
         }
-        clen = seq.size();
-        offset += clen;
+        offset += seq.size();
     }
 
-    return std::string(ustr->_view.data() + _index, offset - _index - clen);
+    return std::string(ustr->_view.data() + _index, offset - _index);
 }

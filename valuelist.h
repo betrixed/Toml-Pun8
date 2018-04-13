@@ -5,11 +5,11 @@
 #include "parameter.h"
 #include <iostream>
 // ValueList should not be crippled by placing "all the same thing" checks
-// on each call to push. Since TomlBase has a "Tag" facility, force the 
+// on each call to push. Since TomlBase has a "Tag" facility, force the
 // tag usage and value type matching here, for use by Toml Arrays which must be
 // all of the same type, and the parser code will have to do a check
-// Drawback is there is an extra PHP object tag for every 
-// Array representation. 
+// Drawback is there is an extra PHP object tag for every
+// Array representation.
 
 namespace pun {
 
@@ -20,7 +20,7 @@ class VL_Iterator : public Php::Iterator {
 
 public:
 	VL_Iterator(Php::Base* pobj, ValueArray& aRef)
-		: Php::Iterator(pobj), _ref(aRef), _iter(aRef.begin()) 
+		: Php::Iterator(pobj), _ref(aRef), _iter(aRef.begin())
 	{
 	}
 
@@ -31,7 +31,7 @@ public:
 		return _iter != _ref.end();
 	}
 
-	virtual Php::Value current() override 
+	virtual Php::Value current() override
 	{
 		return (*_iter);
 	}
@@ -52,12 +52,15 @@ public:
 	}
 };
 
-class ValueList : public TomlBase, public Php::Countable, 
+class ValueList : public TomlBase, public Php::Countable,
 				public Php::Traversable , public Php::Serializable
 
 {
 public:
 	static const char* PHP_NAME;
+
+	static void setup_ext(Php::Extension& ext);
+
 	ValueList() {}
 
 	void pushBack(Php::Parameters& param);
@@ -69,22 +72,22 @@ public:
 	virtual long  count() override { return (long) _store.size(); }
 
 	Php::Value size() const;
-	void clear() { _store.clear(); } 
+	void clear() { _store.clear(); }
 
-	virtual Php::Iterator *getIterator() override 
+	virtual Php::Iterator *getIterator() override
 	{
 		return new VL_Iterator( this, _store);
 	}
 
 	// Return the Array as stored
 	Php::Value toArray();
-	
+
 
 	Php::Value getTag() const;
 	void setTag(Php::Parameters& param);
 
 	Php::Value __toString();
-	
+
 	virtual std::string serialize();
 	virtual void unserialize(const char *input, size_t size);
 
@@ -100,13 +103,13 @@ public:
 
 	void fn_unserialize(std::istream& ins);
 	void fn_serialize(std::ostream& out);
-	
+
 
 private:
 	ValueArray 		_store;
 	// if storing objects, require same class name
 	// store it to avoid more calls to "get_class"
-	//Php::Value      _className; 
+	//Php::Value      _className;
 	// require same value type
 	//Php::Type 	 	_type;
 };

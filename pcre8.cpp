@@ -1,6 +1,5 @@
 #include "pcre8.h"
 #include "recap8.h"
-#include "pun8.h"
 #include "parameter.h"
 #include <ostream>
 
@@ -10,9 +9,9 @@ using namespace pun;
 const char* Pcre8::PHP_NAME = "Pun\\IdRex8";
 
 
-Pcre8::Pcre8() 
+Pcre8::Pcre8()
 {
-    
+
 }
 
 Pcre8::~Pcre8()
@@ -24,7 +23,7 @@ void Pcre8::__construct(Php::Parameters& params)
 	(*this).setIdString(params);
 }
 
-Pcre8_share 
+Pcre8_share
 Pcre8::fromParameters(Php::Parameters& params)
 {
 	int index = pun::check_IntString(params);
@@ -40,7 +39,7 @@ void Pcre8::setIdString(Php::Parameters& params)
 {
 	_imp = Pcre8::fromParameters(params);
 }
-    
+
 void Pcre8::setImp(const Pcre8_share& sptr) {
 	_imp = sptr;
 }

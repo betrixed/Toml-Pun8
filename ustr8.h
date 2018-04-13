@@ -23,6 +23,8 @@ public:
 
 		static void setup_ext(Php::Extension& ext);
 
+		static UStr8* get_UStr8(Php::Value& val);
+
 		UStr8();
         UStr8(UStr8& original);
 
@@ -84,6 +86,7 @@ public:
 		void fn_setBegin(Php::Value& val);
 		void fn_setEnd(Php::Value& val);
 		void fn_setString(const char* ptr, unsigned int len);
+		svx::string_view fn_getView();
 public:
 		Str_ptr				_str;
     	uint64_t			_index;

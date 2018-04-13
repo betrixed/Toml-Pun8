@@ -1,7 +1,6 @@
 <?php
 
 use Pun\IdRex8;
-use Pun\Pun8;
 use Pun\Re8map;
 use Pun\Recap8;
 use Pun\Token8;
@@ -10,6 +9,7 @@ use Pun\KeyTable;
 use Pun\ValueList;
 use Pun\Type;
 use Pun\UStr8;
+use Pun\IntList;
 
 use Pun\TomlReader;
 
@@ -165,12 +165,13 @@ function show($result) {
 
 function testToken($test,$id) {
 	$map = Lexer::getAllRegex();
-	$pun = new Pun8($test);
-	$pun->setRe8map($map);
+	$pun = new UStr8($test);
 	$cap = new Recap8();
 	$ids = Lexer::getAllIds();
-    $pun->setIdList($ids);
-	$match = $pun->firstMatch($cap);
+    $intlist = new IntList($ids);
+
+    $match = $map->firstMatch($pun, $cap, $intlist);
+
 	if ($id !== $match) {
 		echo "**** id: " . $match . PHP_EOL;
 		show($cap);
@@ -291,7 +292,6 @@ function routine() {
     echo "ID is " . $id . PHP_EOL;
     echo "Value is " . $ts->getValue() . PHP_EOL;
     echo "Tail is " . $ts->beforeEOL() . PHP_EOL;
-
 }
 
 function reader_0() {

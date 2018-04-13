@@ -1,15 +1,30 @@
 #include "re8map.h"
-
-#include "pun8.h"
 #include "pcre8.h"
 #include "ucode8.h"
 #include "parameter.h"
-
+#include "ustr8.h"
+#include "idlist.h"
+#include "recap8.h"
 #include <sstream>
 
 using namespace pun;
 
 const char* Re8map::PHP_NAME = "Pun\\Re8map";
+
+void
+Re8map::setup_ext(Php::Extension& ext)
+{
+    Php::Class<Re8map> re8(Re8map::PHP_NAME);
+    re8.method<&Re8map::setIdRex> ("setIdRex");
+    re8.method<&Re8map::hasIdRex> ("hasIdRex");
+    re8.method<&Re8map::unsetIdRex> ("unsetIdRex");
+    re8.method<&Re8map::getIdRex> ("getIdRex");
+    re8.method<&Re8map::addMapIds> ("addMapIds");
+    re8.method<&Re8map::getIds> ("getIds");
+    re8.method<&Re8map::count> ("count");
+    re8.method<&Re8map::firstMatch> ("firstMatch");
+    ext.add(std::move(re8));
+}
 
 Re8map::Re8map()
 {
@@ -20,7 +35,7 @@ Re8map::~Re8map()
 {
 }
 
-Php::Value 
+Php::Value
 Re8map::setIdRex(Php::Parameters& params)
 {
     auto sp = Pcre8::fromParameters(params);
@@ -28,7 +43,7 @@ Re8map::setIdRex(Php::Parameters& params)
     return Php::Value(params[0]);
 }
 
-Php::Value 
+Php::Value
 Re8map::getIds() const
 {
     Php::Value result;
@@ -45,8 +60,8 @@ Re8map::getIds() const
     return result;
 }
 
-Php::Value 
-Re8map::getIdRex(Php::Parameters& params) 
+Php::Value
+Re8map::getIdRex(Php::Parameters& params)
 {
     pun::check_Int(params);
     int index = params[0];
@@ -71,7 +86,7 @@ Php::Value Re8map::addMapIds(Php::Parameters& params)
 	Re8map* obj = pun::check_Re8map(params,0);
 	auto mFrom = obj->getImp().get();
 	auto mTo = _remap.get();
-	
+
 
 	if (pun::option_Array(params,1)) {
 		auto& Ar = params[1];
@@ -126,3 +141,42 @@ Php::Value Re8map::unsetIdRex(Php::Parameters& params)
 	auto map = _remap.get();
 	return Php::Value(map->eraseRex(index));
 }
+
+Php::Value
+Re8map::firstMatch(Php::Parameters& param)
+{
+    UStr8* u8 = nullptr;;
+    Recap8* caps = nullptr;;
+    IntList*  intlist = nullptr;
+    IdList    ids;
+
+    bool checked = true;
+    if (param.size() < 3) {
+        checked = false;
+    }
+    if (checked && (u8 = UStr8::get_UStr8(param[0])) == nullptr) {
+        checked = false;
+    }
+    if (checked && (caps = Recap8::get_Recap8(param[1])) == nullptr) {
+        checked = false;
+    }
+    if (checked) {
+        Php::Value& idArray = param[2];
+        if (idArray.isArray()) {
+            ids = toIdList(idArray);
+        }
+        else {
+            checked = ((intlist = IntList::get_IntList(param[2])) != nullptr);
+        }
+    }
+    if (!checked) {
+        throw Php::Exception("firstMatch(UStr8,Recap8,List<int>) parameter missing");
+    }
+
+    auto spm = _remap.get();
+    const IdList& tests = (intlist==nullptr) ? ids : intlist->_store;
+
+    return spm->firstMatch(u8->fn_getView(), tests, caps->_match );
+
+}
+

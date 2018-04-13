@@ -6,10 +6,11 @@
 
 #include "parameter.h"
 #include "token8.h"
-#include "pun8.h"
 
 #include <vector>
 #include "ustr_data.h"
+
+#include "pcre8_imp.h"
 
 // globals for TomlReader, shareable, for a static class member.
 

@@ -69,6 +69,7 @@ namespace pun {
      int check_IntString(Php::Parameters& params);
      void need_Value(Php::Parameters& params,unsigned int offset=0);
 
+
      bool check_String(Php::Parameters& params,unsigned int offset = 0);
      int check_Int(Php::Parameters& params,unsigned int offset = 0);
      bool option_Int(Php::Parameters& params,unsigned int offset);
