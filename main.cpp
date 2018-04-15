@@ -45,36 +45,22 @@ PHPCPP_EXPORT void *get_module()
 
 
     Php::Interface mergeable("Mergeable");
-
 // define an interface method
     mergeable.method("merge", {
         Php::ByVal("store", KeyTable::PHP_NAME)
     });
     mergeable.method("toArray");
-
     extension.add(std::move(mergeable));
+
 // registration methods
     UStr8::setup_ext(extension);
     ValueList::setup_ext(extension);
     IntList::setup_ext(extension);
     Re8map::setup_ext(extension);
+    Recap8::setup_ext(extension);
+    Pcre8::setup_ext(extension);
+    KeyTable::setup_ext(extension, mergeable);
 
-
-    Php::Class<Pcre8> preg(Pcre8::PHP_NAME);
-    preg.method<&Pcre8::__construct>("__construct");
-    preg.method<&Pcre8::setIdString> ("setIdString");
-    preg.method<&Pcre8::getString> ("getString");
-    preg.method<&Pcre8::getId> ("getId");
-    preg.method<&Pcre8::isCompiled> ("isCompiled");
-    preg.method<&Pcre8::match> ("match");
-
-    extension.add(std::move(preg));
-
-
-    Php::Class<Recap8> cap8(Recap8::PHP_NAME);
-    cap8.method<&Recap8::count> ("count");
-    cap8.method<&Recap8::getCap> ("getCap");
-    extension.add(std::move(cap8));
 
     Php::Class<Token8Stream> t8s(Token8Stream::PHP_NAME);
     t8s.method<&Token8Stream::setEOSId> ("setEOSId");
@@ -122,29 +108,7 @@ PHPCPP_EXPORT void *get_module()
 
 
 
-    Php::Class<KeyTable> keytab(KeyTable::PHP_NAME);
-    keytab.implements(mergeable);
-    keytab.extends(tbase);
 
-    keytab.method<&KeyTable::setKV> ("setKV");
-    keytab.method<&KeyTable::getV> ("getV");
-    keytab.method<&KeyTable::get> ("get");
-    keytab.method<&KeyTable::unsetK> ("unsetK");
-    keytab.method<&KeyTable::hasK> ("hasK");
-    keytab.method<&KeyTable::clear> ("clear");
-    keytab.method<&KeyTable::merge> ("merge", {
-        Php::ByVal("store", KeyTable::PHP_NAME)
-    });
-    //keytab.method<&KeyTable::merge> ("merge");
-    keytab.method<&KeyTable::size> ("size");
-
-    keytab.method<&KeyTable::toArray> ("toArray");
-    keytab.method<&KeyTable::setTag> ("setTag");
-    keytab.method<&KeyTable::getTag> ("getTag");
-
-
-
-    extension.add(std::move(keytab));
 
     Php::Class<TomlReader> rdr(TomlReader::PHP_NAME);
 

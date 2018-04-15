@@ -103,8 +103,10 @@ public:
 
 	void fn_unserialize(std::istream& ins);
 	void fn_serialize(std::ostream& out);
+    ValueArray::iterator begin() { return _store.begin(); }
+    ValueArray::iterator end() { return _store.end(); }
 
-
+    ValueArray& fn_store() { return _store;}
 private:
 	ValueArray 		_store;
 	// if storing objects, require same class name

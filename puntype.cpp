@@ -1,9 +1,10 @@
 #include "puntype.h"
+#include "parameter.h"
 
 using namespace pun;
 
 const char* PunType::PHP_NAME = "Pun\\Type";
-	
+
 void PunType::fromValue(Php::Parameters& param)
 {
 	pun::need_Value(param);
@@ -15,14 +16,14 @@ void PunType::fn_fromValue(Php::Value& val) {
 	_type = pun::getPype(val);
 }
 
-Php::Value 
+Php::Value
 PunType::type() const
 {
 	return _type;
 }
 
 
-Php::Value 
+Php::Value
 PunType::name() const
 {
 	return pun::getPypeId(_type);

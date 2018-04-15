@@ -11,6 +11,7 @@
 #include <vector>
 #include <memory>
 
+
 #ifndef _H_TEXT
 #include "text.h"
 #endif
@@ -36,6 +37,10 @@ public:
     Pcre8_match &operator=(const Pcre8_match &&m);
 };
 
+typedef std::vector<Pcre8_match> Pcre8_matchAll;
+
+
+
 class Pcre8_imp {
 private:
     pcre2_code *_re;
@@ -48,8 +53,11 @@ public:
 
     pcre2_code* getRex() { return _re; }
     void setRex(pcre2_code* re);
-    // return number of matches, or negative error code
-    int doMatch(const unsigned char* start, unsigned int slen, Pcre8_match& matches);
+    //! return first match,  or negative error code
+    int doMatch(const svx::string_view& sv, Pcre8_match& matches);
+    //! multiple matches, so there is an array of Pcre8_match
+    int doMatchAll(const svx::string_view& sv, Pcre8_matchAll& matches);
+
     int match(const svx::string_view& sv, Pcre8_match& matches);
     bool compile(std::string& _error);
     bool isCompiled() { return _re != nullptr; }
@@ -61,7 +69,6 @@ typedef std::unordered_map<int, Pcre8_share> RexMap;
 
 typedef std::unordered_map<char32_t, int> RexSingles;
 
-typedef std::vector<Php::Value> ValueArray;
 
 
 class Pcre8_map {

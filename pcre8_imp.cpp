@@ -8,6 +8,162 @@
 #include <utility>
 //#include <ostream>
 
+
+//! Handle  pcre2 calls for first and all matches, free _matchData
+class Pcre8_calls {
+public:
+    Pcre8_calls(pcre2_code* re) : _re(re), _matchData(nullptr), _ovector(nullptr) {
+
+    }
+    ~Pcre8_calls() {
+        if (_matchData) {
+            pcre2_match_data_free(_matchData);
+            // _ovector is part of _matchData
+            _ovector = nullptr;
+            _matchData = nullptr;
+        }
+    }
+
+    int doMatch(const svx::string_view &subject, Pcre8_match& matches)
+    {
+        if (_matchData == nullptr) {
+            _matchData = pcre2_match_data_create_from_pattern(_re, nullptr);
+        }
+        auto start = (const unsigned char*) subject.data();
+        auto slen = subject.size();
+
+        auto rcount = pcre2_match(_re, start, slen, 0, 0, _matchData, nullptr);
+
+        matches._slist.clear();
+
+        if (rcount <= 0) {
+            //std::string test(reinterpret_cast<const char*>(start), slen);
+            return rcount;
+        }
+
+        if (_ovector == nullptr) {
+            _ovector = pcre2_get_ovector_pointer(_matchData);
+        }
+
+        if (_ovector[0] > _ovector[1]) {
+            return -1;
+        }
+        addMatchData( matches, start, rcount );
+        return rcount;
+    }
+
+    int doMatchAll(const svx::string_view &seg, Pcre8_matchAll& matchSet)
+    {
+        uint32_t option_bits;
+        uint32_t newline;
+        // make 1 match results
+        matchSet.resize(1);
+
+        auto mcount = doMatch(seg, matchSet[0]);
+
+        // follow the pcre2 demo exactly as possible
+        if (mcount <= 0) {
+            return 0;
+        }
+        pcre2_pattern_info(_re,PCRE2_INFO_ALLOPTIONS, &option_bits );
+
+        bool isUTF8 = (option_bits & PCRE2_UTF) != 0;
+
+        pcre2_pattern_info(_re,PCRE2_INFO_NEWLINE, &newline );
+        bool crlf_is_newline = (newline == PCRE2_NEWLINE_ANY ||
+                  newline == PCRE2_NEWLINE_CRLF ||
+                  newline == PCRE2_NEWLINE_ANYCRLF);
+
+        for(;;) {
+            uint32_t options = 0;
+            auto subject_length = seg.size();
+            auto subject = (const unsigned char*) seg.data();
+
+            PCRE2_SIZE start_offset = _ovector[1]; // end of previous match
+
+            if (_ovector[0] == _ovector[1]) {
+                if (_ovector[0] == subject_length)
+                    break;
+                options = PCRE2_NOTEMPTY_ATSTART | PCRE2_ANCHORED;
+            }
+            else {
+                PCRE2_SIZE startchar = pcre2_get_startchar(_matchData);
+                if (startchar >= subject_length)
+                    break;
+                start_offset = startchar + 1;
+                if (isUTF8) {
+                    for( ; start_offset < subject_length; start_offset++){
+                        if ((subject[start_offset] & 0xC0) != 0x80)
+                            break;
+                    }
+                }
+            }
+
+            // next match
+            auto rcount = pcre2_match(
+                _re, subject, subject_length,
+                start_offset,
+                options,
+                _matchData,
+                nullptr
+            );
+
+            if (rcount == PCRE2_ERROR_NOMATCH) {
+                if (options == 0)
+                    break; // all matches found
+                _ovector[1] = start_offset + 1;
+                if (crlf_is_newline && (start_offset < subject_length - 1) &&
+                    subject[start_offset] == '\r' &&
+                    subject[start_offset+1] == '\n')
+                    _ovector[1] += 1;
+                else if (isUTF8) {
+                    while(_ovector[1] < subject_length) {
+                        if ((subject[start_offset] & 0xC0) != 0x80)
+                            break;
+                        _ovector[1] += 1;
+                    }
+                }
+                continue;
+            }
+
+            if (rcount <= 0) {
+                //not recoverable
+                return rcount;
+            }
+
+            if (_ovector[0] > _ovector[1]) {
+                // see pcre2demo, "\\K was used in an assertion to set the match start after its end."
+                return -1;
+            }
+
+            auto matchCount = matchSet.size();
+            matchSet.resize(matchCount + 1);
+            Pcre8_match& match = matchSet[matchCount];
+            match._rcode = rcount;
+            addMatchData(match, subject, rcount);
+        }
+        return matchSet.size();
+    }
+private:
+    //! start: match subject, rcount: number of matches
+    void addMatchData(Pcre8_match& matches, const unsigned char* start, int rcount) {
+        for(int i = 0; i < rcount; i++)
+        {
+            auto offset = 2*i;
+            auto substart = reinterpret_cast<const char*>(start + _ovector[offset]);
+            size_t sublen = _ovector[offset+1] - _ovector[offset];
+            matches._slist.push_back(std::move(std::string(substart, sublen)));
+        }
+    }
+    // this is burrowed.
+    pcre2_code* _re;
+    // these are managed
+    pcre2_match_data* _matchData;
+    PCRE2_SIZE* _ovector;
+
+};
+
+
 IdList toIdList(const Php::Value& v) {
 
     IdList result;
@@ -137,17 +293,18 @@ bool Pcre8_imp::compile(std::string& _error)
   	}
 }
 
+
+
 int
 Pcre8_imp::match(const svx::string_view& sv, Pcre8_match& matches)
 {
     int rct;
     auto slen = sv.size();
     if (slen > 0) {
-        //Php::out << "target: " << buf << " with " << pimp->_eStr << std::endl;
-        rct = doMatch(
-                reinterpret_cast<const unsigned char*>(sv.data()),
-                slen,
-                matches);
+        Pcre8_calls  pre_call(_re);
+
+        rct = pre_call.doMatch(sv, matches);
+
         if (rct > 0) {
             // _rcode to hold match mapId
             //Php::out << "Matched " << pimp->_id << std::endl;
@@ -159,40 +316,20 @@ Pcre8_imp::match(const svx::string_view& sv, Pcre8_match& matches)
     return 0;
 }
 
+int
+Pcre8_imp::doMatchAll(const svx::string_view& sv, Pcre8_matchAll& matchSet)
+{
+    Pcre8_calls pre_call(_re);
+
+    return pre_call.doMatchAll(sv, matchSet);
+}
 
 int
-Pcre8_imp::doMatch(const unsigned char* start, unsigned int slen, Pcre8_match& matches)
+Pcre8_imp::doMatch(const svx::string_view& sv, Pcre8_match& matches)
 {
-  auto match_data = pcre2_match_data_create_from_pattern(_re, nullptr);
+    Pcre8_calls pre_call(_re);
 
-  auto rcount = pcre2_match(_re, start, slen, 0, 0, match_data, nullptr);
-
-  matches._slist.clear();
-  matches._rcode = rcount;
-
-  if (rcount <= 0) {
-      //std::string test(reinterpret_cast<const char*>(start), slen);
-      pcre2_match_data_free(match_data);
-      return rcount;
-  }
-
-  auto ovector = pcre2_get_ovector_pointer(match_data);
-
-  if (ovector[0] > ovector[1]) {
-    // can't handle this at all
-    pcre2_match_data_free(match_data);
-    return -1;
-  }
-
-  for(int i = 0; i < rcount; i++)
-  {
-    auto offset = 2*i;
-    auto substart = reinterpret_cast<const char*>(start + ovector[offset]);
-    size_t sublen = ovector[offset+1] - ovector[offset];
-    matches._slist.push_back(std::move(std::string(substart, sublen)));
-  }
-  pcre2_match_data_free(match_data);
-  return rcount;
+    return pre_call.doMatch(sv, matches);
 }
 
 Pcre8_match::Pcre8_match() : _rcode(0)

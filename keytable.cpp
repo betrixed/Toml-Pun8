@@ -10,8 +10,43 @@ using namespace pun;
 const char* KeyTable::PHP_NAME = "Pun\\KeyTable";
 const std::string CPunk::keytable_classname(KeyTable::PHP_NAME);
 
+KeyTable* KeyTable::get_KeyTable(Php::Value& v)
+{
+    if (v.instanceOf(CPunk::keytable_classname))
+    {
+        return (KeyTable*) v.implementation();
+    }
+    return nullptr;
+}
 
-long KeyTable::count() 
+void
+KeyTable::setup_ext(Php::Extension& ext, Php::Interface& intf) {
+    Php::Class<KeyTable> keytab(KeyTable::PHP_NAME);
+    keytab.implements(intf);
+    //keytab.extends(tbase);
+
+    keytab.method<&KeyTable::setKV> ("setKV");
+    keytab.method<&KeyTable::getV> ("getV");
+    keytab.method<&KeyTable::get> ("get");
+    keytab.method<&KeyTable::unsetK> ("unsetK");
+    keytab.method<&KeyTable::hasK> ("hasK");
+    keytab.method<&KeyTable::clear> ("clear");
+    keytab.method<&KeyTable::merge> ("merge", {
+        Php::ByVal("store", KeyTable::PHP_NAME)
+    });
+    //keytab.method<&KeyTable::merge> ("merge");
+    keytab.method<&KeyTable::size> ("size");
+
+    keytab.method<&KeyTable::toArray> ("toArray");
+    keytab.method<&KeyTable::setTag> ("setTag");
+    keytab.method<&KeyTable::getTag> ("getTag");
+
+    keytab.method<&KeyTable::replaceVars> ("replaceVars");
+
+    ext.add(std::move(keytab));
+}
+
+long KeyTable::count()
 {
 	return _store.size();
 }
@@ -93,12 +128,12 @@ void KeyTable::unsetK(Php::Parameters& params)
 	}
 	_store.erase(params[0].stringValue());
 }
-// Return keys as Php Array 
+// Return keys as Php Array
 Php::Value KeyTable::getKeys()
 {
 	Php::Value result;
 	int idx = 0;
-	for(auto ait = _store.begin(); ait != _store.end(); ait++) 
+	for(auto ait = _store.begin(); ait != _store.end(); ait++)
 	{
 		result[ idx ] = ait->first;
 		idx++;
@@ -140,7 +175,7 @@ Php::Value KeyTable::count() const
 Php::Value KeyTable::toArray()
 {
 	Php::Array result;
-	for(auto ait = _store.begin(); ait != _store.end(); ait++) 
+	for(auto ait = _store.begin(); ait != _store.end(); ait++)
 	{
 		Php::Value& val = ait->second;
 		if (val.isObject()) {
@@ -167,7 +202,7 @@ Php::Value KeyTable::__toString() {
 	return ss.str();
 }
 
-Php::Value 
+Php::Value
 KeyTable::fn_object()
 {
 	return Php::Object(PHP_NAME, this);
@@ -190,6 +225,7 @@ void KeyTable::fn_unserialize(std::istream& ins)
 		pun::unserialize(val, ins);
 		_store[key] = val;
 	}
+	pun::unserialize(_tag, ins);
 	ins >> check;
 	//Php::out << "fn_unserialize check2 " << check << std::endl;
 }
@@ -200,7 +236,7 @@ void KeyTable::fn_serialize(std::ostream& out)
 	out.write((const char*) &keyct,sizeof(keyct));
 	//Php::out << "KT fn_serialize " << std::endl;
 	out << '{';
-	for(auto ait = _store.begin(); ait != _store.end(); ait++) 
+	for(auto ait = _store.begin(); ait != _store.end(); ait++)
 	{
 		const std::string& key = ait->first;
 		//Php::out << "fn_serialize key" << key << std::endl;
@@ -208,10 +244,11 @@ void KeyTable::fn_serialize(std::ostream& out)
 		pun::serialize(ait->second, out);
 
 	}
+	pun::serialize(_tag, out);
 	out << '}';
 }
 
-std::string 
+std::string
 KeyTable::serialize()
 {
 	std::stringstream out;
@@ -222,11 +259,13 @@ KeyTable::serialize()
 	return out.str();
 }
 
+
+
 void KeyTable::unserialize(const char *input, size_t size)
 {
 	std::string buffer(input,size);
 	//Php::out << "KT unserialize " << std::endl;
-	
+
 	std::istringstream ins(buffer);
 	char check;
 	ins >> check;
@@ -242,7 +281,7 @@ Php::Value KeyTable::__get(const Php::Value &name) const
 	if (fit != _store.end()) {
 		return fit->second;
 	}
-	else 
+	else
 		return Php::Value();
 }
 
@@ -268,12 +307,12 @@ KeyTable::throw_mergeFail(const std::string& key) {
 }
 // if merge fails at some point,
 // throw exception, leaving merge with incomplete state.
-void 
+void
 KeyTable::fn_merge(KeyTable* other)
 {
 	auto zit = other->end();
 
-	for(auto ait = other->begin(); ait != zit; ait++) 
+	for(auto ait = other->begin(); ait != zit; ait++)
 	{
 		const std::string& key = ait->first;
 		auto hereNow = _store.find(key);
@@ -293,7 +332,7 @@ KeyTable::fn_merge(KeyTable* other)
 		else {
 			_store[key] = ait->second;
 		}
-	}	
+	}
 }
 
 
@@ -305,16 +344,38 @@ KeyTable::fn_merge(KeyTable* other)
 Php::Value
 KeyTable::merge(Php::Parameters& param) {
 	KeyTable* other = check_KeyTable(param,0);
-	
+
 	fn_merge(other);
 	return fn_object();
 }
 
 
-Php::Value 
+Php::Value
 KeyTable::intf_merge(Php::Value& obj)
 {
 	KeyTable* other = castKeyTable(obj);
 	fn_merge(other);
 	return fn_object();
+}
+
+void KeyTable::replaceVars(Php::Parameters& param)
+{
+    bool check = (param.size() > 0);
+    KeyTable*   searchKT = nullptr;
+    Php::Value  searchArray;
+
+    if (check) {
+        Php::Value& v = param[0];
+        if (v.isArray()) {
+            searchArray = v;
+        }
+        else if (v.isObject()) {
+            searchKT = KeyTable::get_KeyTable(v);
+            check = (searchKT != nullptr);
+        }
+    }
+    if (!check) {
+        throw Php::Exception("replaceVars needs a string lookup array or object");
+    }
+    replaceVar_ValueMap(_store,param[0]);
 }

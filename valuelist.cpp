@@ -158,6 +158,7 @@ void ValueList::fn_unserialize(std::istream& ins)
 		pun::unserialize(val, ins);
 		_store.push_back( val );
 	}
+	pun::unserialize(_tag, ins);
 	//ins >> check;
 }
 
@@ -171,6 +172,7 @@ void ValueList::fn_serialize(std::ostream& out)
 	{
 		pun::serialize(*ait, out);
 	}
+	pun::serialize(_tag, out);
 	//out << ']';
 }
 
@@ -181,6 +183,7 @@ ValueList::serialize()
 
 	out << 'V';
 	this->fn_serialize(out);
+
 	return out.str();
 }
 
@@ -191,4 +194,5 @@ void ValueList::unserialize(const char *input, size_t size)
 	char check;
 	ins >> check;
 	fn_unserialize(ins);
+
 }

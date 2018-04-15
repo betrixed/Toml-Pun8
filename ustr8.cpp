@@ -1,5 +1,6 @@
 #include "ustr8.h"
 #include "ucode8.h"
+#include <ostream>
 
 using namespace pun;
 
@@ -22,10 +23,19 @@ UStr8::setup_ext(Php::Extension& ext)
     ustr8.method<&UStr8::setEnd> ("setEnd");
     ustr8.method<&UStr8::value> ("value");
 
-    // 2 static methods
+    ustr8.method<&UStr8::peekChar> ("peekChar");
+    ustr8.method<&UStr8::nextChar> ("nextChar");
+    ustr8.method<&UStr8::replaceAll> ("replaceAll");
+    ustr8.method<&UStr8::endsWith> ("endsWith");
+    ustr8.method<&UStr8::beginsWith> ("beginsWith");
+    ustr8.method<&UStr8::pushBack> ("pushBack");
+    ustr8.method<&UStr8::popBack> ("popBack");
+
     ustr8.method<&UStr8::bomUTF16> ("bomUTF16");
     ustr8.method<&UStr8::bomUTF8> ("bomUTF8");
     ext.add(std::move(ustr8));
+
+
 }
 
 UStr8::UStr8() : _index(0), _size(0)
@@ -51,6 +61,60 @@ UStr8* UStr8::get_UStr8(Php::Value& val)
 void UStr8::__construct(Php::Parameters& param)
 {
     (*this).setString(param);
+}
+
+svx::string_view
+UStr8::param_getView(Php::Value& v)
+{
+    if (v.isString()) {
+        return svx::string_view(v, v.size());
+    }
+    else {
+        UStr8* u8 = get_UStr8(v);
+        return u8->fn_getView();
+    }
+    return svx::string_view();
+}
+
+Php::Value
+UStr8::replaceAll(Php::Parameters& param)
+{
+    svx::string_view target;
+    svx::string_view instr;
+    bool checked =  (param.size() >= 2);
+    UStr8 *saveObj = nullptr;
+
+    if (checked) {
+        target = param_getView(param[0]);
+        instr = param_getView(param[1]);
+        if (param.size() >= 3) {
+            saveObj = UStr8::get_UStr8(param[2]);
+        }
+    }
+    svx::string_view src = fn_getView();
+    std::string result;
+
+    auto rct = pun::replaceAll(src, target, instr, result);
+
+    if (rct == 0) {
+        // make a copy, because replaceAll did not
+        result = src;
+    }
+    if (saveObj) {
+        saveObj->fn_setString(std::move(result));
+        return param[2];
+    }
+    else {
+        UStr8* u8 = new UStr8();
+        u8->fn_setString(std::move(result));
+        return Php::Object(UStr8::PHP_NAME, u8);
+    }
+}
+
+Php::Value UStr8::__toString()
+{
+    svx::string_view result = fn_getView();
+    return Php::Value(result.data(), result.size());
 }
 
 
@@ -162,12 +226,21 @@ void UStr8::setEnd(Php::Parameters& param)
 }
 
 
+void UStr8::fn_setString(std::string&& m)
+{
+    if (_str.use_count() > 1) {
+        _str = std::make_shared<UStrData>();
+    }
+    auto sp = _str.get();
+    sp->assign(std::move(m));
+    _index = 0;
+    _size = sp->_view.size();
+}
+
 void UStr8::fn_setString(const char* ptr, unsigned int len)
 {
-     _index = 0;
-     _size = len;
-     auto sp = _str.get();
-     sp->assign(ptr,len);
+    std::string buffer(ptr, len);
+    fn_setString(std::move(buffer));
 }
 
 // return BOM for UTF16 as string on this platform
@@ -207,6 +280,89 @@ UStr8::ensureUTF8()
 	sp->ensureUTF8();
     _index = 0;
     _size = sp->_view.size();
+}
+
+/*! Return boolean if argument is last part of string */
+Php::Value
+UStr8::endsWith(Php::Parameters& param)
+{
+    svx::string_view src = fn_getView();
+    bool checked = (param.size() >= 1);
+    if (checked) {
+        svx::string_view target = param_getView(param[0]);
+        auto target_offset = target.size();
+        if (target_offset > src.size()) {
+            return false;
+        }
+        if (src.substr(src.size() - target_offset,target_offset )==target) {
+            return true;
+        }
+    }
+    return false;
+}
+/*! Return boolean if argument is first part of string */
+Php::Value
+UStr8::beginsWith(Php::Parameters& param)
+{
+    svx::string_view src = fn_getView();
+    bool checked = (param.size() >= 1);
+    if (checked) {
+        svx::string_view target = param_getView(param[0]);
+        auto target_offset = target.size();
+        if (target_offset > src.size()) {
+            return false;
+        }
+        if (src.substr(0,target_offset )==target) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/*! Push the string argument onto the end. This resets the view range. */
+void
+UStr8::pushBack(Php::Parameters& param)
+{
+
+    bool checked = param.size() >= 1;
+    if (checked) {
+       auto seg = param_getView(param[0]);
+       auto sp = _str.get();
+       sp->_data += seg;
+       //Php::out << "Add " << seg << std::endl;
+
+       sp->reset_view();
+       //Php::out << sp->_view << std::endl;
+       _index = 0;
+       _size = sp->_view.size();
+    }
+}
+
+/*! Reduce length by so many characters.  This resets the view range. */
+void
+UStr8::popBack(Php::Parameters& param)
+{
+    bool checked = param.size() >= 1;
+    if (checked) {
+        checked = param[0].isNumeric();
+        if (checked) {
+            auto value = param[0].numericValue();
+            if (value > 0) {
+                auto sp = _str.get();
+                std::string& data = sp->_data;
+                auto oldsize = data.size();
+                if (oldsize > (std::string::size_type) value) {
+                    data.resize(oldsize - value);
+                }
+                else {
+                    data.clear();
+                }
+                sp->reset_view();
+                _index = 0;
+                _size = sp->_view.size();
+            }
+        }
+    }
 }
 
 Php::Value UStr8::value() const

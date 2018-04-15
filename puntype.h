@@ -5,9 +5,28 @@
 #include <phpcpp.h>
 #endif
 
-#include "parameter.h"
+//#include <map>
+
+typedef std::map<std::string, Php::Value> ValueMap;
+typedef std::vector<Php::Value> ValueArray;
 
 namespace pun {
+
+    enum Pype {
+          tNull,
+          tBool,
+          tInteger,
+          tFloat,
+          tString,
+          tDateTime,
+          tValueList,
+          tKeyTable,
+          tArray,
+          tObject,
+          tResource,
+          tReference,
+          tUndefined,
+     };
 
 	class PunType : public Php::Base {
 	public:
@@ -16,7 +35,7 @@ namespace pun {
 		pun::Pype 	 	_type;				// Php::Type is an enum
 		//Php::Value      _className; 		// is a string, didn't know how to do this cheaply
 
-		enum {	
+		enum {
 			Different = 0,
 			Same = 1
 		};
@@ -35,7 +54,7 @@ namespace pun {
 		}
 
 		void fn_fromValue(Php::Value& val);
-		
+
 
 		//static std::string fn_ValueConflict(const ValueTag &tag, const Php::Value& val, int matchEnum);
 	};

@@ -14,8 +14,8 @@
 *
 * As well, there are inline arrays, vectors of Php::Value, where each value in a single array is the same type,
 * even if the type is array. The PHP version TOML parser uses a ValueList object for these.
-* ValueList is therefore very similar to a TableList.  
-* 
+* ValueList is therefore very similar to a TableList.
+*
 */
 
 /* Making a C++ compiled version of the TOML parser implies not going back to the PHP interpreter very much until the
@@ -24,10 +24,10 @@
 
    The PHP-CPP documentation has examples of implementations of ArrayAccess, shall try this first. One
    feature of PHP noted has been the difficulty of avoiding the forced conversion of "numeric" strings into
-   integer keys. There are efficiency considerations that make it reasonable. 
+   integer keys. There are efficiency considerations that make it reasonable.
 
    Of interest is that Php::Value can wrap the PHP-Array Implementation, and can be returned as an array value,
-   so lets do that, and forgo implementing the full ArrayAccess interface, as we try the simplest implementation first.  
+   so lets do that, and forgo implementing the full ArrayAccess interface, as we try the simplest implementation first.
 
    As well as the public PHP - object interface, there will be KeyTable methods for use by the C++ world, which will not
    be using Php::Parameter arguments.
@@ -49,7 +49,7 @@ class KT_Iterator : public Php::Iterator {
 	ValueMap::const_iterator _iter;
 public:
 	KT_Iterator(Php::Base* pobj, ValueMap& mapRef)
-		: Php::Iterator(pobj), _ref(mapRef), _iter(mapRef.begin()) 
+		: Php::Iterator(pobj), _ref(mapRef), _iter(mapRef.begin())
 	{
 	}
 
@@ -60,7 +60,7 @@ public:
 		return _iter != _ref.end();
 	}
 
-	virtual Php::Value current() override 
+	virtual Php::Value current() override
 	{
 		return _iter->second;
 	}
@@ -81,11 +81,14 @@ public:
 	}
 };
 
-class KeyTable : public TomlBase, public Php::Countable, 
+class KeyTable : public TomlBase, public Php::Countable,
 				public Php::ArrayAccess, public Php::Traversable, public Php::Serializable
 {
 public:
 	static const char* PHP_NAME;
+
+	static KeyTable* get_KeyTable(Php::Value& v);
+    static void setup_ext(Php::Extension& ext, Php::Interface& intf);
 
 	// Set a key value pair
 	void setKV(Php::Parameters& params);
@@ -98,7 +101,7 @@ public:
 	Php::Value hasK(Php::Parameters& params);
 	// Remove value accessed by key
 	void unsetK(Php::Parameters& params);
-	// Return keys as Array 
+	// Return keys as Array
 	Php::Value getKeys();
 
 	Php::Value getTag() const;
@@ -106,33 +109,32 @@ public:
 	// Countable and ArrayAccess, as done by PHP-CPP
 	virtual long count() override;
 	virtual bool offsetExists(const Php::Value &key) override;
-	virtual void offsetSet(const Php::Value &key, const Php::Value &value) override;
 	virtual Php::Value offsetGet(const Php::Value &key) override;
 	virtual void offsetUnset(const Php::Value &key) override;
-	
+	virtual void offsetSet(const Php::Value &key, const Php::Value &value) override;
 	// For Traversable
-	virtual Php::Iterator *getIterator() override 
+	virtual Php::Iterator *getIterator() override
 	{
 		return new KT_Iterator( this, _store);
 	}
 
 	Php::Value  size() const { return (long) _store.size(); }
-	void clear() { _store.clear(); } 
+	void clear() { _store.clear(); }
 	// Return the Array as stored
 	Php::Value toArray();
 	// recursive merge
-	
+
 	// Recursive add keys from KeyTable argument
 	// values are not copied, references are copied.
 	Php::Value merge(Php::Parameters& param);
 
 	Php::Value intf_merge(Php::Value& obj);
-	
+
 	auto begin() { return _store.begin(); }
 	auto end() { return _store.end(); }
 
 	Php::Value __toString();
-	
+
 	virtual std::string serialize();
 	virtual void unserialize(const char *input, size_t size);
 
@@ -140,7 +142,13 @@ public:
 	void __set(const Php::Value &name, const Php::Value &value);
 	bool __isset(const Php::Value &name) const;
 	void __unset(const Php::Value &name);
-
+    /*!
+        function replaceVars() : void;
+        Replace each segment ${name} of a string value
+        with the looked up value
+        in a KeyTable or Array
+    */
+	void replaceVars(Php::Parameters& param);
 
 public:
 	void fn_setKV(std::string& key, Php::Value &val);
@@ -148,14 +156,14 @@ public:
 
 	void fn_merge(KeyTable* other);
 	void throw_mergeFail(const std::string& key) ;
-	
+
 	void fn_unserialize(std::istream& ins);
 	void fn_serialize(std::ostream& os);
 
 	bool fn_hasK(std::string& key) const;
 
 	Php::Value fn_object();
-
+    ValueMap& fn_store() { return _store; }
 protected:
 	ValueMap _store;
 

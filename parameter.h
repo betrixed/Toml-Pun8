@@ -10,9 +10,6 @@
 #endif
 
 #include <ostream>
-#include <map>
-
-typedef std::map<std::string, Php::Value> ValueMap;
 
 struct CPunk {
      static const std::string keytable_classname;
@@ -28,21 +25,7 @@ namespace pun {
      class Token8;
      class Pcre8;
 
-     enum Pype {
-          tNull,
-          tBool,
-          tInteger,
-          tFloat,
-          tString,
-          tDateTime,
-          tValueList,
-          tKeyTable,
-          tArray,
-          tObject,
-          tResource,
-          tReference,
-          tUndefined,
-     };
+
 
      Pype getPype(Php::Value& val);
 

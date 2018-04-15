@@ -82,11 +82,33 @@ public:
         // if 1st param is byRef variable, place the unicode value in it
         Php::Value peekChar(Php::Parameters& params);
 
+        /*! Return new object with replaced segments
+            function replace_all(target, newstuff) : UStr8;
+        */
+        Php::Value replaceAll(Php::Parameters& params);
+        /*! Return boolean if argument is last part of string */
+        Php::Value endsWith(Php::Parameters& params);
+        /*! Return boolean if argument is first part of string */
+        Php::Value beginsWith(Php::Parameters& params);
+
+        /*! Push the string argument onto the end. This resets the view range. */
+        void pushBack(Php::Parameters& params);
+
+        /*! Reduce length by so many characters.  This resets the view range. */
+        void popBack(Php::Parameters& params);
+
+        /*! return PHP string value */
+        Php::Value __toString();
+
 public:
 		void fn_setBegin(Php::Value& val);
 		void fn_setEnd(Php::Value& val);
 		void fn_setString(const char* ptr, unsigned int len);
+		void fn_setString(std::string&& m);
+
 		svx::string_view fn_getView();
+		svx::string_view param_getView(Php::Value& v);
+
 public:
 		Str_ptr				_str;
     	uint64_t			_index;

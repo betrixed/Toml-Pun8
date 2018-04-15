@@ -307,10 +307,7 @@ Token8Stream::matchSP(Pcre8_share& sp, Pcre8_match& matches)
         buf = _str.get()->_view.data();
         buf += _index;
         //Php::out << "target: " << buf << " with " << pimp->_eStr << std::endl;
-        rct = pimp->doMatch(
-                 reinterpret_cast<const unsigned char*>(buf),
-                 _size - _index,
-                  matches);
+        rct = pimp->doMatch(svx::string_view(buf, _size - _index), matches);
         if (rct > 0) {
             // _rcode to hold match mapId
             //Php::out << "Matched " << pimp->_id << std::endl;

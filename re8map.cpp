@@ -15,10 +15,10 @@ void
 Re8map::setup_ext(Php::Extension& ext)
 {
     Php::Class<Re8map> re8(Re8map::PHP_NAME);
-    re8.method<&Re8map::setIdRex> ("setIdRex");
-    re8.method<&Re8map::hasIdRex> ("hasIdRex");
-    re8.method<&Re8map::unsetIdRex> ("unsetIdRex");
-    re8.method<&Re8map::getIdRex> ("getIdRex");
+    re8.method<&Re8map::setPreg> ("setPreg");
+    re8.method<&Re8map::hasPreg> ("hasPreg");
+    re8.method<&Re8map::unsetPreg> ("unsetPreg");
+    re8.method<&Re8map::getPreg> ("getPreg");
     re8.method<&Re8map::addMapIds> ("addMapIds");
     re8.method<&Re8map::getIds> ("getIds");
     re8.method<&Re8map::count> ("count");
@@ -36,7 +36,7 @@ Re8map::~Re8map()
 }
 
 Php::Value
-Re8map::setIdRex(Php::Parameters& params)
+Re8map::setPreg(Php::Parameters& params)
 {
     auto sp = Pcre8::fromParameters(params);
     _remap.get()->setRex(sp);
@@ -61,7 +61,7 @@ Re8map::getIds() const
 }
 
 Php::Value
-Re8map::getIdRex(Php::Parameters& params)
+Re8map::getPreg(Php::Parameters& params)
 {
     pun::check_Int(params);
     int index = params[0];
@@ -125,7 +125,7 @@ Php::Value Re8map::count() const
 	return Php::Value((int)map->_map.size());
 }
 // Has key value in map
-Php::Value Re8map::hasIdRex(Php::Parameters& params) const
+Php::Value Re8map::hasPreg(Php::Parameters& params) const
 {
 	pun::check_Int(params);
 	int index = params[0];
@@ -134,7 +134,7 @@ Php::Value Re8map::hasIdRex(Php::Parameters& params) const
 }
 
 // Remove key value and expression data from map
-Php::Value Re8map::unsetIdRex(Php::Parameters& params)
+Php::Value Re8map::unsetPreg(Php::Parameters& params)
 {
 	pun::check_Int(params);
 	int index = params[0];
@@ -149,13 +149,27 @@ Re8map::firstMatch(Php::Parameters& param)
     Recap8* caps = nullptr;;
     IntList*  intlist = nullptr;
     IdList    ids;
+    svx::string_view target;
 
     bool checked = true;
     if (param.size() < 3) {
         checked = false;
     }
-    if (checked && (u8 = UStr8::get_UStr8(param[0])) == nullptr) {
-        checked = false;
+
+    if (checked) {
+        Php::Value& v = param[0];
+        if (v.isObject()) {
+            u8 = UStr8::get_UStr8(v);
+            if (u8 != nullptr) {
+                target = u8->fn_getView();
+            }
+        }
+        else if (v.isString())
+        {
+            target = svx::string_view(v, v.size());
+        }
+
+        checked = target.size() > 0;
     }
     if (checked && (caps = Recap8::get_Recap8(param[1])) == nullptr) {
         checked = false;
@@ -176,7 +190,7 @@ Re8map::firstMatch(Php::Parameters& param)
     auto spm = _remap.get();
     const IdList& tests = (intlist==nullptr) ? ids : intlist->_store;
 
-    return spm->firstMatch(u8->fn_getView(), tests, caps->_match );
+    return spm->firstMatch(target, tests, caps->_match );
 
 }
 
