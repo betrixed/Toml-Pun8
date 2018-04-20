@@ -895,7 +895,7 @@ void TomlReader::parseInteger(std::string& val)
         int_str = svx::string_view(val.data() + prefix, val.size() - prefix);
 	}
 	else {
-        val = _valueText;
+        val.assign(_valueText.data(), _valueText.size());
 	}
 	if (int_str[0] == '0' && int_str.size() > 1){
 		valueError("Invalid integer: Leading zeros not allowed", val);
