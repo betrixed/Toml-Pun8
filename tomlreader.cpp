@@ -381,7 +381,7 @@ void TomlReader::parseQString(std::string& sval)
 {
 	this->pushExpSet(eBString);
 	auto id = _ts->fn_moveNextId();
-
+    svx::string_view temp;
 	while(id != Rex::Quote1) {
 		if (id == Rex::Newline || id == Rex::EOS || id == Rex::Escape)
 		{
@@ -391,7 +391,8 @@ void TomlReader::parseQString(std::string& sval)
 			sval += escString(_ts->fn_getValue());
 		}
 		else {
-			sval += _ts->fn_getValue();
+            temp = _ts->fn_getValue();
+			sval.append(temp.data(), temp.size());
 		}
 		id = _ts->fn_moveNextId();
 	}
@@ -452,7 +453,8 @@ void TomlReader::parseLitString(std::string& sval)
 		// a literal string is just no control characters,
 		// and no / (x27)
 		if (_ts->fn_moveRegId(Rex::LitString)) {
-			sval += _ts->fn_getValue();
+            svx::string_view temp = _ts->fn_getValue();
+			sval.append(temp.data(), temp.size()) ;
 		}
 		//if (this->fn_moveLiteralStr(value)) {
 		//	result << value;
@@ -510,6 +512,7 @@ void
 TomlReader::parseMLString(std::string& sval)
 {
 //	std::stringstream result;
+    svx::string_view temp;
 
 	pushExpSet(eMLString);
 
@@ -532,7 +535,8 @@ TomlReader::parseMLString(std::string& sval)
 			syntaxError("Missing ''' at end");
 			break;
 		default:
-			sval += _ts->fn_getValue();
+            temp = _ts->fn_getValue();
+			sval.append(temp.data(), temp.size());
 			id = _ts->fn_moveNextId();
 			break;
 		}
@@ -882,7 +886,7 @@ void TomlReader::parseInteger(std::string& val)
 				valid = false;
 			}
 		}
-		val = _valueText;
+		val.assign(_valueText.data(), _valueText.size());
 		if (!valid) {
 			valueError("Invalid integer: Underscore must be between digits", val);
 		}
@@ -955,6 +959,8 @@ void TomlReader::parseDateTime(Php::Value& val)
 }
 
 void TomlReader::parseMLQString(std::string& sval) {
+    svx::string_view temp;
+
 	pushExpSet(eBString);
 
 	auto id = _ts->fn_moveNextId();
@@ -990,7 +996,8 @@ void TomlReader::parseMLQString(std::string& sval) {
 			id = _ts->fn_moveNextId();
 			break;
 		default:
-			sval += _ts->fn_getValue();
+            temp = _ts->fn_getValue();
+            sval.append(temp.data(), temp.size());
 			id = _ts->fn_moveNextId();
 			break;
 		}

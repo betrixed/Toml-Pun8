@@ -1,6 +1,6 @@
 <?php
 
-use Pun\IdRex8;
+use Pun\Preg;
 use Pun\Re8map;
 use Pun\Recap8;
 use Pun\Token8;
@@ -24,7 +24,7 @@ class Lexer
 {
 
 
-    // register all the regular expressions that 
+    // register all the regular expressions that
     // might be used.  Not all of them all the time!
     const T_BAD = 0;
     const T_EQUAL = 1;
@@ -64,36 +64,36 @@ class Lexer
     {
         if (empty(Lexer::$_AllRegExp)) {
             $kt = new Re8map();
-            $kt->setIdRex(Lexer::T_EQUAL, "^(=)");
-            $kt->setIdRex(Lexer::T_BOOLEAN, "^(true|false)");
-            $kt->setIdRex(Lexer::T_DATE_TIME, "(^\\d{4}-\\d{2}-\\d{2}(T\\d{2}:\\d{2}:\\d{2}(\\.\\d{6})?(Z|-\\d{2}:\\d{2})?)?)");
-            $kt->setIdRex(Lexer::T_FLOAT_EXP,"^([+-]?((\d_?)+([\.](\d_?)*)?)([eE][+-]?(\d_?)+))");
-            $kt->setIdRex(Lexer::T_FLOAT, "^([+-]?((\d_?)+([\.](\d_?)*)))");
-            $kt->setIdRex(Lexer::T_INTEGER, "^([+-]?(\\d_?)+)");
-            $kt->setIdRex(Lexer::T_3_QUOTATION_MARK, "^(\"\"\")");
-            $kt->setIdRex(Lexer::T_QUOTATION_MARK, "^(\")");
-            $kt->setIdRex(Lexer::T_3_APOSTROPHE, "^(\'\'\')");
-            $kt->setIdRex(Lexer::T_APOSTROPHE, "^(\')");
-            $kt->setIdRex(Lexer::T_HASH, "^(#)");
-            $kt->setIdRex(Lexer::T_SPACE, "^(\\h+)");
-            $kt->setIdRex(Lexer::T_LEFT_SQUARE_BRACE, "^(\\[)");
-            $kt->setIdRex(Lexer::T_RIGHT_SQUARE_BRACE, "^(\\])");
-            $kt->setIdRex(Lexer::T_LEFT_CURLY_BRACE, "^(\\{)");
-            $kt->setIdRex(Lexer::T_RIGHT_CURLY_BRACE, "^(\\})");
-            $kt->setIdRex(Lexer::T_COMMA, "^(,)");
-            $kt->setIdRex(Lexer::T_DOT, "^(\\.)");
-            $kt->setIdRex(Lexer::T_UNQUOTED_KEY, "^([-A-Z_a-z0-9]+)");
-            $kt->setIdRex(
+            $kt->setPreg(Lexer::T_EQUAL, "^(=)");
+            $kt->setPreg(Lexer::T_BOOLEAN, "^(true|false)");
+            $kt->setPreg(Lexer::T_DATE_TIME, "(^\\d{4}-\\d{2}-\\d{2}(T\\d{2}:\\d{2}:\\d{2}(\\.\\d{6})?(Z|-\\d{2}:\\d{2})?)?)");
+            $kt->setPreg(Lexer::T_FLOAT_EXP,"^([+-]?((\d_?)+([\.](\d_?)*)?)([eE][+-]?(\d_?)+))");
+            $kt->setPreg(Lexer::T_FLOAT, "^([+-]?((\d_?)+([\.](\d_?)*)))");
+            $kt->setPreg(Lexer::T_INTEGER, "^([+-]?(\\d_?)+)");
+            $kt->setPreg(Lexer::T_3_QUOTATION_MARK, "^(\"\"\")");
+            $kt->setPreg(Lexer::T_QUOTATION_MARK, "^(\")");
+            $kt->setPreg(Lexer::T_3_APOSTROPHE, "^(\'\'\')");
+            $kt->setPreg(Lexer::T_APOSTROPHE, "^(\')");
+            $kt->setPreg(Lexer::T_HASH, "^(#)");
+            $kt->setPreg(Lexer::T_SPACE, "^(\\h+)");
+            $kt->setPreg(Lexer::T_LEFT_SQUARE_BRACE, "^(\\[)");
+            $kt->setPreg(Lexer::T_RIGHT_SQUARE_BRACE, "^(\\])");
+            $kt->setPreg(Lexer::T_LEFT_CURLY_BRACE, "^(\\{)");
+            $kt->setPreg(Lexer::T_RIGHT_CURLY_BRACE, "^(\\})");
+            $kt->setPreg(Lexer::T_COMMA, "^(,)");
+            $kt->setPreg(Lexer::T_DOT, "^(\\.)");
+            $kt->setPreg(Lexer::T_UNQUOTED_KEY, "^([-A-Z_a-z0-9]+)");
+            $kt->setPreg(
                     Lexer::T_ESCAPED_CHARACTER, "^(\\\\(n|t|r|f|b|\\\"|\\\\|u[0-9A-Fa-f]{4,4}|U[0-9A-Fa-f]{8,8}))");
             // ESCAPE \ would also be caught by LITERAL_STRING
-            $kt->setIdRex(Lexer::T_ESCAPE, "^(\\\\)");
+            $kt->setPreg(Lexer::T_ESCAPE, "^(\\\\)");
             // T_BASIC_UNESCAPED Leaves out " \    (0x22, 0x5C)
-            $kt->setIdRex(Lexer::T_BASIC_UNESCAPED, "^([^\\x{0}-\\x{19}\\x{22}\\x{5C}]+)");
+            $kt->setPreg(Lexer::T_BASIC_UNESCAPED, "^([^\\x{0}-\\x{19}\\x{22}\\x{5C}]+)");
             // Literal strings are 'WYSIWYG'
             // Single 'quote' (0x27) is separate fetch.
-            $kt->setIdRex(Lexer::T_LITERAL_STRING, "^([^\\x{0}-\\x{19}\\x{27}]+)");
-            $kt->setIdRex(Lexer::T_IGNORE_COMMENT, "^(\\V*)");
-            $kt->setIdRex(Lexer::T_ANY_VALUE, "^([^\\s\\]\\},]+)");
+            $kt->setPreg(Lexer::T_LITERAL_STRING, "^([^\\x{0}-\\x{19}\\x{27}]+)");
+            $kt->setPreg(Lexer::T_IGNORE_COMMENT, "^(\\V*)");
+            $kt->setPreg(Lexer::T_ANY_VALUE, "^([^\\s\\]\\},]+)");
 
             Lexer::$_AllRegExp = $kt;
         }
@@ -104,7 +104,9 @@ class Lexer
     {
         if (empty(Lexer::$_AllExpIds)) {
             Lexer::$_AllExpIds = [
-                Lexer::T_EQUAL, Lexer::T_BOOLEAN, Lexer::T_DATE_TIME,
+                Lexer::T_EQUAL,
+                Lexer::T_BOOLEAN,
+                Lexer::T_DATE_TIME,
                 Lexer::T_FLOAT_EXP,
                 Lexer::T_FLOAT, Lexer::T_INTEGER,
                 Lexer::T_3_QUOTATION_MARK, Lexer::T_QUOTATION_MARK,
@@ -121,7 +123,7 @@ class Lexer
         return Lexer::$_AllExpIds;
     }
     static private $_AllSingles;
-    
+
     static public function getAllSingles(): array
     {
         if (empty(Lexer::$_AllSingles)) {
@@ -152,14 +154,14 @@ class Lexer
 
 
 function show($result) {
-	$ct = $result->count();
+	$ct = count($result);
 	if ($ct > 0) {
 		for($i = 0; $i < $ct; $i++) {
-			echo $i . ": " . $result->getCap($i) . PHP_EOL;
+			echo $i . ": " . $result[$i] . PHP_EOL;
 		}
 	}
 	else {
-		echo $result->count() . " captures returned" . PHP_EOL;
+		echo "No captures returned" . PHP_EOL;
 	}
 }
 
@@ -181,7 +183,7 @@ function testToken($test,$id) {
 		echo "______ id: " . $match . PHP_EOL;
 		show($cap);
 	}
-    
+
 	return true;
 }
 
@@ -239,7 +241,7 @@ function keytable() {
 
     $kt["100.1"] = 1000;
     $kt[100] = 1111;
-    
+
     $a = $kt->toArray();
 
 
@@ -247,7 +249,7 @@ function keytable() {
     $m = new KeyTable();
     $m->setKV("modules", ["a" => ['name' => 'a'], "b" => ['name' => 'b']]);
     $kt->merge($m);
-   
+
     echo "merge " . print_r($kt->toArray(),true) . PHP_EOL;
 
 }
@@ -275,7 +277,7 @@ function valuelist() {
     }
 }
 function routine() {
-	
+
 
     $ts = new Token8Stream();
 
@@ -404,7 +406,7 @@ function serial() {
     $kt->setKV("Nested", $kt2);
 
     $valone = new ValueList();
-    
+
 
     for($i = 0; $i < 5; $i++) {
         $valtwo = new ValueList();
@@ -420,7 +422,20 @@ function serial() {
 
     $kt = unserialize(file_get_contents($fname));
 
+
     echo "Serial to Array " . print_r( $kt->toArray(), true) . PHP_EOL;
+    if (!defined('BIG_CONST'))
+    {
+        define('BIG_CONST', "Hello");
+    }
+
+    $kt["defined"] = 'BIG_CONST is ${BIG_CONST}';
+    $dlist = get_defined_constants();
+
+    $kt->replaceVars($dlist);
+
+    echo "defined is " . $kt["defined"] . PHP_EOL;
+
 }
 
 function ustr()
@@ -442,11 +457,46 @@ function ustr()
     foreach($readback as $key => $value) {
         echo $key . " : " . $value . PHP_EOL;
     }
+    $u8->setString("\\Path\\To\\The\\Sustainable\\Future");
+    $path = $u8->replaceAll("\\","/");
+    echo "Replaced " . $path . PHP_EOL;
+    if (!$path->endsWith("/"))
+    {
+        $path->pushBack("/");
+    }
+    echo "Added " . $path . PHP_EOL;
+    if ($path->endsWith("/"))
+    {
+        $path->popBack(1);
+    }
+    echo "Removed " . $path . PHP_EOL;
 }
-ustr();
-serial();
+
+function allMatches() {
+    $u = new UStr8("\${HELLO} \${WORLD} \${DEFINE}");
+
+    $preg = new Preg(1, '\${(\w+)}');
+
+    $caps = $preg->matchAll($u);
+    echo "Matches for " . $u . PHP_EOL;
+    if (count($caps) > 0) {
+        foreach($caps as $idx => $cap) {
+            echo $idx . ": " . PHP_EOL;
+            $ct = count($cap);
+            for($i=0; $i < $ct; $i++)
+            {
+                echo "  " . $i . ":" . $cap[$i] . PHP_EOL;
+            }
+        }
+    }
+}
+
+
 keytable();
 valuelist();
 reader_0();
 routine();
 parser();
+ustr();
+allMatches();
+serial();

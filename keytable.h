@@ -88,7 +88,11 @@ public:
 	static const char* PHP_NAME;
 
 	static KeyTable* get_KeyTable(Php::Value& v);
+
     static void setup_ext(Php::Extension& ext, Php::Interface& intf);
+
+    //! __construct([array]);  from optional array
+    void __construct(Php::Parameters& param);
 
 	// Set a key value pair
 	void setKV(Php::Parameters& params);
@@ -123,10 +127,25 @@ public:
 	// Return the Array as stored
 	Php::Value toArray();
 	// recursive merge
+    /*!
+        function merge(array) : KeyTable;
+        Recursive add all values from array.
+        Convert numeric keys into strings.
+        Convert values which are sub-arrays into KeyTable objects.
 
-	// Recursive add keys from KeyTable argument
-	// values are not copied, references are copied.
+        function fromArray(array) : KeyTable;
+    */
+
+	/*! function merge(KeyTable) : KeyTable;
+	 Recursive add keys from KeyTable argument
+	 values are not copied, references are copied.
+	 */
+
 	Php::Value merge(Php::Parameters& param);
+
+
+    //Php::Value fromArray(Php::Parameters& param);
+
 
 	Php::Value intf_merge(Php::Value& obj);
 
@@ -153,6 +172,8 @@ public:
 public:
 	void fn_setKV(std::string& key, Php::Value &val);
 	Php::Value fn_getV(std::string& key);
+
+	void fn_merge(const Php::Value& fromArray);
 
 	void fn_merge(KeyTable* other);
 	void throw_mergeFail(const std::string& key) ;

@@ -16,15 +16,15 @@ pun::replaceAll(svx::string_view src,
         fpos = src.find(out);
         if (fpos==svx::string_view::npos) {
             if (replaced > 0) {
-                build += src;
+                build.append(src.data(), src.size());
             }
             break;
         }
         else {
             //
             replaced += 1;
-            build += src.substr(0,fpos);
-            build += in;
+            build.append(src.data(), fpos);
+            build.append(in.data(), in.size());
             //Php::out << fpos << ": replaceAll " << src << " | " <<  build << std::endl;
             src.remove_prefix(fpos + out.size());
 
@@ -128,7 +128,7 @@ pun::replaceVar_str(
     bool changed = false;
     auto rct = getVarRegexp()->doMatchAll(src,mlist);
     if (rct > 0) {
-        result = src;
+        result.assign(src.data(), src.size());
         auto mend = mlist.end();
         for( auto mit = mlist.begin(); mit != mend; mit++) {
             const StringList& sl = mit->_slist;

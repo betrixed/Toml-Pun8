@@ -98,7 +98,7 @@ UStr8::replaceAll(Php::Parameters& param)
 
     if (rct == 0) {
         // make a copy, because replaceAll did not
-        result = src;
+        result .assign(src.data(), src.size());
     }
     if (saveObj) {
         saveObj->fn_setString(std::move(result));
@@ -328,7 +328,7 @@ UStr8::pushBack(Php::Parameters& param)
     if (checked) {
        auto seg = param_getView(param[0]);
        auto sp = _str.get();
-       sp->_data += seg;
+       sp->_data.append(seg.data(), seg.size());
        //Php::out << "Add " << seg << std::endl;
 
        sp->reset_view();

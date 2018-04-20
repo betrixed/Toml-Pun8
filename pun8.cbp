@@ -37,6 +37,8 @@
 		<Unit filename="main.cpp" />
 		<Unit filename="parameter.cpp" />
 		<Unit filename="parameter.h" />
+		<Unit filename="path.cpp" />
+		<Unit filename="path.h" />
 		<Unit filename="pcre8.cpp" />
 		<Unit filename="pcre8.h" />
 		<Unit filename="pcre8_imp.cpp" />
@@ -48,6 +50,7 @@
 		<Unit filename="re8map.h" />
 		<Unit filename="recap8.cpp" />
 		<Unit filename="recap8.h" />
+		<Unit filename="test/test.php" />
 		<Unit filename="text.cpp" />
 		<Unit filename="text.h" />
 		<Unit filename="token8.cpp" />

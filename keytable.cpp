@@ -10,6 +10,7 @@ using namespace pun;
 const char* KeyTable::PHP_NAME = "Pun\\KeyTable";
 const std::string CPunk::keytable_classname(KeyTable::PHP_NAME);
 
+
 KeyTable* KeyTable::get_KeyTable(Php::Value& v)
 {
     if (v.instanceOf(CPunk::keytable_classname))
@@ -37,6 +38,7 @@ KeyTable::setup_ext(Php::Extension& ext, Php::Interface& intf) {
     //keytab.method<&KeyTable::merge> ("merge");
     keytab.method<&KeyTable::size> ("size");
 
+    keytab.method<&KeyTable::__construct> ("__construct");
     keytab.method<&KeyTable::toArray> ("toArray");
     keytab.method<&KeyTable::setTag> ("setTag");
     keytab.method<&KeyTable::getTag> ("getTag");
@@ -44,6 +46,21 @@ KeyTable::setup_ext(Php::Extension& ext, Php::Interface& intf) {
     keytab.method<&KeyTable::replaceVars> ("replaceVars");
 
     ext.add(std::move(keytab));
+}
+
+void KeyTable::__construct(Php::Parameters& param) {
+    if (param.size() > 0) {
+        Php::Value& v = param[0];
+
+        if (v.isArray()) {
+            fn_merge(v);
+        }
+        else if (v.isObject())
+        {
+            auto obj = KeyTable::get_KeyTable(v);
+            fn_merge(obj);
+        }
+    }
 }
 
 long KeyTable::count()
@@ -343,12 +360,53 @@ KeyTable::fn_merge(KeyTable* other)
 
 Php::Value
 KeyTable::merge(Php::Parameters& param) {
-	KeyTable* other = check_KeyTable(param,0);
+    bool ok = true;
+	if (param.size() > 0) {
+        Php::Value& v = param[0];
 
-	fn_merge(other);
+        if (v.isArray()) {
+            fn_merge(v);
+        }
+        else if (v.isObject()) {
+            auto obj = KeyTable::get_KeyTable(v);
+            if (obj != nullptr) {
+                fn_merge(obj);
+            }
+            else {
+                ok = false;
+            }
+        }
+	}
+	else {
+        ok = false;
+	}
+	if (!ok) {
+        throw Php::Exception("KeyTable merge  needs array or KeyTable as argument");
+	}
 	return fn_object();
 }
 
+void KeyTable::fn_merge(const Php::Value& fromArray)
+{
+    for( auto &iter : fromArray) {
+		const Php::Value& kval = iter.first;
+
+		std::string key = kval.stringValue();
+        if (key.size() > 0) {
+            // empty keys not allowed.
+            const Php::Value& val = iter.second;
+            if (val.isArray()) {
+                KeyTable* subTable = new KeyTable();
+                Php::Value table(Php::Object(KeyTable::PHP_NAME, subTable));
+                subTable->fn_merge(val);
+                _store[key] = table;
+            }
+            else {
+                _store[key] = val;
+            }
+        }
+    }
+}
 
 Php::Value
 KeyTable::intf_merge(Php::Value& obj)
