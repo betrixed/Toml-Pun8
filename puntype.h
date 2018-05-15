@@ -31,8 +31,9 @@ namespace pun {
 	class PunType : public Php::Base {
 	public:
 		static const char* PHP_NAME;
+        static void setup_ext(Php::Extension& ext);
 
-		pun::Pype 	 	_type;				// Php::Type is an enum
+		pun::Pype 	 	  _type;			// Php::Type is an enum
 		//Php::Value      _className; 		// is a string, didn't know how to do this cheaply
 
 		enum {

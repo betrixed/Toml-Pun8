@@ -43,88 +43,37 @@ PHPCPP_EXPORT void *get_module()
     // for the entire duration of the process (that's why it's static)
     static Php::Extension extension("pun8", "1.0");
 
-
     Php::Interface mergeable("Mergeable");
-// define an interface method
+//  interface methods
     mergeable.method("merge", {
         Php::ByVal("store", KeyTable::PHP_NAME)
     });
     mergeable.method("toArray");
     extension.add(std::move(mergeable));
 
+    Php::Interface tagable("Tagable");
+
+    tagable.method("setTag", {
+        Php::ByVal("tag")
+    });
+    tagable.method("getTag");
+    extension.add(std::move(tagable));
+
 // registration methods
     UStr8::setup_ext(extension);
-    ValueList::setup_ext(extension);
+    KeyTable::setup_ext(extension, mergeable, tagable);
+    ValueList::setup_ext(extension, tagable);
+
     IntList::setup_ext(extension);
     Re8map::setup_ext(extension);
     Recap8::setup_ext(extension);
     Pcre8::setup_ext(extension);
-    KeyTable::setup_ext(extension, mergeable);
 
-
-    Php::Class<Token8Stream> t8s(Token8Stream::PHP_NAME);
-    t8s.method<&Token8Stream::setEOSId> ("setEOSId");
-    t8s.method<&Token8Stream::setEOLId> ("setEOLId");
-    t8s.method<&Token8Stream::setUnknownId> ("setUnknownId");
-
-    t8s.method<&Token8Stream::setExpSet> ("setExpSet");
-    t8s.method<&Token8Stream::getExpSet> ("getExpSet");
-    t8s.method<&Token8Stream::setSingles> ("setSingles");
-    t8s.method<&Token8Stream::setRe8map> ("setRe8map");
-    t8s.method<&Token8Stream::setInput> ("setInput");
-
-
-    t8s.method<&Token8Stream::hasPendingTokens> ("hasPendingTokens");
-    t8s.method<&Token8Stream::getToken> ("getToken");
-    t8s.method<&Token8Stream::getLine> ("getLine");
-    t8s.method<&Token8Stream::getValue> ("getValue");
-    t8s.method<&Token8Stream::getId> ("getId");
-    t8s.method<&Token8Stream::getOffset> ("getOffset");
-    t8s.method<&Token8Stream::beforeEOL> ("beforeEOL");
-
-
-    t8s.method<&Token8Stream::peekToken> ("peekToken");
-    t8s.method<&Token8Stream::acceptToken> ("acceptToken");
-    t8s.method<&Token8Stream::moveNextId> ("moveNextId");
-    t8s.method<&Token8Stream::moveRegex> ("moveRegex");
-    t8s.method<&Token8Stream::moveRegId> ("moveRegId");
-    extension.add(std::move(t8s));
-
-    Php::Class<Token8> token(Token8::PHP_NAME);
-    token.method<&Token8::getValue> ("getValue");
-    token.method<&Token8::getId> ("getId");
-    token.method<&Token8::getLine> ("getLine");
-    token.method<&Token8::isSingle> ("isSingle");
-    extension.add(std::move(token));
-
-    Php::Class<PathTag> tag(PathTag::PHP_NAME);
-    extension.add(std::move(tag));
-
-    Php::Class<TomlBase> tbase(TomlBase::PHP_NAME);
-    tbase.method<&TomlBase::setTag> ("setTag");
-    tbase.method<&TomlBase::getTag> ("getTag");
-    extension.add(std::move(tbase));
-
-
-
-
-
-
-    Php::Class<TomlReader> rdr(TomlReader::PHP_NAME);
-
-    rdr.method<&TomlReader::parse> ("parse");
-    rdr.method<&TomlReader::parseFile>("parseFile");
-    rdr.method<&TomlReader::getUseVersion>("getUseVersion");
-    rdr.method<&TomlReader::getTomlVersion>("getTomlVersion");
-    extension.add(std::move(rdr));
-
-    Php::Class<PunType> ptype(PunType::PHP_NAME);
-    ptype.method<&PunType::fromValue> ("fromValue");
-    ptype.method<&PunType::isMatch> ("isMatch");
-    ptype.method<&PunType::type> ("type");
-    ptype.method<&PunType::name> ("name");
-
-    extension.add(std::move(ptype));
+    Token8Stream::setup_ext(extension);
+    Token8::setup_ext(extension);
+    TomlReader::setup_ext(extension);
+    TomlBase::setup_ext(extension);
+    PunType::setup_ext(extension);
 
     return extension;
 }

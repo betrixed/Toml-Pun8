@@ -9,9 +9,10 @@ using namespace pun;
 const char* ValueList::PHP_NAME = "Pun\\ValueList";
 
 void
-ValueList::setup_ext(Php::Extension& ext)
+ValueList::setup_ext(Php::Extension& ext, Php::Interface& if1)
 {
     Php::Class<ValueList> valList(ValueList::PHP_NAME);
+    valList.implements(if1);
 
     valList.method<&ValueList::pushBack> ("pushBack");
     valList.method<&ValueList::popBack> ("popBack");
@@ -98,6 +99,15 @@ Php::Value ValueList::back() const
 	return Php::Value(_store[index]);
 }
 
+void ValueList::resize(Php::Parameters& param) {
+    if (param.size() > 0 && param[0].isNumeric()) {
+        size_t newLength = (size_t) param[0].numericValue();
+        Php::Value nval = (param.size() > 1 ? param[1] : Php::Value());
+        _store.resize(newLength, nval);
+        return;
+    }
+    throw Php::Exception("ValueList resize() with invalid arguments");
+}
 Php::Value ValueList::size() const
 {
 	return Php::Value((int)_store.size());

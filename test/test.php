@@ -218,8 +218,16 @@ function testMatch() {
 function keytable() {
     $kt = new KeyTable();
 
-    $kt->setKV("key1", "value1");
-    $kt->setKV("2.1", "value2");
+    $kt->set("key1", "value1");
+    $kt->set("2.1", "value2");
+    echo "exists..";
+    if ($kt->exists("key1"))
+    {
+        echo "pass" . PHP_EOL;
+    }
+    else {
+        echo "fail" . PHP_EOL;
+    }
 
     // dynamic properties
     $kt->MyProperty1 = "Set Property";
@@ -247,7 +255,7 @@ function keytable() {
 
     // merge something
     $m = new KeyTable();
-    $m->setKV("modules", ["a" => ['name' => 'a'], "b" => ['name' => 'b']]);
+    $m->set("modules", ["a" => ['name' => 'a'], "b" => ['name' => 'b']]);
     $kt->merge($m);
 
     echo "merge " . print_r($kt->toArray(),true) . PHP_EOL;
@@ -396,14 +404,14 @@ function utf16() {
 function serial() {
     $kt = new KeyTable();
     $key = "One Key variable";
-    $kt->setKV($key , 1);
+    $kt->set($key , 1);
 
-    $kt->setKV("Time now", new DateTime());
+    $kt->set("Time now", new DateTime());
 
     $kt2 = new KeyTable();
 
-    $kt2->setKV("Referenced key value", 2);
-    $kt->setKV("Nested", $kt2);
+    $kt2->set("Referenced key value", 2);
+    $kt->set("Nested", $kt2);
 
     $valone = new ValueList();
 
@@ -414,7 +422,7 @@ function serial() {
         $valtwo->pushBack($i);
         $valtwo->pushBack($i*2);
     }
-    $kt2->setKV("Arrays", $valone);
+    $kt2->set("Arrays", $valone);
 
     echo "As Original " . print_r( $kt->toArray(), true) . PHP_EOL;
     $fname = "serial_test1.dat";

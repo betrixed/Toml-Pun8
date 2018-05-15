@@ -7,6 +7,9 @@
 // Pack Php array of integers into C++ vector
 
 namespace pun {
+    /*!
+    This wraps a simple std::vector<int> for Php
+    */
 
 	class IntList : public Php::Base, Php::Countable  {
 	public:
@@ -25,10 +28,13 @@ namespace pun {
 		Php::Value getV(Php::Parameters& params) const;
 		void setV(Php::Parameters& param);
 
+		//! Return value at position size() - 1
 		Php::Value back() const;
+		//! Implements count() operator for PHP
 		virtual long  count() override { return (long) _store.size(); }
-
+        //! return size() of vector
 		Php::Value size() const;
+		//! reset vector to have zero items
 		void clear() { _store.clear(); }
 
 	public:

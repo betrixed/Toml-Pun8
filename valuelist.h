@@ -52,6 +52,12 @@ public:
 	}
 };
 
+/*!
+    ValueList is a PHP wrapper of C++ std::vector<Php::Value>.
+    It supports random access, foreach, count, and is serializable.
+    ValueList supports push and pop operations.
+
+*/
 class ValueList : public TomlBase, public Php::Countable,
 				public Php::Traversable , public Php::Serializable
 
@@ -59,7 +65,7 @@ class ValueList : public TomlBase, public Php::Countable,
 public:
 	static const char* PHP_NAME;
 
-	static void setup_ext(Php::Extension& ext);
+	static void setup_ext(Php::Extension& ext, Php::Interface& if1);
 
 	ValueList() {}
 
@@ -71,7 +77,15 @@ public:
 	Php::Value back() const;
 	virtual long  count() override { return (long) _store.size(); }
 
+
 	Php::Value size() const;
+
+	/*! function resize(int newLength [, newValue]);
+        Resize the container to newLength elements. If the new length is
+        greater, newValue or null are assigned to new elements.
+	*/
+	void resize(Php::Parameters& param);
+
 	void clear() { _store.clear(); }
 
 	virtual Php::Iterator *getIterator() override

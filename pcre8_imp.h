@@ -19,6 +19,9 @@
 typedef std::vector<int>  IdList;
 IdList toIdList(const Php::Value& v);
 
+/*!
+    Internal store of regular expression captures as std::vector<std::string>
+*/
 class Pcre8_match {
 public:
     StringList  _slist;
@@ -40,7 +43,9 @@ public:
 typedef std::vector<Pcre8_match> Pcre8_matchAll;
 
 
-
+/*!
+    Wrap calls to libpcre2-8, and manage the compiled regular expression
+*/
 class Pcre8_imp {
 private:
     pcre2_code *_re;
@@ -70,7 +75,10 @@ typedef std::unordered_map<int, Pcre8_share> RexMap;
 typedef std::unordered_map<char32_t, int> RexSingles;
 
 
-
+/*!
+    Interface to map of shared pointers to compiled regular expressions, key
+    is integer.
+*/
 class Pcre8_map {
 public:
 	RexMap	_map;
@@ -89,6 +97,9 @@ public:
 	int  eraseRex(int index);
 };
 
+/*!
+    Wrap a map of a unicode char32_t key to arbitrary integer "token" id.
+*/
 class CharMap {
 public:
     RexSingles _map;

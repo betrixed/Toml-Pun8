@@ -84,6 +84,8 @@ namespace pun {
 	class TomlReader : public Php::Base {
 	public:
 		static const char* PHP_NAME;
+		static void setup_ext(Php::Extension& ext);
+
 		static Php::Value parseFile(Php::Parameters& param);
 		static Php::Value getUseVersion();
 		static Php::Value getTomlVersion();

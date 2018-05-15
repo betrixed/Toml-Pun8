@@ -17,6 +17,17 @@ using namespace pun;
 
 const char* TomlReader::PHP_NAME = "Pun\\TomlReader";
 
+void TomlReader::setup_ext(Php::Extension& ext)
+{
+    Php::Class<TomlReader> rdr(TomlReader::PHP_NAME);
+
+    rdr.method<&TomlReader::parse> ("parse");
+    rdr.method<&TomlReader::parseFile>("parseFile");
+    rdr.method<&TomlReader::getUseVersion>("getUseVersion");
+    rdr.method<&TomlReader::getTomlVersion>("getTomlVersion");
+    ext.add(std::move(rdr));
+}
+
 const char* const cRexBool = "^(true|false)";
 const char* const cDateTime = "^(\\d{4}-\\d{2}-\\d{2}(T\\d{2}:\\d{2}:\\d{2}(\\.\\d{6})?(Z|-\\d{2}:\\d{2})?)?)";
 const char* const cFloatExp = "^([+-]?((\\d_?)+([\\.](\\d_?)*)?)([eE][+-]?(_?\\d_?)+))";

@@ -44,6 +44,9 @@
 
 namespace pun {
 
+/*!
+    Implement PHP interator internals for KeyTable
+*/
 class KT_Iterator : public Php::Iterator {
 	ValueMap &_ref;
 	ValueMap::const_iterator _iter;
@@ -81,6 +84,29 @@ public:
 	}
 };
 
+/*! KeyTable is a PHP class wrapper of a std::map<std::string,Php::Value> , where
+    Php::Value is a wrapper for any value, known as a Z_VAL.
+    All keys are strings.
+    From PHP, array access [] is possible, foreach works as expected,
+    the count() function returns the number of keys.
+    and serialize and unserialize works.
+    Php 'foreach' always traverses in the default alphabetical order, as
+    std::map is implemented with a red-black tree container.
+
+    KeyTable also has a Tag property, to get or set with any Php::Value.
+    Keytable is serialiable, and can return its values as an Array,
+    or be set from an Array.
+    KeyTable access time grows O(log N).
+    Its keys and values are not directly visible to PHP xdebug variable inspection.
+
+    KeyTable differs in behaviour from Phalcon\Config class, which it is loosely meant to be
+    a substitute for.
+    Phalcon\Config stores numeric (integer) keys, as integer, even if set as string.
+    Phalcon\Config foreach traversal order is undefined for a given set of keys.
+    Phalcon\Config access stores values as PHP object properties table, which uses a hash, quasi O(1).
+
+
+*/
 class KeyTable : public TomlBase, public Php::Countable,
 				public Php::ArrayAccess, public Php::Traversable, public Php::Serializable
 {
@@ -89,7 +115,7 @@ public:
 
 	static KeyTable* get_KeyTable(Php::Value& v);
 
-    static void setup_ext(Php::Extension& ext, Php::Interface& intf);
+    static void setup_ext(Php::Extension& ext, Php::Interface& if1, Php::Interface& if2);
 
     //! __construct([array]);  from optional array
     void __construct(Php::Parameters& param);

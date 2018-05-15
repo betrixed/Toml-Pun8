@@ -7,6 +7,10 @@
 
 namespace pun {
 
+/*!
+    PathTag has no declared methods accessible by script.
+    It is used by internal TOML parsing.
+*/
 class PathTag : public Php::Base{
 public:
 	static const char* PHP_NAME;
@@ -14,19 +18,24 @@ public:
 	bool		_implicit; // Implicity created by Toml Path, not yet used as KeyTable
 
 	Php::Value __toString();
-	
+
 	PathTag() : _objAOT(false), _implicit(true) {
 
 	}
 };
 
-
+/*!
+    A base class for ValueList and KeyTable, for the Tagable interface
+*/
 class TomlBase : public Php::Base {
 protected:
 	Php::Value 			_tag;
 public:
 
 	static const char* PHP_NAME;
+
+	static void setup_ext(Php::Extension& ext);
+
 	virtual int fn_endIndex() { return 0; }
 	// interface for PHP
 	Php::Value getTag() const;
@@ -34,12 +43,13 @@ public:
 public:
 	void fn_setTag(Php::Value&& v) { _tag = std::move(v); }
 	Php::Value&  fn_getTag() { return _tag; }
-	
 	PathTag*  fn_getPathTag();
 	void	  fn_setPathTag(PathTag* tag);
 };
 
-// Temporary created during Table path parse
+/*!
+Temporary created during Table path parse
+*/
 
 class TomlPartTag {
 public:

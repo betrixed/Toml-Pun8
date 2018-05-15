@@ -21,17 +21,18 @@ KeyTable* KeyTable::get_KeyTable(Php::Value& v)
 }
 
 void
-KeyTable::setup_ext(Php::Extension& ext, Php::Interface& intf) {
+KeyTable::setup_ext(Php::Extension& ext, Php::Interface& if1, Php::Interface& if2) {
     Php::Class<KeyTable> keytab(KeyTable::PHP_NAME);
-    keytab.implements(intf);
+    keytab.implements(if1);
+    keytab.implements(if2);
     //keytab.extends(tbase);
 
-    keytab.method<&KeyTable::setKV> ("setKV");
-    keytab.method<&KeyTable::getV> ("getV");
+    keytab.method<&KeyTable::setKV> ("set");
     keytab.method<&KeyTable::get> ("get");
-    keytab.method<&KeyTable::unsetK> ("unsetK");
-    keytab.method<&KeyTable::hasK> ("hasK");
+    keytab.method<&KeyTable::unsetK> ("unsetKey");
+    keytab.method<&KeyTable::hasK> ("exists");
     keytab.method<&KeyTable::clear> ("clear");
+
     keytab.method<&KeyTable::merge> ("merge", {
         Php::ByVal("store", KeyTable::PHP_NAME)
     });
@@ -114,19 +115,13 @@ Php::Value KeyTable::fn_getV(std::string& key){
 	return _store[key];
 }
 
-Php::Value KeyTable::getV(Php::Parameters& param)
-{
-	if (param.size() < 1) {
-		throw Php::Exception("KeyTable->getV(key) missing parameter ");
-	}
-	return _store[param[0].stringValue()];
-}
+
 
 Php::Value KeyTable::get(Php::Parameters& param)
 {
 	auto ct = param.size();
 	if (ct < 1) {
-		throw Php::Exception("KeyTable->get(key, alternate) missing parameter ");
+		throw Php::Exception("KeyTable->get(key, alternate) missing key");
 	}
 	auto fit = _store.find(param[0].stringValue());
 	if (fit != _store.end())

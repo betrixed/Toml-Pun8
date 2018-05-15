@@ -4,9 +4,9 @@
 #include <phpcpp.h>
 #include "pcre8_imp.h"
 
-// Php object wrap a single PCRE2
 
 namespace pun {
+//! Php object represents the captures as string list, returned by regular expression match
 
 class Recap8 : public Php::Base, public Php::ArrayAccess, public Php::Countable {
 public:
@@ -19,11 +19,17 @@ public:
     */
     Php::Value getCap(Php::Parameters& params) const;
 
+    //! Number of captures stored
     virtual long count() override;
+    //! Operators for PHP interface ArrayAccess, are not directly callable
+    //! If this capture index exists
 	virtual bool offsetExists(const Php::Value &key) override;
+	//! return value for this capture index
 	virtual Php::Value offsetGet(const Php::Value &key) override;
-	//! Array access parameters are read only
+	//! Write operators for PHP interface ArrayAccess are nothing stubs
+	//! This won't do anything
     virtual void offsetUnset(const Php::Value &key) override {}
+    //! This won't do anything
 	virtual void offsetSet(const Php::Value &key, const Php::Value &value) override {}
 public:
     Pcre8_match	_match;

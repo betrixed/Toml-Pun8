@@ -6,9 +6,21 @@ const char* PathTag::PHP_NAME = "Pun\\PathTag";
 
 const char* TomlBase::PHP_NAME = "Pun\\TomlBase";
 
+void
+TomlBase::setup_ext(Php::Extension& ext)
+{
+    Php::Class<PathTag> tag(PathTag::PHP_NAME);
+    ext.add(std::move(tag));
+
+    Php::Class<TomlBase> tbase(TomlBase::PHP_NAME);
+    tbase.method<&TomlBase::setTag> ("setTag");
+    tbase.method<&TomlBase::getTag> ("getTag");
+    ext.add(std::move(tbase));
+}
+
 Php::Value PathTag::__toString()
 {
-	std::string txt = "PathTag(" + std::to_string((int) _objAOT) 
+	std::string txt = "PathTag(" + std::to_string((int) _objAOT)
 		+ "," + std::to_string((int) _implicit) + ")";
 
 
@@ -37,7 +49,7 @@ PathTag*  TomlBase::fn_getPathTag()
 	}
 	return nullptr;
 }
-	
+
 
 void TomlBase::fn_setPathTag(PathTag* tag)
 {

@@ -18,6 +18,7 @@ namespace pun {
     class Token8Stream : public Php::Base {
     public:
         static const char* PHP_NAME;
+        static void setup_ext(Php::Extension& ext);
 
         Token8Stream();
         ~Token8Stream();

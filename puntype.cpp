@@ -5,6 +5,18 @@ using namespace pun;
 
 const char* PunType::PHP_NAME = "Pun\\Type";
 
+void
+PunType::setup_ext(Php::Extension& ext)
+{
+    Php::Class<PunType> ptype(PunType::PHP_NAME);
+    ptype.method<&PunType::fromValue> ("fromValue");
+    ptype.method<&PunType::isMatch> ("isMatch");
+    ptype.method<&PunType::type> ("type");
+    ptype.method<&PunType::name> ("name");
+
+    ext.add(std::move(ptype));
+}
+
 void PunType::fromValue(Php::Parameters& param)
 {
 	pun::need_Value(param);
