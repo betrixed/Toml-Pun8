@@ -11,9 +11,13 @@
 
 #include <ostream>
 
+//!  It made sense at the time to have these constant string values pre-formed.
 struct CPunk {
+     //! initialised with PHP class name
      static const std::string keytable_classname;
+     //! initialised with PHP class name
      static const std::string valuelist_classname;
+     //! initialised with PHP class name
      static const std::string datetime_classname;
 };
 

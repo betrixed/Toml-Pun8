@@ -15,27 +15,33 @@
     for common operations, such as fetch.
 */
 struct UStrData {
-
+    //! Actual data
 	std::string 	 _data;
+	//! Adjusted view
 	svx::string_view _view;
 
 	//! make it UTF-8 if necessary, hide bom if any, from _view
 	void ensureUTF8();
-
+    //! setup data and view
 	void assign(const char* p, uint64_t slen);
+	//! setup data and view
 	void assign(std::string&& rh);
 	//! Set _view to entire _data
     void reset_view();
     //! Fetch UTF-8 character, as UTF-32, and as multibyte range in string_view.
 	char32_t fetch(uint64_t offset, svx::string_view& v);
 
+	//! return UTF-16 in std::string
 	std::string asUTF16();
+	//! return BOM string, if any
 	std::string getBOMId();
 
-	static std::string bomUTF16();
-	static std::string bomUTF8();
+	//! return native UTF-16 BOM string
+	static  std::string bomUTF16();
+	//! return native UTF-8  BOM string
+	static  std::string bomUTF8();
 
-	// start offset and length
+	//! Substring as string_view
 	svx::string_view substr(uint64_t begin, uint64_t len);
 };
 

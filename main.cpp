@@ -1,6 +1,7 @@
 #include <phpcpp.h>
 #include "ucode8.h"
 //#include "pun8.h"
+#include "path.h"
 #include "pcre8.h"
 #include "re8map.h"
 #include "recap8.h"
@@ -74,7 +75,7 @@ PHPCPP_EXPORT void *get_module()
     TomlReader::setup_ext(extension);
     TomlBase::setup_ext(extension);
     PunType::setup_ext(extension);
-
+    Path::setup_ext(extension);
     return extension;
 }
 

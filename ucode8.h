@@ -20,15 +20,20 @@ ucode16Fore(
 
 //! Encode char32_t into null terminated string of char_t, return length
 struct EncodeUTF8 {
+    //! one to several bytes result
 	char result[8];
+	//! Turn Unicode 32 character into multibyte UTF-8 string
 	unsigned int encode(const char32_t d);
 };
 
 //! Encode char32_t , return number of char16_t units
 struct EncodeUTF16 {
+    //! one or 2 character utf-16 result
 	char16_t result[2];
+	//! return count of encoded length put in result
 	unsigned int encode(const char32_t d);
 };
+
 //! Arbitrary enum for a few Byte-Order-Marks sequences
 enum BOM_CODE {
 	BAD_BOM = -1,
@@ -40,7 +45,9 @@ enum BOM_CODE {
 	UTF_32BE = 5
 };
 
-
+/*! This little class found on the net, to detect native endian direction.
+    If it isn't big, presume its little.
+*/
 class TestEndian {
 private:
 	union {
@@ -48,6 +55,7 @@ private:
         char c[4];
     } bint = {0x01020304};
 public:
+    //! True if most signifcant at lowest memory address.
 	bool isBigEnd() const {
 		return bint.c[0] == 1;
 	}
@@ -56,18 +64,18 @@ public:
 const char32_t INVALID_CHAR = (char32_t) -1;
 const char* getBOMName(BOM_CODE code);
 
-// byte by byte check
+//! byte by byte check
 BOM_CODE getBOMCode(const char* sptr, unsigned int len);
 
-// 16-bit character buffer from UTF-16 on this platform, to UTF-8
+//! 16-bit character buffer from UTF-16 on this platform, to UTF-8
 bool convertUTF16(char16_t const* cp, unsigned int wlen, std::string& output);
 
-// Result is returned in std::string, because PHP uses string for buffer storage.
+//! Result is returned in std::string, because PHP uses string for buffer storage.
 int toUTF16(const std::string& input, std::string& output);
 
 void swap16buffer(char16_t* cp, unsigned int wlen);
 
-/*
+/*!
  * Check the value of input for encoding, and make sure it is UTF-8
  * Convert if possible.
  * Return an offset to end of BOM , if any remains

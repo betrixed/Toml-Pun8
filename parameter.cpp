@@ -30,8 +30,12 @@ Undefined       =   0,  // Variable is not set
     Constant        =  11,  // A constant value
     ConstantAST     =  12,  // I think an Abstract Syntax tree, not quite sure
 */
+
+//! temporary stack storage
 union SerUnion {
+    //! As real number
     double dval;
+    //! As Integer
     int64_t ival;
 };
 

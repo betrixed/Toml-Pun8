@@ -6,15 +6,15 @@
 #include <vector>
 
 #include "re8map.h"
-
-// integrated functions of Pun8 class
-// external interface based on PHP version
-//
 #include "token8.h"
 #include "ustr_data.h"
 
 namespace pun {
 
+    /*!
+        Parse a UTF-8 stream into a series of mapped token Ids,
+        according to what regular expressions, and single characters seem appropriate.
+    */
     class Token8Stream : public Php::Base {
     public:
         static const char* PHP_NAME;

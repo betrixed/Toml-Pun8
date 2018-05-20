@@ -41,7 +41,9 @@ KeyTable::setup_ext(Php::Extension& ext, Php::Interface& if1, Php::Interface& if
 
     keytab.method<&KeyTable::__construct> ("__construct");
     keytab.method<&KeyTable::toArray> ("toArray");
-    keytab.method<&KeyTable::setTag> ("setTag");
+    keytab.method<&KeyTable::setTag> ("setTag",
+        { Php::ByVal("tag") }
+    );
     keytab.method<&KeyTable::getTag> ("getTag");
 
     keytab.method<&KeyTable::replaceVars> ("replaceVars");

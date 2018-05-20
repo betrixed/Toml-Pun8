@@ -27,7 +27,7 @@ UStr8::setup_ext(Php::Extension& ext)
     ustr8.method<&UStr8::nextChar> ("nextChar");
     ustr8.method<&UStr8::replaceAll> ("replaceAll");
     ustr8.method<&UStr8::endsWith> ("endsWith");
-    ustr8.method<&UStr8::beginsWith> ("beginsWith");
+    ustr8.method<&UStr8::beginsWith> ("startsWith");
     ustr8.method<&UStr8::pushBack> ("pushBack");
     ustr8.method<&UStr8::popBack> ("popBack");
 
@@ -36,6 +36,13 @@ UStr8::setup_ext(Php::Extension& ext)
     ext.add(std::move(ustr8));
 
 
+}
+
+Php::Value
+UStr8::make_UStr8(std::string& s) {
+    UStr8* u8 = new UStr8();
+    u8->fn_setString(std::move(s));
+    return Php::Object(UStr8::PHP_NAME, u8);
 }
 
 UStr8::UStr8() : _index(0), _size(0)
@@ -105,9 +112,7 @@ UStr8::replaceAll(Php::Parameters& param)
         return param[2];
     }
     else {
-        UStr8* u8 = new UStr8();
-        u8->fn_setString(std::move(result));
-        return Php::Object(UStr8::PHP_NAME, u8);
+        return UStr8::make_UStr8(result);
     }
 }
 

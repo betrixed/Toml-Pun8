@@ -80,7 +80,11 @@ namespace pun {
 
 	};
 
-
+    /*!
+        Using Token8Stream and recursive parsing,
+        parse a TOML document into a
+        a KeyTable / ValueList hierarchy
+    */
 	class TomlReader : public Php::Base {
 	public:
 		static const char* PHP_NAME;

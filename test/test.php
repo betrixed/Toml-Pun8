@@ -10,7 +10,7 @@ use Pun\ValueList;
 use Pun\Type;
 use Pun\UStr8;
 use Pun\IntList;
-
+use Pun\Path;
 use Pun\TomlReader;
 
 
@@ -366,25 +366,7 @@ function parser() {
         echo $key . " : " . $value . PHP_EOL;
     }
 }
-keytable();
-testMatch();
 
-$memInc = 0.0;
-$i = 0;
-$startMem = $endMem = 0;
-$memInit = memory_get_usage();
-
-for ($i = 0 ; $i < 2; $i++)
-{
-    if ($i == 1) {
-        $startMem = memory_get_usage();
-    }
-	reader();
-}
-gc_collect_cycles();
-$endMem = memory_get_usage();
-$memInc +=  ($endMem - $startMem);
-echo "*** Memory Inc  = " . $memInc . PHP_EOL;
 
 function utf16() {
     $pun = new Pun8(testmix());
@@ -499,7 +481,21 @@ function allMatches() {
     }
 }
 
+function testPath()
+{
+    echo "Separator = " . Path::sep() . PHP_EOL;
+    $pn = new UStr8("/UnixPath/End");
+    $a = Path::endSep($pn);
+    echo "End " . $a . PHP_EOL;
 
+    $py = new UStr8("/UnixPath/NoEnd/");
+    $b = Path::noEndSep($py);
+    echo "No End "  . $b . PHP_EOL;
+    
+    echo "Class " . get_class($a) . " " . get_class($b) . PHP_EOL;
+}
+
+testPath();
 keytable();
 valuelist();
 reader_0();
@@ -508,3 +504,22 @@ parser();
 ustr();
 allMatches();
 serial();
+
+testMatch();
+
+$memInc = 0.0;
+$i = 0;
+$startMem = $endMem = 0;
+$memInit = memory_get_usage();
+
+for ($i = 0 ; $i < 2; $i++)
+{
+    if ($i == 1) {
+        $startMem = memory_get_usage();
+    }
+    reader();
+}
+gc_collect_cycles();
+$endMem = memory_get_usage();
+$memInc +=  ($endMem - $startMem);
+echo "*** Memory Inc  = " . $memInc . PHP_EOL;

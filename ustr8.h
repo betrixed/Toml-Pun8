@@ -14,8 +14,11 @@ class UStr8;
 class UStr_Iterator;
 
 
-// Not going to do Countable, or ArrayAccess, or Serializable
-// because of potential difficulties.
+/*!
+    UTF8 string, traversible as foreach, can set a virtual substring range.
+    Has endsWith, beginsWith methods.
+*/
+
 class UStr8 : public Php::Base, public Php::Traversable {
 public:
 
@@ -24,6 +27,8 @@ public:
 		static void setup_ext(Php::Extension& ext);
 
 		static UStr8* get_UStr8(Php::Value& val);
+
+		static Php::Value make_UStr8(std::string& s);
 
 		UStr8();
         UStr8(UStr8& original);
@@ -116,7 +121,8 @@ public:
 };
 
 
-// Forward iterate through UStr8, produce offset, utf-8 string pair
+//! foreach in PHP - Forward iterate through UStr8, produce offset, utf-8 string pair
+
 class UStr_Iterator : public Php::Iterator {
 	Str_ptr				_str;
 	uint64_t			_startOffset;

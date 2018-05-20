@@ -6,12 +6,11 @@
 
 #include <sstream>
 #include <utility>
-//#include <ostream>
 
-
-//! Handle  pcre2 calls for first and all matches, free _matchData
+//! Internal class to hold state of  pcre2 calls for first and all matches, free _matchData
 class Pcre8_calls {
 public:
+    //! construct with compiled regular expression pointer.
     Pcre8_calls(pcre2_code* re) : _re(re), _matchData(nullptr), _ovector(nullptr) {
 
     }
@@ -23,7 +22,7 @@ public:
             _matchData = nullptr;
         }
     }
-
+    //! find zero or more PRE matches
     int doMatch(const svx::string_view &subject, Pcre8_match& matches)
     {
         if (_matchData == nullptr) {
@@ -51,7 +50,7 @@ public:
         addMatchData( matches, start, rcount );
         return rcount;
     }
-
+    //! There are multiple sets of matches.
     int doMatchAll(const svx::string_view &seg, Pcre8_matchAll& matchSet)
     {
         uint32_t option_bits;
