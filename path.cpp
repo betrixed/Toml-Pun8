@@ -30,6 +30,8 @@ Path::setup_ext(Php::Extension& ext)
     cpath.method<&Path::noEndSep> ("noEndSep");
     cpath.method<&Path::native> ("native");
     cpath.method<&Path::sep> ("sep");
+    cpath.method<&Path::startsWith> ("startsWith");
+    cpath.method<&Path::endsWith> ("endsWith");
     ext.add(std::move(cpath));
 
 }
