@@ -128,6 +128,9 @@ public:
 	// Get value or return supplied default
 	Php::Value get(Php::Parameters& params);
 
+    // Follow string of keys separated by '.'
+	Php::Value path(Php::Parameters& param);
+
 	Php::Value hasK(Php::Parameters& params);
 	// Remove value accessed by key
 	void unsetK(Php::Parameters& params);
@@ -147,6 +150,8 @@ public:
 	{
 		return new KT_Iterator( this, _store);
 	}
+
+
 
 	Php::Value  size() const { return (long) _store.size(); }
 	void clear() { _store.clear(); }

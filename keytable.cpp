@@ -29,6 +29,7 @@ KeyTable::setup_ext(Php::Extension& ext, Php::Interface& if1, Php::Interface& if
 
     keytab.method<&KeyTable::setKV> ("set");
     keytab.method<&KeyTable::get> ("get");
+    keytab.method<&KeyTable::path> ("path");
     keytab.method<&KeyTable::unsetK> ("unsetKey");
     keytab.method<&KeyTable::hasK> ("exists");
     keytab.method<&KeyTable::clear> ("clear");
@@ -117,7 +118,42 @@ Php::Value KeyTable::fn_getV(std::string& key){
 	return _store[key];
 }
 
+/**
+    Each key except the last must find another KeyTable object
+*/
+Php::Value KeyTable::path(Php::Parameters& param)
+{
+    bool check = param.size() >= 1;
+    if (check) {
+        Php::Value& v = param[0];
 
+        if (v.isString()) {
+            std::string target((const char*) v, v.size());
+            StringList keys = pun::explode(".", target);
+            auto ct = keys.size();
+            auto kit = keys.begin();
+            auto table = this;
+            if (ct == 0) {
+                return Php::Value();
+            }
+            while (ct > 1) {
+                auto fit = table->_store.find(*kit);
+                if (fit == table->_store.end())
+                    return Php::Value();
+                table = castKeyTable( fit->second );
+                if (table == nullptr) {
+                   return Php::Value();
+                }
+                ct--;
+                kit++;
+            }
+            // one key left, return whatever it is
+            auto fit = table->_store.find(*kit);
+            return (fit == table->_store.end() ? Php::Value() : fit->second);
+        }
+    }
+    throw Php::Exception("No path argument");
+}
 
 Php::Value KeyTable::get(Php::Parameters& param)
 {
