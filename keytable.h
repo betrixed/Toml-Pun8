@@ -115,7 +115,7 @@ public:
 
 	static KeyTable* get_KeyTable(Php::Value& v);
 
-    static void setup_ext(Php::Extension& ext, Php::Interface& if1, Php::Interface& if2);
+    static void setup_ext(Php::Extension& ext /*, Php::Interface& if1, Php::Interface& if2*/);
 
     //! __construct([array]);  from optional array
     void __construct(Php::Parameters& param);

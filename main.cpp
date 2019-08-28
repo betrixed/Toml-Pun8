@@ -44,26 +44,27 @@ PHPCPP_EXPORT void *get_module()
     // for the entire duration of the process (that's why it's static)
     static Php::Extension extension("pun8", "1.0");
 
-    Php::Interface mergeable("Mergeable");
+    /* Php::Interface mergeable("Mergeable");
 //  interface methods
     mergeable.method("merge", {
-        Php::ByVal("store", KeyTable::PHP_NAME)
+        Php::ByVal("store")
     });
     mergeable.method("toArray");
     extension.add(std::move(mergeable));
+    */
 
-    Php::Interface tagable("Tagable");
+    // Php::Interface tagable("Tagable");
 
-    tagable.method("setTag", {
-        Php::ByVal("tag")
-    });
-    tagable.method("getTag");
-    extension.add(std::move(tagable));
+    //tagable.method("setTag", {
+    //    Php::ByVal("tag")
+    //});
+    //tagable.method("getTag");
+    //extension.add(std::move(tagable));
 
 // registration methods
     UStr8::setup_ext(extension);
-    KeyTable::setup_ext(extension, mergeable, tagable);
-    ValueList::setup_ext(extension, tagable);
+    KeyTable::setup_ext(extension/* , mergeable , tagable*/);
+    ValueList::setup_ext(extension/*, tagable */);
 
     IntList::setup_ext(extension);
     Re8map::setup_ext(extension);

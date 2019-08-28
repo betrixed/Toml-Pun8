@@ -42,7 +42,7 @@ public:
 	void setTag(Php::Parameters& param);
 public:
 	void fn_setTag(Php::Value&& v) { _tag = std::move(v); }
-	Php::Value&  fn_getTag() { return _tag; }
+	Php::Value  fn_getTag() { return _tag; }
 	PathTag*  fn_getPathTag();
 	void	  fn_setPathTag(PathTag* tag);
 };

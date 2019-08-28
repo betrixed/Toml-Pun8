@@ -9,10 +9,10 @@ using namespace pun;
 const char* ValueList::PHP_NAME = "Pun\\ValueList";
 
 void
-ValueList::setup_ext(Php::Extension& ext, Php::Interface& if1)
+ValueList::setup_ext(Php::Extension& ext/*, Php::Interface& if1*/)
 {
     Php::Class<ValueList> valList(ValueList::PHP_NAME);
-    valList.implements(if1);
+    //valList.implements(if1);
 
     valList.method<&ValueList::pushBack> ("pushBack");
     valList.method<&ValueList::popBack> ("popBack");

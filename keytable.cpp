@@ -20,11 +20,10 @@ KeyTable* KeyTable::get_KeyTable(Php::Value& v)
     return nullptr;
 }
 
-void
-KeyTable::setup_ext(Php::Extension& ext, Php::Interface& if1, Php::Interface& if2) {
+void KeyTable::setup_ext(Php::Extension& ext /* , Php::Interface& if1 , Php::Interface& if2*/) {
     Php::Class<KeyTable> keytab(KeyTable::PHP_NAME);
-    keytab.implements(if1);
-    keytab.implements(if2);
+    /* keytab.implements(if1);*/
+    /* keytab.implements(if2);*/
     //keytab.extends(tbase);
 
     keytab.method<&KeyTable::setKV> ("set");
@@ -35,7 +34,7 @@ KeyTable::setup_ext(Php::Extension& ext, Php::Interface& if1, Php::Interface& if
     keytab.method<&KeyTable::clear> ("clear");
 
     keytab.method<&KeyTable::merge> ("merge", {
-        Php::ByVal("store", KeyTable::PHP_NAME)
+        Php::ByVal("store" )
     });
     //keytab.method<&KeyTable::merge> ("merge");
     keytab.method<&KeyTable::size> ("size");

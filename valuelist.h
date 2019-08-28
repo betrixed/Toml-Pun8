@@ -65,7 +65,7 @@ class ValueList : public TomlBase, public Php::Countable,
 public:
 	static const char* PHP_NAME;
 
-	static void setup_ext(Php::Extension& ext, Php::Interface& if1);
+	static void setup_ext(Php::Extension& ext /*, Php::Interface& if1*/);
 
 	ValueList() {}
 

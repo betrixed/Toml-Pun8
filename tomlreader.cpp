@@ -319,7 +319,7 @@ Php::Value TomlReader::doParse()
 	// context information to be added here.
 	catch (Php::Exception& oh_no) {
 			std::stringstream ss;
-			ss << "Toml Parse at line " << _ts->getLine() << ". " << oh_no.message();
+			ss << "Toml Parse at line " << _ts->getLine() << ". " << oh_no.what();
 			const std::string& value = _ts->getValue();
 			if (value.size() > 0) {
 				ss << ". Value { " << value << " }.";
@@ -650,7 +650,7 @@ void TomlReader::parseArray(ValueList *vlist)
 				vlist->fn_setTag(Php::Value(pun::tValueList));
 			}
 			else {
-				Php::Value &spun = vlist->fn_getTag();
+				Php::Value spun = vlist->fn_getTag();
 				pun::Pype spunt = (pun::Pype)((int) spun);
 				if (spunt != pun::tValueList) {
 					arrayMatchError(spunt, pun::tValueList);
@@ -673,7 +673,7 @@ void TomlReader::parseArray(ValueList *vlist)
 				vlist->fn_setTag(Php::Value(punt));
 			}
 			else {
-				Php::Value &spun = vlist->fn_getTag();
+				Php::Value spun = vlist->fn_getTag();
 				pun::Pype spunt = (pun::Pype)((int) spun);
 				if (punt != spunt) {
 					arrayMatchError(spunt, punt);
