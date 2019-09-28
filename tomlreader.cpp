@@ -319,7 +319,7 @@ Php::Value TomlReader::doParse()
 	// context information to be added here.
 	catch (Php::Exception& oh_no) {
 			std::stringstream ss;
-			ss << "Toml Parse at line " << _ts->getLine() << ". " << oh_no.message();
+			ss << "Toml Parse at line " << _ts->getLine() << ". " << oh_no.what();
 			const std::string& value = _ts->getValue();
 			if (value.size() > 0) {
 				ss << ". Value { " << value << " }.";

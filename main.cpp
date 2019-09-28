@@ -46,18 +46,18 @@ PHPCPP_EXPORT void *get_module()
 
     Php::Interface mergeable("Mergeable");
 //  interface methods
-    mergeable.method("merge", {
-        Php::ByVal("store", KeyTable::PHP_NAME)
-    });
-    mergeable.method("toArray");
+    //mergeable.method("merge", {
+    //    Php::ByVal("store", KeyTable::PHP_NAME)
+    //});
+    // mergeable.method("toArray");
     extension.add(std::move(mergeable));
 
     Php::Interface tagable("Tagable");
 
-    tagable.method("setTag", {
-        Php::ByVal("tag")
-    });
-    tagable.method("getTag");
+    //tagable.method("setTag", {
+    //    Php::ByVal("tag")
+    //});
+    // tagable.method("getTag");
     extension.add(std::move(tagable));
 
 // registration methods

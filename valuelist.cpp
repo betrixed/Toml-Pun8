@@ -12,7 +12,7 @@ void
 ValueList::setup_ext(Php::Extension& ext, Php::Interface& if1)
 {
     Php::Class<ValueList> valList(ValueList::PHP_NAME);
-    valList.implements(if1);
+    //valList.implements(if1);
 
     valList.method<&ValueList::pushBack> ("pushBack");
     valList.method<&ValueList::popBack> ("popBack");
@@ -23,10 +23,10 @@ ValueList::setup_ext(Php::Extension& ext, Php::Interface& if1)
     valList.method<&ValueList::size> ("size");
     valList.method<&ValueList::clear> ("clear");
     valList.method<&ValueList::toArray> ("toArray");
-    valList.method<&ValueList::setTag>("setTag", {
-        Php::ByVal("tag")
-    });
-    //valList.method<&ValueList::setTag> ("setTag");
+    //valList.method<&ValueList::setTag>("setTag", {
+    //    Php::ByVal("tag")
+    //});
+    valList.method<&ValueList::setTag> ("setTag");
     valList.method<&ValueList::getTag> ("getTag");
 
     ext.add(std::move(valList));

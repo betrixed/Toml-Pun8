@@ -237,8 +237,9 @@ function keytable() {
     else {
         echo "MyProperty not set " . PHP_EOL;
     }
-     unset($kt->MyProperty1);
-
+    // unset($kt->MyProperty1);
+    $kt->MyProperty1 = null;
+    
      if (isset($kt->MyProperty1)) {
         echo "MyProperty set to " . $kt->MyProperty1 . PHP_EOL;
     }
