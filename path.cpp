@@ -26,12 +26,12 @@ Path::setup_ext(Php::Extension& ext)
 {
     Php::Class<Path> cpath(Path::PHP_NAME);
 
-    cpath.method<&Path::endSep> ("endSep");
-    cpath.method<&Path::noEndSep> ("noEndSep");
-    cpath.method<&Path::native> ("native");
-    cpath.method<&Path::sep> ("sep");
-    cpath.method<&Path::startsWith> ("startsWith");
-    cpath.method<&Path::endsWith> ("endsWith");
+    cpath.method<&Path::endSep> ("endSep", Php::Public);
+    cpath.method<&Path::noEndSep> ("noEndSep", Php::Public);
+    cpath.method<&Path::native> ("native", Php::Public);
+    cpath.method<&Path::sep> ("sep", Php::Public);
+    cpath.method<&Path::startsWith> ("startsWith", Php::Public);
+    cpath.method<&Path::endsWith> ("endsWith", Php::Public);
     ext.add(std::move(cpath));
 
 }

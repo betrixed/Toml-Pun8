@@ -9,10 +9,10 @@ void
 PunType::setup_ext(Php::Extension& ext)
 {
     Php::Class<PunType> ptype(PunType::PHP_NAME);
-    ptype.method<&PunType::fromValue> ("fromValue");
-    ptype.method<&PunType::isMatch> ("isMatch");
-    ptype.method<&PunType::type> ("type");
-    ptype.method<&PunType::name> ("name");
+    ptype.method<&PunType::fromValue> ("fromValue", Php::Public);
+    ptype.method<&PunType::isMatch> ("isMatch", Php::Public);
+    ptype.method<&PunType::type> ("type", Php::Public);
+    ptype.method<&PunType::name> ("name", Php::Public);
 
     ext.add(std::move(ptype));
 }

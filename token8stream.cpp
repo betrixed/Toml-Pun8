@@ -15,31 +15,31 @@ void Token8Stream::setup_ext(Php::Extension &ext)
 {
     Php::Class<Token8Stream> t8s(Token8Stream::PHP_NAME);
 
-    t8s.method<&Token8Stream::setEOSId> ("setEOSId");
-    t8s.method<&Token8Stream::setEOLId> ("setEOLId");
-    t8s.method<&Token8Stream::setUnknownId> ("setUnknownId");
+    t8s.method<&Token8Stream::setEOSId> ("setEOSId", Php::Public);
+    t8s.method<&Token8Stream::setEOLId> ("setEOLId", Php::Public);
+    t8s.method<&Token8Stream::setUnknownId> ("setUnknownId", Php::Public);
 
-    t8s.method<&Token8Stream::setExpSet> ("setExpSet");
-    t8s.method<&Token8Stream::getExpSet> ("getExpSet");
-    t8s.method<&Token8Stream::setSingles> ("setSingles");
-    t8s.method<&Token8Stream::setRe8map> ("setRe8map");
-    t8s.method<&Token8Stream::setInput> ("setInput");
-
-
-    t8s.method<&Token8Stream::hasPendingTokens> ("hasPendingTokens");
-    t8s.method<&Token8Stream::getToken> ("getToken");
-    t8s.method<&Token8Stream::getLine> ("getLine");
-    t8s.method<&Token8Stream::getValue> ("getValue");
-    t8s.method<&Token8Stream::getId> ("getId");
-    t8s.method<&Token8Stream::getOffset> ("getOffset");
-    t8s.method<&Token8Stream::beforeEOL> ("beforeEOL");
+    t8s.method<&Token8Stream::setExpSet> ("setExpSet", Php::Public);
+    t8s.method<&Token8Stream::getExpSet> ("getExpSet", Php::Public);
+    t8s.method<&Token8Stream::setSingles> ("setSingles", Php::Public);
+    t8s.method<&Token8Stream::setRe8map> ("setRe8map", Php::Public);
+    t8s.method<&Token8Stream::setInput> ("setInput", Php::Public);
 
 
-    t8s.method<&Token8Stream::peekToken> ("peekToken");
-    t8s.method<&Token8Stream::acceptToken> ("acceptToken");
-    t8s.method<&Token8Stream::moveNextId> ("moveNextId");
-    t8s.method<&Token8Stream::moveRegex> ("moveRegex");
-    t8s.method<&Token8Stream::moveRegId> ("moveRegId");
+    t8s.method<&Token8Stream::hasPendingTokens> ("hasPendingTokens", Php::Public);
+    t8s.method<&Token8Stream::getToken> ("getToken", Php::Public);
+    t8s.method<&Token8Stream::getLine> ("getLine", Php::Public);
+    t8s.method<&Token8Stream::getValue> ("getValue", Php::Public);
+    t8s.method<&Token8Stream::getId> ("getId", Php::Public);
+    t8s.method<&Token8Stream::getOffset> ("getOffset", Php::Public);
+    t8s.method<&Token8Stream::beforeEOL> ("beforeEOL", Php::Public);
+
+
+    t8s.method<&Token8Stream::peekToken> ("peekToken", Php::Public);
+    t8s.method<&Token8Stream::acceptToken> ("acceptToken", Php::Public);
+    t8s.method<&Token8Stream::moveNextId> ("moveNextId", Php::Public);
+    t8s.method<&Token8Stream::moveRegex> ("moveRegex", Php::Public);
+    t8s.method<&Token8Stream::moveRegId> ("moveRegId", Php::Public);
     ext.add(std::move(t8s));
 }
 

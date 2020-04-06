@@ -19,17 +19,17 @@ void
 IntList::setup_ext(Php::Extension& ext)
 {
     Php::Class<IntList> cext(IntList::PHP_NAME);
-    cext.method<&IntList::__construct>("__construct");
-    cext.method<&IntList::setArray> ("setArray");
-    cext.method<&IntList::pushBack> ("pushBack");
-    cext.method<&IntList::popBack> ("popBack");
-    cext.method<&IntList::getV> ("getV");
+    cext.method<&IntList::__construct>("__construct", Php::Public);
+    cext.method<&IntList::setArray> ("setArray", Php::Public);
+    cext.method<&IntList::pushBack> ("pushBack", Php::Public);
+    cext.method<&IntList::popBack> ("popBack", Php::Public);
+    cext.method<&IntList::getV> ("getV", Php::Public);
 
-    cext.method<&IntList::setV> ("setV");
-    cext.method<&IntList::back> ("back");
-    cext.method<&IntList::size> ("size");
-    cext.method<&IntList::clear> ("clear");
-    cext.method<&IntList::toArray> ("toArray");
+    cext.method<&IntList::setV> ("setV", Php::Public);
+    cext.method<&IntList::back> ("back", Php::Public);
+    cext.method<&IntList::size> ("size", Php::Public);
+    cext.method<&IntList::clear> ("clear", Php::Public);
+    cext.method<&IntList::toArray> ("toArray", Php::Public);
 
 
     ext.add(std::move(cext));

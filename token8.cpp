@@ -6,10 +6,10 @@ const char* Token8::PHP_NAME = "Pun\\Token8";
 
 void Token8::setup_ext(Php::Extension& ext) {
     Php::Class<Token8> token(Token8::PHP_NAME);
-    token.method<&Token8::getValue> ("getValue");
-    token.method<&Token8::getId> ("getId");
-    token.method<&Token8::getLine> ("getLine");
-    token.method<&Token8::isSingle> ("isSingle");
+    token.method<&Token8::getValue> ("getValue", Php::Public);
+    token.method<&Token8::getId> ("getId", Php::Public);
+    token.method<&Token8::getLine> ("getLine", Php::Public);
+    token.method<&Token8::isSingle> ("isSingle", Php::Public);
     ext.add(std::move(token));
 }
 

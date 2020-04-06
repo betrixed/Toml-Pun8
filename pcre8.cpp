@@ -13,13 +13,13 @@ void
 Pcre8::setup_ext(Php::Extension& ext)
 {
     Php::Class<Pcre8> preg(Pcre8::PHP_NAME);
-    preg.method<&Pcre8::__construct>("__construct");
-    preg.method<&Pcre8::setPreg> ("setPreg");
-    preg.method<&Pcre8::getPreg> ("getPreg");
-    preg.method<&Pcre8::getId> ("getId");
-    preg.method<&Pcre8::isCompiled> ("isCompiled");
-    preg.method<&Pcre8::match> ("match");
-    preg.method<&Pcre8::matchAll> ("matchAll");
+    preg.method<&Pcre8::__construct>("__construct", Php::Public);
+    preg.method<&Pcre8::setPreg> ("setPreg", Php::Public);
+    preg.method<&Pcre8::getPreg> ("getPreg", Php::Public);
+    preg.method<&Pcre8::getId> ("getId", Php::Public);
+    preg.method<&Pcre8::isCompiled> ("isCompiled", Php::Public);
+    preg.method<&Pcre8::match> ("match", Php::Public);
+    preg.method<&Pcre8::matchAll> ("matchAll", Php::Public);
     ext.add(std::move(preg));
 }
 

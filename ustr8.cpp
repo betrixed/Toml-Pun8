@@ -10,29 +10,29 @@ void
 UStr8::setup_ext(Php::Extension& ext)
 {
     Php::Class<UStr8> ustr8(UStr8::PHP_NAME);
-    ustr8.method<&UStr8::__construct>("__construct");
-    ustr8.method<&UStr8::share>("share");
-    ustr8.method<&UStr8::setString> ("setString");
-    ustr8.method<&UStr8::asUTF16> ("asUTF16");
-    ustr8.method<&UStr8::getBOMId> ("getBOMId");
-    ustr8.method<&UStr8::ensureUTF8> ("ensureUTF8");
-    ustr8.method<&UStr8::getBegin> ("getBegin");
-    ustr8.method<&UStr8::getEnd> ("getEnd");
-    ustr8.method<&UStr8::size> ("size");
-    ustr8.method<&UStr8::setRange> ("setRange");
-    ustr8.method<&UStr8::setEnd> ("setEnd");
-    ustr8.method<&UStr8::value> ("value");
+    ustr8.method<&UStr8::__construct>("__construct", Php::Public);
+    ustr8.method<&UStr8::share>("share", Php::Public);
+    ustr8.method<&UStr8::setString> ("setString", Php::Public);
+    ustr8.method<&UStr8::asUTF16> ("asUTF16", Php::Public);
+    ustr8.method<&UStr8::getBOMId> ("getBOMId", Php::Public);
+    ustr8.method<&UStr8::ensureUTF8> ("ensureUTF8", Php::Public);
+    ustr8.method<&UStr8::getBegin> ("getBegin", Php::Public);
+    ustr8.method<&UStr8::getEnd> ("getEnd", Php::Public);
+    ustr8.method<&UStr8::size> ("size", Php::Public);
+    ustr8.method<&UStr8::setRange> ("setRange", Php::Public);
+    ustr8.method<&UStr8::setEnd> ("setEnd", Php::Public);
+    ustr8.method<&UStr8::value> ("value", Php::Public);
 
-    ustr8.method<&UStr8::peekChar> ("peekChar");
-    ustr8.method<&UStr8::nextChar> ("nextChar");
-    ustr8.method<&UStr8::replaceAll> ("replaceAll");
-    ustr8.method<&UStr8::endsWith> ("endsWith");
-    ustr8.method<&UStr8::beginsWith> ("startsWith");
-    ustr8.method<&UStr8::pushBack> ("pushBack");
-    ustr8.method<&UStr8::popBack> ("popBack");
+    ustr8.method<&UStr8::peekChar> ("peekChar", Php::Public);
+    ustr8.method<&UStr8::nextChar> ("nextChar", Php::Public);
+    ustr8.method<&UStr8::replaceAll> ("replaceAll", Php::Public);
+    ustr8.method<&UStr8::endsWith> ("endsWith", Php::Public);
+    ustr8.method<&UStr8::beginsWith> ("startsWith", Php::Public);
+    ustr8.method<&UStr8::pushBack> ("pushBack", Php::Public);
+    ustr8.method<&UStr8::popBack> ("popBack", Php::Public);
 
-    ustr8.method<&UStr8::bomUTF16> ("bomUTF16");
-    ustr8.method<&UStr8::bomUTF8> ("bomUTF8");
+    ustr8.method<&UStr8::bomUTF16> ("bomUTF16", Php::Public);
+    ustr8.method<&UStr8::bomUTF8> ("bomUTF8", Php::Public);
     ext.add(std::move(ustr8));
 
 

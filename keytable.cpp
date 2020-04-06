@@ -24,37 +24,37 @@ void
 KeyTable::setup_ext(Php::Extension& ext, Php::Interface& if1, Php::Interface& if2) {
     Php::Class<KeyTable> keytab(KeyTable::PHP_NAME);
  
-    //keytab.implements(if1);
-    //keytab.implements(if2);
+    keytab.implements(if1);
+    keytab.implements(if2);
     //keytab.extends(tbase);   
 
-    keytab.method<&KeyTable::setKV> ("set");
-    keytab.method<&KeyTable::get> ("get");
-    keytab.method<&KeyTable::path> ("path");
-    keytab.method<&KeyTable::unsetK> ("unsetKey");
-    keytab.method<&KeyTable::hasK> ("exists");
-    keytab.method<&KeyTable::clear> ("clear");
+    keytab.method<&KeyTable::setKV> ("set", Php::Public);
+    keytab.method<&KeyTable::get> ("get", Php::Public);
+    keytab.method<&KeyTable::path> ("path", Php::Public);
+    keytab.method<&KeyTable::unsetK> ("unsetKey", Php::Public);
+    keytab.method<&KeyTable::hasK> ("exists", Php::Public);
+    keytab.method<&KeyTable::clear> ("clear", Php::Public);
 
-    //keytab.method<&KeyTable::merge> ("merge", {
-    //    Php::ByVal("store", KeyTable::PHP_NAME)
-    //});
-        //keytab.method<&KeyTable::setTag> ("setTag",
-    //    { Php::ByVal("tag") }
-    //);
+    keytab.method<&KeyTable::merge> ("merge", {
+        Php::ByVal("store", KeyTable::PHP_NAME) //, KeyTable::PHP_NAME
+    });
+    keytab.method<&KeyTable::setTag> ("setTag",
+        { Php::ByVal("tag") }
+    );
 
-    keytab.method<&KeyTable::merge> ("merge");
-    keytab.method<&KeyTable::getTag> ("getTag");
-    keytab.method<&KeyTable::setTag> ("setTag");
+    //keytab.method<&KeyTable::merge> ("merge", Php::Public);
+    keytab.method<&KeyTable::getTag> ("getTag", Php::Public);
+    //keytab.method<&KeyTable::setTag> ("setTag", Php::Public);
 
 
-    keytab.method<&KeyTable::size> ("size");
+    keytab.method<&KeyTable::size> ("size", Php::Public);
 
-    keytab.method<&KeyTable::__construct> ("__construct");
-    keytab.method<&KeyTable::toArray> ("toArray");
+    keytab.method<&KeyTable::__construct> ("__construct", Php::Public);
+    keytab.method<&KeyTable::toArray> ("toArray", Php::Public);
 
    
 
-    keytab.method<&KeyTable::replaceVars> ("replaceVars");
+    keytab.method<&KeyTable::replaceVars> ("replaceVars", Php::Public);
 
 
     ext.add(std::move(keytab));
@@ -345,7 +345,7 @@ Php::Value KeyTable::__get(const Php::Value &name) const
 
 void KeyTable::__set(const Php::Value &name, const Php::Value &value)
 {
-	_store[name.stringValue()] = value;
+	 _store[name.stringValue()] = value;
 }
 
 bool KeyTable::__isset(const Php::Value &name) const

@@ -14,20 +14,20 @@ ValueList::setup_ext(Php::Extension& ext, Php::Interface& if1)
     Php::Class<ValueList> valList(ValueList::PHP_NAME);
     //valList.implements(if1);
 
-    valList.method<&ValueList::pushBack> ("pushBack");
-    valList.method<&ValueList::popBack> ("popBack");
-    valList.method<&ValueList::getV> ("getV");
+    valList.method<&ValueList::pushBack> ("pushBack", Php::Public);
+    valList.method<&ValueList::popBack> ("popBack", Php::Public);
+    valList.method<&ValueList::getV> ("getV", Php::Public);
 
-    valList.method<&ValueList::setV> ("setV");
-    valList.method<&ValueList::back> ("back");
-    valList.method<&ValueList::size> ("size");
-    valList.method<&ValueList::clear> ("clear");
-    valList.method<&ValueList::toArray> ("toArray");
+    valList.method<&ValueList::setV> ("setV", Php::Public);
+    valList.method<&ValueList::back> ("back", Php::Public);
+    valList.method<&ValueList::size> ("size", Php::Public);
+    valList.method<&ValueList::clear> ("clear", Php::Public);
+    valList.method<&ValueList::toArray> ("toArray", Php::Public);
     //valList.method<&ValueList::setTag>("setTag", {
     //    Php::ByVal("tag")
     //});
-    valList.method<&ValueList::setTag> ("setTag");
-    valList.method<&ValueList::getTag> ("getTag");
+    valList.method<&ValueList::setTag> ("setTag", Php::Public);
+    valList.method<&ValueList::getTag> ("getTag", Php::Public);
 
     ext.add(std::move(valList));
 }

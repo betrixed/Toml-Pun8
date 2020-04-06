@@ -15,14 +15,14 @@ void
 Re8map::setup_ext(Php::Extension& ext)
 {
     Php::Class<Re8map> re8(Re8map::PHP_NAME);
-    re8.method<&Re8map::setPreg> ("setPreg");
-    re8.method<&Re8map::hasPreg> ("hasPreg");
-    re8.method<&Re8map::unsetPreg> ("unsetPreg");
-    re8.method<&Re8map::getPreg> ("getPreg");
-    re8.method<&Re8map::addMapIds> ("addMapIds");
-    re8.method<&Re8map::getIds> ("getIds");
-    re8.method<&Re8map::count> ("count");
-    re8.method<&Re8map::firstMatch> ("firstMatch");
+    re8.method<&Re8map::setPreg> ("setPreg", Php::Public);
+    re8.method<&Re8map::hasPreg> ("hasPreg", Php::Public);
+    re8.method<&Re8map::unsetPreg> ("unsetPreg", Php::Public);
+    re8.method<&Re8map::getPreg> ("getPreg", Php::Public);
+    re8.method<&Re8map::addMapIds> ("addMapIds", Php::Public);
+    re8.method<&Re8map::getIds> ("getIds", Php::Public);
+    re8.method<&Re8map::count> ("count", Php::Public);
+    re8.method<&Re8map::firstMatch> ("firstMatch", Php::Public);
     ext.add(std::move(re8));
 }
 
