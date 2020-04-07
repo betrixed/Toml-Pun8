@@ -1,7 +1,5 @@
 #include "text.h"
 #include "pcre8.h"
-#include "valuelist.h"
-#include "keytable.h"
 
 unsigned int
 pun::replaceAll(svx::string_view src,
@@ -103,19 +101,6 @@ Pcre8_imp* getVarRegexp() {
         }
     }
     return &gVarRegexp;
-}
-
-void
-pun::replaceVar_object(Php::Value& obj, Php::Value& lookup)
-{
-    if (obj.instanceOf(ValueList::PHP_NAME)) {
-        auto vlist = (ValueList*) obj.implementation();
-        replaceVar_ValueArray(vlist->fn_store(), lookup);
-    }
-    else if (obj.instanceOf(KeyTable::PHP_NAME)) {
-        auto vmap = (KeyTable*) obj.implementation();
-        replaceVar_ValueMap(vmap->fn_store(), lookup);
-    }
 }
 
 bool

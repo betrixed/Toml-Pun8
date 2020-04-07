@@ -19,8 +19,6 @@ namespace pun {
           tFloat,
           tString,
           tDateTime,
-          tValueList,
-          tKeyTable,
           tArray,
           tObject,
           tResource,

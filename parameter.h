@@ -14,16 +14,11 @@
 //!  It made sense at the time to have these constant string values pre-formed.
 struct CPunk {
      //! initialised with PHP class name
-     static const std::string keytable_classname;
-     //! initialised with PHP class name
-     static const std::string valuelist_classname;
-     //! initialised with PHP class name
      static const std::string datetime_classname;
 };
 
 namespace pun {
 
-     class KeyTable;
      class Re8map;
      class Recap8;
      class Token8;
@@ -40,9 +35,7 @@ namespace pun {
      Pcre8* check_Pcre8(Php::Parameters& params,unsigned int offset=0);
      Token8* check_Token8(Php::Parameters& params, unsigned int offset=0);
      Re8map* check_Re8map(Php::Parameters& params, unsigned int offset=0);
-     KeyTable* check_KeyTable(Php::Parameters& params, unsigned int offset=0);
 
-     KeyTable* castKeyTable(Php::Value& val);
 
      Recap8* option_Recap8(Php::Parameters& params, unsigned int offset=0);
 
@@ -63,9 +56,6 @@ namespace pun {
 
      std::string missingParameter(const char* shouldBe, unsigned int offset);
      std::string invalidCharacter(char32_t unc8);
-
-     void serialize_keyTable(Php::Base* base, std::ostream& out);
-     void serialize_valueList(Php::Base* base, std::ostream& out);
 
      void serialize_str(const char* s, size_t slen, std::ostream& out);
      void unserialize_str(std::string& cval, std::istream& ins);

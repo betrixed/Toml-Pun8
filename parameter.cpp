@@ -1,6 +1,5 @@
 #include "parameter.h"
 
-#include "valuelist.h"
 
 #include "pcre8.h"
 #include "recap8.h"
@@ -12,7 +11,6 @@
 #include <cstdint>
 
 #include "ucode8.h"
-#include "keytable.h"
 
 
 /*
@@ -80,18 +78,6 @@ pun::unserialize(Php::Value& val, std::istream& ins)
         pun::unserialize_str(sval, ins);
         val = Php::call("unserialize", sval);
         break;
-    case 'K': {
-            auto ktp = new pun::KeyTable();
-            ktp->fn_unserialize(ins);
-            val = ktp->fn_object();
-        }
-        break;
-    case 'V': {
-            auto vlp = new pun::ValueList();
-            vlp->fn_unserialize(ins);
-            val = vlp->fn_object();
-        }
-        break;
     case 'N':
         val = Php::Value();
         break;
@@ -103,13 +89,7 @@ Pype
 pun::getPype(Php::Value& val) {
     auto t = pun::getPype(val.type());
     if (t == pun::tObject) {
-        if (val.instanceOf(CPunk::keytable_classname)) {
-            return pun::tKeyTable;
-        }
-        else if (val.instanceOf(CPunk::valuelist_classname)) {
-            return pun::tValueList;
-        }
-        else if (val.instanceOf(CPunk::datetime_classname)) {
+        if (val.instanceOf(CPunk::datetime_classname)) {
             return pun::tDateTime;
         }
     }
@@ -152,10 +132,6 @@ const char* pun::getPypeId(Pype t)
         return "integer";
     case pun::tFloat:
         return "float";
-    case pun::tKeyTable:
-        return "table";
-    case pun::tValueList:
-        return "list";
     case pun::tDateTime:
         return "datetime";
     case pun::tArray:
@@ -203,13 +179,6 @@ const char* pun::getTypeName(Php::Type ptype)
     default:
         return "undefined";
     }
-}
-
-KeyTable* pun::castKeyTable(Php::Value& val) {
-    if  (!val.isObject())
-        return nullptr;
-    Php::Base* base = val.implementation();
-    return  dynamic_cast<KeyTable*>(base);
 }
 
 std::string
@@ -373,32 +342,6 @@ pun::check_Token8(Php::Parameters& params, unsigned int offset)
     throw Php::Exception(pun::missingParameter("Token8 object", offset));
 }
 
-KeyTable*
-pun::check_KeyTable(Php::Parameters& params, unsigned int offset)
-{
-    auto ct = params.size();
-
-    if (offset < ct) {
-        KeyTable *obj = castKeyTable(params[offset]);
-            if (obj)
-                return obj;
-    }
-    throw Php::Exception(pun::missingParameter("KeyTable object", offset));
-
-}
-
-
-void pun::serialize_valueList(Php::Base* base, std::ostream& out)
-{
-    pun::ValueList* vlist = ( pun::ValueList* ) base;
-    vlist->fn_serialize(out);
-}
-
-void pun::serialize_keyTable(Php::Base* base, std::ostream& out)
-{
-    pun::KeyTable* ktab = ( pun::KeyTable* ) base;
-    ktab->fn_serialize(out);
-}
 
 void
 pun::serialize_str(const char* s, size_t slen, std::ostream& out) {
@@ -461,16 +404,6 @@ pun::serialize(Php::Value& val, std::ostream& out)
         pun::serialize_str(result, result.size(), out);
         break;
 
-    case pun::tValueList:
-        out << 'V';
-        pun::serialize_valueList(val.implementation(),out);
-        break;
-
-    case pun::tKeyTable:
-        out << 'K';
-        pun::serialize_keyTable(val.implementation(),out);
-        break;
-
     case pun::tArray:
         out << 'A';
         result = Php::call("serialize", val);
@@ -489,17 +422,4 @@ pun::serialize(Php::Value& val, std::ostream& out)
         break;
 
     }
-}
-
-Php::Array
-pun::to_array(const ValueMap &vmap)
-{
-    Php::Array result;
-
-    auto zit = vmap.end();
-    for( auto ait = vmap.begin(); ait != zit; ait++ ) {
-        result[ait->first] = ait->second;
-    }
-
-    return result;
 }
